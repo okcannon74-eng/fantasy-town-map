@@ -286,18 +286,13 @@
             </ul>
           </div>`
       },
-      {
-        emoji: '📜',
-        angle: 30, // Top-Right
-        title: 'Rumors & Gossip',
-        popupHtml: `
-          <div class="popup-card">
-            <h3>Overheard Rumors</h3>
-            <div class="subtitle">Local Gossip</div>
-            <p>"The blacksmith on East Street hasn't received iron shipments in three weeks."</p>
-          </div>`
-      }
-    ];
+{
+    emoji: '📜',
+    angle: 30,
+    title: 'Rumors & Gossip',
+    get popupHtml() { return getRandomRumorHTML(); } // Dynamically generates a fresh rumor every time!
+  }
+];
 
     let isSubMenuOpen = false;
 
@@ -405,7 +400,70 @@ map.on('mousemove', function(e) {
   const x = Math.round(e.latlng.lng);
   document.querySelector('.coord-hud').innerHTML = `Coords: [${y}, ${x}]`;
 });
+// ===================================================================
+// DYNAMIC RUMOR DATABASE
+// ===================================================================
+const rumorPool = [
+  {
+    text: "The blacksmith on East Street hasn't received iron shipments in three weeks.",
+    source: "Overheard at the bar"
+  },
+  {
+    text: "Strange blue lights were seen flickering in the old sewer grates past midnight.",
+    source: "Whispered by a street urchin"
+  },
+  {
+    text: "The High Priest is secretly purchasing large quantities of silver dust.",
+    source: "A drunken acolyte"
+  },
+  {
+    text: "A merchant offering 'unbeatable prices' on health potions is selling colored sugar water.",
+    source: "Guild notice"
+  },
+  {
+    text: "Goblins in the nearby woods have started wielding finely crafted steel weapons.",
+    source: "A wounded hunter"
+  }
+];
+
+// Helper function to pick a random rumor and build HTML
+function getRandomRumorHTML() {
+  const randomRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
   
+  return `
+    <div class="popup-card" id="rumor-card">
+      <h3>Tavern Gossip</h3>
+      <div class="subtitle">${randomRumor.source}</div>
+      <p style="min-height: 48px;">"${randomRumor.text}"</p>
+      
+      <button onclick="rerollRumor()" style="
+        width: 100%;
+        margin-top: 6px;
+        padding: 6px 10px;
+        background: #2a2e37;
+        border: 1px solid #f6c177;
+        color: #f6c177;
+        border-radius: 4px;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      " onmouseover="this.style.background='#3b4252'" onmouseout="this.style.background='#2a2e37'">
+        🎲 Hear Another Rumor
+      </button>
+    </div>
+  `;
+}
+
+// Function triggered by the button click inside the popup card
+window.rerollRumor = function() {
+  const cardContainer = document.getElementById('rumor-card');
+  if (cardContainer) {
+    const freshRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
+    cardContainer.querySelector('.subtitle').innerText = freshRumor.source;
+    cardContainer.querySelector('p').innerText = `"${freshRumor.text}"`;
+  }
+};  
   </script>
 </body>
 </html>
