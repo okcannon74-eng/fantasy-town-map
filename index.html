@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fantasy Town Interactive Map</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Fantasy Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* Reset & Fullscreen Setup */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background-color: #0d0e12; font-family: 'Inter', sans-serif; }
+    
+    #map {
+      width: 100vw;
+      height: 100vh;
+      background-color: #0d0e12;
+    }
+
+    /* Dark Fantasy Popup Card Styling */
+    .leaflet-popup-content-wrapper {
+      background: #181b20;
+      color: #e2e8f0;
+      border: 1px solid #3b4252;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+      padding: 4px;
+    }
+
+    .leaflet-popup-tip {
+      background: #181b20;
+    }
+
+    .popup-card {
+      min-width: 220px;
+      max-width: 280px;
+    }
+
+    .popup-card h3 {
+      font-family: 'Cinzel', serif;
+      color: #f6c177;
+      border-bottom: 1px solid #2e3440;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+
+    .popup-card .subtitle {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #9ccfd8;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .popup-card p {
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: #c4a7e7;
+      margin-bottom: 8px;
+    }
+
+    /* Merchant Inventory Table */
+    .shop-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 0.8rem;
+    }
+
+    .shop-table th, .shop-table td {
+      padding: 4px 6px;
+      text-align: left;
+      border-bottom: 1px solid #2e3440;
+    }
+
+    .shop-table th {
+      color: #e0def4;
+      font-weight: 600;
+    }
+
+    .shop-table td.cost {
+      text-align: right;
+      color: #f6c177;
+      font-weight: 600;
+    }
+
+    /* Custom Map Pin Styling */
+    .custom-pin {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid #ffffff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+      font-size: 16px;
+      transition: transform 0.2s ease;
+    }
+
+    .custom-pin:hover {
+      transform: scale(1.25);
+      cursor: pointer;
+    }
+
+    .pin-tavern { background: #eb6f92; }
+    .pin-armor  { background: #31748f; }
+    .pin-quest  { background: #f6c177; }
+
+    /* Control Panel Styling */
+    .leaflet-control-layers {
+      background: #181b20 !important;
+      color: #e2e8f0 !important;
+      border: 1px solid #3b4252 !important;
+      border-radius: 8px !important;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // ===================================================================
+    // 1. MAP CONFIGURATION (Pixel-based grid)
+    // ===================================================================
+    
+    // Replace with your map image's pixel dimensions
+    const imgWidth = 2000;
+    const imgHeight = 1500;
+    
+    // Bounds define [y_min, x_min] to [y_max, x_max] in pixels
+    const bounds = [[0, 0], [imgHeight, imgWidth]];
+
+    const map = L.map('map', {
+      crs: L.CRS.Simple,
+      minZoom: -1,
+      maxZoom: 2,
+      zoomSnap: 0.25,
+      maxBounds: bounds,
+      maxBoundsViscosity: 0.8
+    });
+
+    // Replace this URL with your town map image file
+    const mapImageUrl = 'https://picsum.photos/id/1015/2000/1500'; 
+    
+    L.imageOverlay(mapImageUrl, bounds).addTo(map);
+    map.fitBounds(bounds);
+
+    // ===================================================================
+    // 2. CUSTOM PIN ICON GENERATOR
+    // ===================================================================
+    function createPinIcon(className, iconEmoji) {
+      return L.divIcon({
+        className: 'custom-icon-wrapper',
+        html: `<div class="custom-pin ${className}">${iconEmoji}</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -16]
+      });
+    }
+
+    const icons = {
+      tavern: createPinIcon('pin-tavern', '🍺'),
+      armor:  createPinIcon('pin-armor', '🛡️'),
+      quest:  createPinIcon('pin-quest', '📜')
+    };
+
+    // ===================================================================
+    // 3. MAP LOCATIONS & LAYERS
+    // ===================================================================
+    const tavernsLayer = L.layerGroup();
+    const merchantsLayer = L.layerGroup();
+    const questsLayer = L.layerGroup();
+
+    // Coordinates are [Y, X] in pixels from bottom-left [0, 0]
+    
+    // Location 1: Tavern
+    const tavernMarker = L.marker([750, 600], { icon: icons.tavern })
+      .bindPopup(`
+        <div class="popup-card">
+          <h3>The Golden Gryphon</h3>
+          <div class="subtitle">Tavern & Inn</div>
+          <p><strong>Overheard Gossip:</strong> "The local blacksmith hasn't shipped iron in three weeks. People say goblins took the east pass."</p>
+          <p><strong>Barkeep:</strong> Elric, a retired paladin with a silver eye patch.</p>
+        </div>
+      `);
+    tavernsLayer.addLayer(tavernMarker);
+
+    // Location 2: Armorer
+    const armorMarker = L.marker([1100, 1300], { icon: icons.armor })
+      .bindPopup(`
+        <div class="popup-card">
+          <h3>Ironhand Armory</h3>
+          <div class="subtitle">Blacksmith & Armor</div>
+          <p>Masterwork plate and shield reinforcement.</p>
+          <table class="shop-table">
+            <thead><tr><th>Item</th><th>Stock</th><th style="text-align:right">Price</th></tr></thead>
+            <tbody>
+              <tr><td>Chainmail</td><td>2</td><td class="cost">75 gp</td></tr>
+              <tr><td>Shield (+1)</td><td>1</td><td class="cost">250 gp</td></tr>
+              <tr><td>Longsword</td><td>5</td><td class="cost">15 gp</td></tr>
+            </tbody>
+          </table>
+        </div>
+      `);
+    merchantsLayer.addLayer(armorMarker);
+
+    // Location 3: Quest Notice Board
+    const questMarker = L.marker([850, 1000], { icon: icons.quest })
+      .bindPopup(`
+        <div class="popup-card">
+          <h3>Town Square Notice</h3>
+          <div class="subtitle">Quest Hub</div>
+          <p><strong>Bounty:</strong> 100 gold pieces for information leading to the capture of the Sewer Cultist master.</p>
+        </div>
+      `);
+    questsLayer.addLayer(questMarker);
+
+    // Add all layers to map by default
+    tavernsLayer.addTo(map);
+    merchantsLayer.addTo(map);
+    questsLayer.addTo(map);
+
+    // ===================================================================
+    // 4. LAYER FILTER CONTROL
+    // ===================================================================
+    const overlays = {
+      "🍺 Taverns & Inns": tavernsLayer,
+      "🛡️ Merchants": merchantsLayer,
+      "📜 Quests & Notices": questsLayer
+    };
+
+    L.control.layers(null, overlays, { collapsed: false }).addTo(map);
+
+    // ===================================================================
+    // 5. DM HELPER: Click anywhere on the map to get [Y, X] coordinates
+    // ===================================================================
+    map.on('click', function(e) {
+      const y = Math.round(e.latlng.lat);
+      const x = Math.round(e.latlng.lng);
+      console.log(`Clicked Pin Location -> [${y}, ${x}]`);
+    });
+  </script>
+</body>
+</html>
