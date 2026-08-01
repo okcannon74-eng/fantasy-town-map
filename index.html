@@ -23,7 +23,18 @@
       height: 100vh;
       background-color: #0d0e12;
     }
-
+    /* Coord Hud */ 
+    .coord-hud {
+      background: rgba(24, 27, 32, 0.9) !important;
+      color: #f6c177 !important;
+      padding: 6px 12px !important;
+      border-radius: 6px !important;
+      border: 1px solid #3b4252 !important;
+      font-family: monospace !important;
+      font-size: 0.85rem !important;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      pointer-events: none;
+    }
     /* Sub-Icon Radial Menu Styling */
     .radial-sub-pin {
       display: flex;
@@ -377,6 +388,24 @@
       const x = Math.round(e.latlng.lng);
       console.log(`Clicked Pin Location -> [${y}, ${x}]`);
     });
+ // Create a floating HUD control in the bottom-left corner
+const coordControl = L.control({ position: 'bottomleft' });
+
+coordControl.onAdd = function() {
+  const div = L.DomUtil.create('div', 'coord-hud');
+  div.innerHTML = 'Coords: [0, 0]';
+  return div;
+};
+
+coordControl.addTo(map);
+
+// Update HUD coordinates on mouse hover
+map.on('mousemove', function(e) {
+  const y = Math.round(e.latlng.lat);
+  const x = Math.round(e.latlng.lng);
+  document.querySelector('.coord-hud').innerHTML = `Coords: [${y}, ${x}]`;
+});
+  
   </script>
 </body>
 </html>
