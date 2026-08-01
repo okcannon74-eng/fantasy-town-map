@@ -248,7 +248,7 @@
     const subMenuLayer = L.layerGroup().addTo(map);
 
     // --- LOCATION 1: THE TALL DWARF INN (RADIAL SUB-MENU) ---
-    const innCoords = [750, 600];
+    const innCoords = [419, 1182];
     const tallDwarfInn = L.marker(innCoords, { icon: icons.tavern });
     tavernsLayer.addLayer(tallDwarfInn);
 
@@ -331,7 +331,7 @@
     }
 
     // --- LOCATION 2: ARMORER ---
-    const armorMarker = L.marker([1100, 1300], { icon: icons.armor })
+    const armorMarker = L.marker([436, 871], { icon: icons.armor })
       .bindPopup(`
         <div class="popup-card">
           <h3>Ironhand Armory</h3>
@@ -350,7 +350,7 @@
     merchantsLayer.addLayer(armorMarker);
 
     // --- LOCATION 3: QUEST BOARD ---
-    const questMarker = L.marker([850, 1000], { icon: icons.quest })
+    const questMarker = L.marker([664, 1147], { icon: icons.quest })
       .bindPopup(`
         <div class="popup-card">
           <h3>Town Square Notice</h3>
