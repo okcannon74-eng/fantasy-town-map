@@ -23,7 +23,8 @@
       height: 100vh;
       background-color: #0d0e12;
     }
-    /* Coord Hud */ 
+
+    /* Coord HUD */ 
     .coord-hud {
       background: rgba(24, 27, 32, 0.9) !important;
       color: #f6c177 !important;
@@ -35,6 +36,7 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.5);
       pointer-events: none;
     }
+
     /* Sub-Icon Radial Menu Styling */
     .radial-sub-pin {
       display: flex;
@@ -184,7 +186,6 @@
     // ===================================================================
     // 1. MAP CONFIGURATION (Pixel-based grid)
     // ===================================================================
-    
     const imgWidth = 2000;
     const imgHeight = 1500;
     const bounds = [[0, 0], [imgHeight, imgWidth]];
@@ -202,8 +203,124 @@
     L.imageOverlay(mapImageUrl, bounds).addTo(map);
     map.fitBounds(bounds);
 
+    // Layer Groups
+    const tavernsLayer = L.layerGroup().addTo(map);
+    const merchantsLayer = L.layerGroup().addTo(map);
+    const questsLayer = L.layerGroup().addTo(map);
+    const subMenuLayer = L.layerGroup().addTo(map);
+
+    // Layer Filter Control
+    const overlays = {
+      "🍺 Taverns & Inns": tavernsLayer,
+      "🛡️ Merchants": merchantsLayer,
+      "📜 Quests & Notices": questsLayer
+    };
+    L.control.layers(null, overlays, { collapsed: false }).addTo(map);
+
     // ===================================================================
-    // 2. CUSTOM PIN ICON GENERATORS
+    // 2. DYNAMIC DATA STORAGE & FETCHING
+    // ===================================================================
+    let rumorPool = [];
+    let merchantData = {};
+
+    async function loadCampaignData() {
+      try {
+        const [rumorsResponse, merchantsResponse] = await Promise.all([
+          fetch('data/rumors.json'),
+          fetch('data/merchants.json')
+        ]);
+
+        rumorPool = await rumorsResponse.json();
+        merchantData = await merchantsResponse.json();
+
+        // Initialize markers ONLY after JSON data finishes loading
+        initMapMarkers();
+      } catch (error) {
+        console.error('Error loading JSON campaign data:', error);
+      }
+    }
+
+    // ===================================================================
+    // 3. HTML GENERATOR HELPERS
+    // ===================================================================
+
+    // Build a shop inventory table dynamically from JSON data
+    function buildShopTableHTML(merchantKey) {
+      const merchant = merchantData[merchantKey];
+      if (!merchant) return '<div class="popup-card"><p>No inventory available.</p></div>';
+
+      const rows = merchant.inventory.map(row => `
+        <tr>
+          <td>${row.item}</td>
+          <td style="text-align: center;">${row.stock}</td>
+          <td class="cost">${row.price}</td>
+        </tr>
+      `).join('');
+
+      return `
+        <div class="popup-card">
+          <h3>${merchant.title}</h3>
+          <div class="subtitle">${merchant.subtitle}</div>
+          ${merchant.description ? `<p>${merchant.description}</p>` : ''}
+          <table class="shop-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th style="text-align: center;">Stock</th>
+                <th style="text-align: right;">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // Build a random rumor card dynamically from JSON data
+    function getRandomRumorHTML() {
+      if (!rumorPool.length) return '<div class="popup-card"><p>No rumors heard.</p></div>';
+
+      const randomRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
+      
+      return `
+        <div class="popup-card" id="rumor-card">
+          <h3>Tavern Gossip</h3>
+          <div class="subtitle">${randomRumor.source}</div>
+          <p style="min-height: 48px;">"${randomRumor.text}"</p>
+          
+          <button onclick="rerollRumor()" style="
+            width: 100%;
+            margin-top: 6px;
+            padding: 6px 10px;
+            background: #2a2e37;
+            border: 1px solid #f6c177;
+            color: #f6c177;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: background 0.2s;
+          " onmouseover="this.style.background='#3b4252'" onmouseout="this.style.background='#2a2e37'">
+            🎲 Hear Another Rumor
+          </button>
+        </div>
+      `;
+    }
+
+    // Interactive reroll button logic inside rumor popup
+    window.rerollRumor = function() {
+      const cardContainer = document.getElementById('rumor-card');
+      if (cardContainer && rumorPool.length) {
+        const freshRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
+        cardContainer.querySelector('.subtitle').innerText = freshRumor.source;
+        cardContainer.querySelector('p').innerText = `"${freshRumor.text}"`;
+      }
+    };
+
+    // ===================================================================
+    // 4. CUSTOM PIN ICON GENERATORS & MATH HELPERS
     // ===================================================================
     function createPinIcon(className, iconEmoji) {
       return L.divIcon({
@@ -231,7 +348,6 @@
       quest:  createPinIcon('pin-quest', '📜')
     };
 
-    // Trigonometric math helper for pixel offsets
     function getRadialPosition(centerLatLng, radiusInPixels, angleInDegrees) {
       const angleRad = (angleInDegrees * Math.PI) / 180;
       const newY = centerLatLng[0] + radiusInPixels * Math.sin(angleRad);
@@ -240,230 +356,126 @@
     }
 
     // ===================================================================
-    // 3. MAP LOCATIONS & LAYERS
+    // 5. MARKER INITIALIZATION (Executed after JSON loads)
     // ===================================================================
-    const tavernsLayer = L.layerGroup();
-    const merchantsLayer = L.layerGroup();
-    const questsLayer = L.layerGroup();
-    const subMenuLayer = L.layerGroup().addTo(map);
+    function initMapMarkers() {
+      // Clear existing layers to prevent duplication on reload
+      tavernsLayer.clearLayers();
+      merchantsLayer.clearLayers();
+      questsLayer.clearLayers();
 
-    // --- LOCATION 1: THE TALL DWARF INN (RADIAL SUB-MENU) ---
-    const innCoords = [419, 1182];
-    const tallDwarfInn = L.marker(innCoords, { icon: icons.tavern });
-    tavernsLayer.addLayer(tallDwarfInn);
+      // --- LOCATION 1: THE TALL DWARF INN (RADIAL SUB-MENU) ---
+      const innCoords = [419, 1182];
+      const tallDwarfInn = L.marker(innCoords, { icon: icons.tavern });
+      tavernsLayer.addLayer(tallDwarfInn);
 
-    const innSubItems = [
-      {
-        emoji: '🍺',
-        angle: 150, // Top-Left
-        title: 'Drink & Food Menu',
-        popupHtml: `
-          <div class="popup-card">
-            <h3>The Tall Dwarf Inn</h3>
-            <div class="subtitle">Drink & Lodging</div>
-            <table class="shop-table">
-              <thead><tr><th>Item</th><th style="text-align: right;">Price</th></tr></thead>
-              <tbody>
-                <tr><td>Tall Dwarf Stout</td><td class="cost">5 cp</td></tr>
-                <tr><td>Elven White Wine</td><td class="cost">2 sp</td></tr>
-                <tr><td>Hearty Mutton Stew</td><td class="cost">1 sp</td></tr>
-                <tr><td>Private Room (Night)</td><td class="cost">8 sp</td></tr>
-              </tbody>
-            </table>
-          </div>`
-      },
-      {
-        emoji: '👤',
-        angle: 90, // Top-Center
-        title: 'Notable NPCs',
-        popupHtml: `
-          <div class="popup-card">
-            <h3>Tavern Patrons</h3>
-            <div class="subtitle">Key Characters</div>
-            <ul style="font-size: 0.8rem; padding-left: 14px; color: #c4a7e7; line-height: 1.5;">
-              <li><strong>Thorin High-Reach:</strong> Dwarf barkeep with an eye for trade.</li>
-              <li><strong>Sera:</strong> Local rogue selling whisper rumors.</li>
-            </ul>
-          </div>`
-      },
-{
-    emoji: '📜',
-    angle: 30,
-    title: 'Rumors & Gossip',
-    get popupHtml() { return getRandomRumorHTML(); } // Dynamically generates a fresh rumor every time!
-  }
-];
+      const innSubItems = [
+        {
+          emoji: '🍺',
+          angle: 150,
+          title: 'Drink & Food Menu',
+          get popupHtml() { return buildShopTableHTML('tall_dwarf_inn'); }
+        },
+        {
+          emoji: '👤',
+          angle: 90,
+          title: 'Notable NPCs',
+          popupHtml: `
+            <div class="popup-card">
+              <h3>Tavern Patrons</h3>
+              <div class="subtitle">Key Characters</div>
+              <ul style="font-size: 0.8rem; padding-left: 14px; color: #c4a7e7; line-height: 1.5;">
+                <li><strong>Thorin High-Reach:</strong> Dwarf barkeep with an eye for trade.</li>
+                <li><strong>Sera:</strong> Local rogue selling whisper rumors.</li>
+              </ul>
+            </div>`
+        },
+        {
+          emoji: '📜',
+          angle: 30,
+          title: 'Rumors & Gossip',
+          get popupHtml() { return getRandomRumorHTML(); }
+        }
+      ];
 
-    let isSubMenuOpen = false;
+      let isSubMenuOpen = false;
 
-    // Toggle sub-menu when clicking the main Inn pin
-    tallDwarfInn.on('click', function (e) {
-      L.DomEvent.stopPropagation(e);
+      tallDwarfInn.on('click', function (e) {
+        L.DomEvent.stopPropagation(e);
 
-      if (isSubMenuOpen) {
-        closeSubMenu();
-        return;
-      }
+        if (isSubMenuOpen) {
+          closeSubMenu();
+          return;
+        }
 
-      const radius = 80; // Pixel distance from main pin
+        const radius = 80;
 
-      innSubItems.forEach(item => {
-        const subPos = getRadialPosition(innCoords, radius, item.angle);
-        
-        const subMarker = L.marker(subPos, { icon: createSubIcon(item.emoji) })
-          .bindTooltip(item.title, { direction: 'top', offset: [0, -10] })
-          .bindPopup(item.popupHtml, { maxWidth: 320, minWidth: 240 });
+        innSubItems.forEach(item => {
+          const subPos = getRadialPosition(innCoords, radius, item.angle);
+          
+          const subMarker = L.marker(subPos, { icon: createSubIcon(item.emoji) })
+            .bindTooltip(item.title, { direction: 'top', offset: [0, -10] })
+            .bindPopup(() => item.popupHtml, { maxWidth: 320, minWidth: 240 });
 
-        subMenuLayer.addLayer(subMarker);
+          subMenuLayer.addLayer(subMarker);
+        });
+
+        isSubMenuOpen = true;
       });
 
-      isSubMenuOpen = true;
-    });
+      function closeSubMenu() {
+        subMenuLayer.clearLayers();
+        isSubMenuOpen = false;
+      }
 
-    function closeSubMenu() {
-      subMenuLayer.clearLayers();
-      isSubMenuOpen = false;
+      // --- LOCATION 2: IRONHAND ARMORY ---
+      const armorMarker = L.marker([436, 871], { icon: icons.armor })
+        .bindPopup(() => buildShopTableHTML('ironhand_armory'));
+      merchantsLayer.addLayer(armorMarker);
+
+      // --- LOCATION 3: QUEST BOARD ---
+      const questMarker = L.marker([664, 1147], { icon: icons.quest })
+        .bindPopup(`
+          <div class="popup-card">
+            <h3>Town Square Notice</h3>
+            <div class="subtitle">Quest Hub</div>
+            <p><strong>Bounty:</strong> 100 gold pieces for information leading to the capture of the Sewer Cultist master.</p>
+          </div>
+        `);
+      questsLayer.addLayer(questMarker);
     }
 
-    // --- LOCATION 2: ARMORER ---
-    const armorMarker = L.marker([436, 871], { icon: icons.armor })
-      .bindPopup(`
-        <div class="popup-card">
-          <h3>Ironhand Armory</h3>
-          <div class="subtitle">Blacksmith & Armor</div>
-          <p>Masterwork plate and shield reinforcement.</p>
-          <table class="shop-table">
-            <thead><tr><th>Item</th><th>Stock</th><th style="text-align:right">Price</th></tr></thead>
-            <tbody>
-              <tr><td>Chainmail</td><td>2</td><td class="cost">75 gp</td></tr>
-              <tr><td>Shield (+1)</td><td>1</td><td class="cost">250 gp</td></tr>
-              <tr><td>Longsword</td><td>5</td><td class="cost">15 gp</td></tr>
-            </tbody>
-          </table>
-        </div>
-      `);
-    merchantsLayer.addLayer(armorMarker);
-
-    // --- LOCATION 3: QUEST BOARD ---
-    const questMarker = L.marker([664, 1147], { icon: icons.quest })
-      .bindPopup(`
-        <div class="popup-card">
-          <h3>Town Square Notice</h3>
-          <div class="subtitle">Quest Hub</div>
-          <p><strong>Bounty:</strong> 100 gold pieces for information leading to the capture of the Sewer Cultist master.</p>
-        </div>
-      `);
-    questsLayer.addLayer(questMarker);
-
-    // Add all layers to map
-    tavernsLayer.addTo(map);
-    merchantsLayer.addTo(map);
-    questsLayer.addTo(map);
-
     // ===================================================================
-    // 4. LAYER FILTER CONTROL
-    // ===================================================================
-    const overlays = {
-      "🍺 Taverns & Inns": tavernsLayer,
-      "🛡️ Merchants": merchantsLayer,
-      "📜 Quests & Notices": questsLayer
-    };
-
-    L.control.layers(null, overlays, { collapsed: false }).addTo(map);
-
-    // ===================================================================
-    // 5. GLOBAL CLICK HANDLERS
+    // 6. GLOBAL CLICK & HUD HANDLERS
     // ===================================================================
     map.on('click', function(e) {
-      // Close sub-menus when clicking empty map space
-      closeSubMenu();
-
-      // DM Helper: Log pixel coordinates to console
+      if (typeof closeSubMenu === 'function') {
+        closeSubMenu();
+      }
       const y = Math.round(e.latlng.lat);
       const x = Math.round(e.latlng.lng);
       console.log(`Clicked Pin Location -> [${y}, ${x}]`);
     });
- // Create a floating HUD control in the bottom-left corner
-const coordControl = L.control({ position: 'bottomleft' });
 
-coordControl.onAdd = function() {
-  const div = L.DomUtil.create('div', 'coord-hud');
-  div.innerHTML = 'Coords: [0, 0]';
-  return div;
-};
+    const coordControl = L.control({ position: 'bottomleft' });
+    coordControl.onAdd = function() {
+      const div = L.DomUtil.create('div', 'coord-hud');
+      div.innerHTML = 'Coords: [0, 0]';
+      return div;
+    };
+    coordControl.addTo(map);
 
-coordControl.addTo(map);
+    map.on('mousemove', function(e) {
+      const y = Math.round(e.latlng.lat);
+      const x = Math.round(e.latlng.lng);
+      document.querySelector('.coord-hud').innerHTML = `Coords: [${y}, ${x}]`;
+    });
 
-// Update HUD coordinates on mouse hover
-map.on('mousemove', function(e) {
-  const y = Math.round(e.latlng.lat);
-  const x = Math.round(e.latlng.lng);
-  document.querySelector('.coord-hud').innerHTML = `Coords: [${y}, ${x}]`;
-});
-// ===================================================================
-// DYNAMIC RUMOR DATABASE
-// ===================================================================
-const rumorPool = [
-  {
-    text: "The blacksmith on East Street hasn't received iron shipments in three weeks.",
-    source: "Overheard at the bar"
-  },
-  {
-    text: "Strange blue lights were seen flickering in the old sewer grates past midnight.",
-    source: "Whispered by a street urchin"
-  },
-  {
-    text: "The High Priest is secretly purchasing large quantities of silver dust.",
-    source: "A drunken acolyte"
-  },
-  {
-    text: "A merchant offering 'unbeatable prices' on health potions is selling colored sugar water.",
-    source: "Guild notice"
-  },
-  {
-    text: "Goblins in the nearby woods have started wielding finely crafted steel weapons.",
-    source: "A wounded hunter"
-  }
-];
+    // ===================================================================
+    // 7. INITIALIZE CAMPAIGN DATA LOADING
+    // ===================================================================
+    loadCampaignData();
 
-// Helper function to pick a random rumor and build HTML
-function getRandomRumorHTML() {
-  const randomRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
-  
-  return `
-    <div class="popup-card" id="rumor-card">
-      <h3>Tavern Gossip</h3>
-      <div class="subtitle">${randomRumor.source}</div>
-      <p style="min-height: 48px;">"${randomRumor.text}"</p>
-      
-      <button onclick="rerollRumor()" style="
-        width: 100%;
-        margin-top: 6px;
-        padding: 6px 10px;
-        background: #2a2e37;
-        border: 1px solid #f6c177;
-        color: #f6c177;
-        border-radius: 4px;
-        font-family: 'Inter', sans-serif;
-        font-size: 0.75rem;
-        cursor: pointer;
-        transition: all 0.2s;
-      " onmouseover="this.style.background='#3b4252'" onmouseout="this.style.background='#2a2e37'">
-        🎲 Hear Another Rumor
-      </button>
-    </div>
-  `;
-}
-
-// Function triggered by the button click inside the popup card
-window.rerollRumor = function() {
-  const cardContainer = document.getElementById('rumor-card');
-  if (cardContainer) {
-    const freshRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
-    cardContainer.querySelector('.subtitle').innerText = freshRumor.source;
-    cardContainer.querySelector('p').innerText = `"${freshRumor.text}"`;
-  }
-};  
   </script>
 </body>
 </html>
