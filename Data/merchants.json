@@ -1,0 +1,22 @@
+{
+  "ironhand_armory": {
+    "title": "Ironhand Armory",
+    "subtitle": "Blacksmith & Armor",
+    "description": "Masterwork plate and shield reinforcement.",
+    "inventory": [
+      { "item": "Chainmail", "stock": 2, "price": "75 gp" },
+      { "item": "Shield (+1)", "stock": 1, "price": "250 gp" },
+      { "item": "Longsword", "stock": 5, "price": "15 gp" }
+    ]
+  },
+  "tall_dwarf_inn": {
+    "title": "The Tall Dwarf Inn",
+    "subtitle": "Drink & Lodging",
+    "inventory": [
+      { "item": "Tall Dwarf Stout", "stock": "∞", "price": "5 cp" },
+      { "item": "Elven White Wine", "stock": 4, "price": "2 sp" },
+      { "item": "Hearty Mutton Stew", "stock": 12, "price": "1 sp" },
+      { "item": "Private Room (Night)", "stock": 3, "price": "8 sp" }
+    ]
+  }
+}
