@@ -188,17 +188,63 @@
 
     // Coordinates are [Y, X] in pixels from bottom-left [0, 0]
     
-    // Location 1: Tavern
-    const tavernMarker = L.marker([750, 600], { icon: icons.tavern })
-      .bindPopup(`
-        <div class="popup-card">
-          <h3>The Golden Gryphon</h3>
-          <div class="subtitle">Tavern & Inn</div>
-          <p><strong>Overheard Gossip:</strong> "The local blacksmith hasn't shipped iron in three weeks. People say goblins took the east pass."</p>
-          <p><strong>Barkeep:</strong> Elric, a retired paladin with a silver eye patch.</p>
-        </div>
-      `);
-    tavernsLayer.addLayer(tavernMarker);
+// Add The Tall Dwarf Inn marker
+const tallDwarfInn = L.marker([750, 600], { icon: icons.tavern })
+  .bindPopup(`
+    <div class="popup-card">
+      <h3>The Tall Dwarf Inn</h3>
+      <div class="subtitle">Tavern & Lodge</div>
+      
+      <!-- Notable People Section -->
+      <p style="margin-bottom: 4px;"><strong>Notable Figures:</strong></p>
+      <ul style="font-size: 0.8rem; color: #c4a7e7; padding-left: 16px; margin-bottom: 12px;">
+        <li><strong>Thorin High-Reach:</strong> An unusually tall dwarf barkeep who brews his own stout.</li>
+        <li><strong>Sera the Whisperer:</strong> A rogue sitting in the corner selling regional rumors.</li>
+      </ul>
+
+      <!-- Menu & Prices Section -->
+      <p style="margin-bottom: 4px;"><strong>Food & Ale:</strong></p>
+      <table class="shop-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Description</th>
+            <th style="text-align:right">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Tall Stout</td>
+            <td>Heavy, dark roasted dwarf ale</td>
+            <td class="cost">5 cp</td>
+          </tr>
+          <tr>
+            <td>Elven Wine</td>
+            <td>Imported, sweet white wine</td>
+            <td class="cost">2 sp</td>
+          </tr>
+          <tr>
+            <td>Mutton Stew</td>
+            <td>Served with crusty dark bread</td>
+            <td class="cost">1 sp</td>
+          </tr>
+          <tr>
+            <td>Roasted Boar</td>
+            <td>Served with root vegetables</td>
+            <td class="cost">3 sp</td>
+          </tr>
+          <tr>
+            <td>Private Room</td>
+            <td>Per night (includes breakfast)</td>
+            <td class="cost">8 sp</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `);
+
+// Add to your taverns layer
+tavernsLayer.addLayer(tallDwarfInn);
 
     // Location 2: Armorer
     const armorMarker = L.marker([1100, 1300], { icon: icons.armor })
