@@ -1,0 +1,17 @@
+[
+  {
+    "id": "r1",
+    "source": "Overheard at the bar",
+    "text": "The blacksmith on East Street hasn't received iron shipments in three weeks."
+  },
+  {
+    "id": "r2",
+    "source": "Whispered by a street urchin",
+    "text": "Strange blue lights were seen flickering in the old sewer grates past midnight."
+  },
+  {
+    "id": "r3",
+    "source": "A drunken acolyte",
+    "text": "The High Priest is secretly purchasing large quantities of silver dust."
+  }
+]
