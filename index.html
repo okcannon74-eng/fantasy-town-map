@@ -24,6 +24,42 @@
       background-color: #0d0e12;
     }
 
+    /* Sub-Icon Radial Menu Styling */
+    .radial-sub-pin {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #181b20;
+      border: 2px solid #f6c177;
+      color: #ffffff;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+      animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    .radial-sub-pin:hover {
+      transform: scale(1.3);
+      border-color: #eb6f92;
+      background: #2a2e37;
+    }
+
+    /* Pop-In Animation */
+    @keyframes popIn {
+      0% {
+        opacity: 0;
+        transform: scale(0.2);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    
     /* Dark Fantasy Popup Card Styling */
     .leaflet-popup-content-wrapper {
       background: #181b20;
@@ -138,11 +174,8 @@
     // 1. MAP CONFIGURATION (Pixel-based grid)
     // ===================================================================
     
-    // Replace with your map image's pixel dimensions
     const imgWidth = 2000;
     const imgHeight = 1500;
-    
-    // Bounds define [y_min, x_min] to [y_max, x_max] in pixels
     const bounds = [[0, 0], [imgHeight, imgWidth]];
 
     const map = L.map('map', {
@@ -154,14 +187,12 @@
       maxBoundsViscosity: 0.8
     });
 
-    // Replace this URL with your town map image file
     const mapImageUrl = 'Basilisk.png'; 
-    
     L.imageOverlay(mapImageUrl, bounds).addTo(map);
     map.fitBounds(bounds);
 
     // ===================================================================
-    // 2. CUSTOM PIN ICON GENERATOR
+    // 2. CUSTOM PIN ICON GENERATORS
     // ===================================================================
     function createPinIcon(className, iconEmoji) {
       return L.divIcon({
@@ -173,11 +204,29 @@
       });
     }
 
+    function createSubIcon(emoji) {
+      return L.divIcon({
+        className: 'custom-sub-wrapper',
+        html: `<div class="radial-sub-pin">${emoji}</div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+        popupAnchor: [0, -14]
+      });
+    }
+
     const icons = {
       tavern: createPinIcon('pin-tavern', '🍺'),
       armor:  createPinIcon('pin-armor', '🛡️'),
       quest:  createPinIcon('pin-quest', '📜')
     };
+
+    // Trigonometric math helper for pixel offsets
+    function getRadialPosition(centerLatLng, radiusInPixels, angleInDegrees) {
+      const angleRad = (angleInDegrees * Math.PI) / 180;
+      const newY = centerLatLng[0] + radiusInPixels * Math.sin(angleRad);
+      const newX = centerLatLng[1] + radiusInPixels * Math.cos(angleRad);
+      return [newY, newX];
+    }
 
     // ===================================================================
     // 3. MAP LOCATIONS & LAYERS
@@ -185,56 +234,92 @@
     const tavernsLayer = L.layerGroup();
     const merchantsLayer = L.layerGroup();
     const questsLayer = L.layerGroup();
+    const subMenuLayer = L.layerGroup().addTo(map);
 
-    // Coordinates are [Y, X] in pixels from bottom-left [0, 0]
-    
-// Add The Tall Dwarf Inn marker
-const tallDwarfInn = L.marker([750, 600], { icon: icons.tavern })
-  .bindPopup(`
-    <div class="popup-card">
-      <h3>The Tall Dwarf Inn</h3>
-      <div class="subtitle">Tavern & Lodge</div>
-      
-      <p><strong>Overheard Rumor:</strong> The blacksmith on East Street hasn't shipped iron in three weeks.</p>
+    // --- LOCATION 1: THE TALL DWARF INN (RADIAL SUB-MENU) ---
+    const innCoords = [750, 600];
+    const tallDwarfInn = L.marker(innCoords, { icon: icons.tavern });
+    tavernsLayer.addLayer(tallDwarfInn);
 
-      <p style="margin-top: 10px; margin-bottom: 4px;"><strong>Drink & Lodging Menu:</strong></p>
-      
-      <!-- LEVERAGING THE SHOP TABLE HERE -->
-      <table class="shop-table">
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th style="text-align: right;">Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Tall Dwarf Stout</td>
-            <td class="cost">5 cp</td>
-          </tr>
-          <tr>
-            <td>Elven White Wine</td>
-            <td class="cost">2 sp</td>
-          </tr>
-          <tr>
-            <td>Hearty Mutton Stew</td>
-            <td class="cost">1 sp</td>
-          </tr>
-          <tr>
-            <td>Private Room (Night)</td>
-            <td class="cost">8 sp</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  `, {
-    maxWidth: 400,
-    minWidth: 300
-  });
+    const innSubItems = [
+      {
+        emoji: '🍺',
+        angle: 150, // Top-Left
+        title: 'Drink & Food Menu',
+        popupHtml: `
+          <div class="popup-card">
+            <h3>The Tall Dwarf Inn</h3>
+            <div class="subtitle">Drink & Lodging</div>
+            <table class="shop-table">
+              <thead><tr><th>Item</th><th style="text-align: right;">Price</th></tr></thead>
+              <tbody>
+                <tr><td>Tall Dwarf Stout</td><td class="cost">5 cp</td></tr>
+                <tr><td>Elven White Wine</td><td class="cost">2 sp</td></tr>
+                <tr><td>Hearty Mutton Stew</td><td class="cost">1 sp</td></tr>
+                <tr><td>Private Room (Night)</td><td class="cost">8 sp</td></tr>
+              </tbody>
+            </table>
+          </div>`
+      },
+      {
+        emoji: '👤',
+        angle: 90, // Top-Center
+        title: 'Notable NPCs',
+        popupHtml: `
+          <div class="popup-card">
+            <h3>Tavern Patrons</h3>
+            <div class="subtitle">Key Characters</div>
+            <ul style="font-size: 0.8rem; padding-left: 14px; color: #c4a7e7; line-height: 1.5;">
+              <li><strong>Thorin High-Reach:</strong> Dwarf barkeep with an eye for trade.</li>
+              <li><strong>Sera:</strong> Local rogue selling whisper rumors.</li>
+            </ul>
+          </div>`
+      },
+      {
+        emoji: '📜',
+        angle: 30, // Top-Right
+        title: 'Rumors & Gossip',
+        popupHtml: `
+          <div class="popup-card">
+            <h3>Overheard Rumors</h3>
+            <div class="subtitle">Local Gossip</div>
+            <p>"The blacksmith on East Street hasn't received iron shipments in three weeks."</p>
+          </div>`
+      }
+    ];
 
-tavernsLayer.addLayer(tallDwarfInn);
+    let isSubMenuOpen = false;
 
-    // Location 2: Armorer
+    // Toggle sub-menu when clicking the main Inn pin
+    tallDwarfInn.on('click', function (e) {
+      L.DomEvent.stopPropagation(e);
+
+      if (isSubMenuOpen) {
+        closeSubMenu();
+        return;
+      }
+
+      const radius = 80; // Pixel distance from main pin
+
+      innSubItems.forEach(item => {
+        const subPos = getRadialPosition(innCoords, radius, item.angle);
+        
+        const subMarker = L.marker(subPos, { icon: createSubIcon(item.emoji) })
+          .bindTooltip(item.title, { direction: 'top', offset: [0, -10] })
+          .bindPopup(item.popupHtml, { maxWidth: 320, minWidth: 240 });
+
+        subMenuLayer.addLayer(subMarker);
+      });
+
+      isSubMenuOpen = true;
+    });
+
+    function closeSubMenu() {
+      subMenuLayer.clearLayers();
+      isSubMenuOpen = false;
+    }
+
+    // --- LOCATION 2: ARMORER ---
     const armorMarker = L.marker([1100, 1300], { icon: icons.armor })
       .bindPopup(`
         <div class="popup-card">
@@ -253,7 +338,7 @@ tavernsLayer.addLayer(tallDwarfInn);
       `);
     merchantsLayer.addLayer(armorMarker);
 
-    // Location 3: Quest Notice Board
+    // --- LOCATION 3: QUEST BOARD ---
     const questMarker = L.marker([850, 1000], { icon: icons.quest })
       .bindPopup(`
         <div class="popup-card">
@@ -264,7 +349,7 @@ tavernsLayer.addLayer(tallDwarfInn);
       `);
     questsLayer.addLayer(questMarker);
 
-    // Add all layers to map by default
+    // Add all layers to map
     tavernsLayer.addTo(map);
     merchantsLayer.addTo(map);
     questsLayer.addTo(map);
@@ -281,9 +366,13 @@ tavernsLayer.addLayer(tallDwarfInn);
     L.control.layers(null, overlays, { collapsed: false }).addTo(map);
 
     // ===================================================================
-    // 5. DM HELPER: Click anywhere on the map to get [Y, X] coordinates
+    // 5. GLOBAL CLICK HANDLERS
     // ===================================================================
     map.on('click', function(e) {
+      // Close sub-menus when clicking empty map space
+      closeSubMenu();
+
+      // DM Helper: Log pixel coordinates to console
       const y = Math.round(e.latlng.lat);
       const x = Math.round(e.latlng.lng);
       console.log(`Clicked Pin Location -> [${y}, ${x}]`);
