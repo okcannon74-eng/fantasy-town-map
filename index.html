@@ -408,6 +408,42 @@
     });
 
     // ===================================================================
+// ENCOUNTER SYSTEM
+// ===================================================================
+let encounterPool = [
+  { title: "Wandering Frost Wolves", text: "A pack of hungry wolves emerges from the treeline!", threat: "Hard" },
+  { title: "Merchant in Distress", text: "A trade wagon with a broken axle is stranded by the road.", threat: "Easy" },
+  { title: "Sudden Blizzard", text: "Freezing winds reduce visibility to zero. Survival check required!", threat: "Medium" },
+  { title: "Suspicious Travelers", text: "A cloaked group watches you silently from a nearby ridge.", threat: "Medium" }
+];
+
+function triggerRandomEncounter() {
+  if (!encounterPool.length) return;
+
+  const encounter = encounterPool[Math.floor(Math.random() * encounterPool.length)];
+  const mapCenter = map.getCenter();
+
+  L.popup({ maxWidth: 280 })
+    .setLatLng(mapCenter)
+    .setContent(`
+      <div class="popup-card">
+        <h3 style="color: #eb6f92;">⚠️ Random Encounter!</h3>
+        <div class="subtitle">Threat Level: ${encounter.threat}</div>
+        <p><strong>${encounter.title}</strong></p>
+        <p>${encounter.text}</p>
+      </div>
+    `)
+    .openOn(map);
+}
+
+function checkForEncounter(chancePercentage = 25) {
+  const roll = Math.floor(Math.random() * 100) + 1;
+  if (roll <= chancePercentage) {
+    triggerRandomEncounter();
+  }
+}
+
+    // ===================================================================
     // 4. DYNAMIC DATA STORAGE & FETCHING (With Fallbacks)
     // ===================================================================
     let rumorPool = [
