@@ -358,33 +358,35 @@
       return `${paddedHours}:${paddedMins} ${period}`;
     }
 
-    function advanceTime(minutesToAdd = 15) {
-      const previousHour = Math.floor(currentMinutes / 60);
-      
-      currentMinutes += minutesToAdd;
+function advanceTime(minutesToAdd = 15) {
+  const previousHour = Math.floor(currentMinutes / 60);
+  
+  currentMinutes += minutesToAdd;
 
-      if (currentMinutes >= 1440) {
-        currentMinutes -= 1440;
-        currentDay += 1;
-      }
+  if (currentMinutes >= 1440) {
+    currentMinutes -= 1440;
+    currentDay += 1;
+  }
 
-      const currentHour = Math.floor(currentMinutes / 60);
+  const currentHour = Math.floor(currentMinutes / 60);
 
-      const timeDisplay = document.getElementById('time-display');
-      const dayDisplay = document.getElementById('day-display');
-      
-      if (timeDisplay && dayDisplay) {
-        timeDisplay.innerText = formatClockTime(currentMinutes);
-        dayDisplay.innerText = `Day ${currentDay}`;
-      }
+  const timeDisplay = document.getElementById('time-display');
+  const dayDisplay = document.getElementById('day-display');
+  
+  if (timeDisplay && dayDisplay) {
+    timeDisplay.innerText = formatClockTime(currentMinutes);
+    dayDisplay.innerText = `Day ${currentDay}`;
+  }
 
-      if (currentHour !== previousHour) {
-        console.log(`⏰ An hour has passed! Current Hour: ${currentHour}:00`);
-      }
+  // Trigger encounter roll when an hour passes (e.g., 25% chance)
+  if (currentHour !== previousHour) {
+    console.log(`⏰ An hour has passed! Current Hour: ${currentHour}:00`);
+    checkForEncounter(25); 
+  }
 
-      // Refresh dynamic lighting whenever time steps forward
-      updateLightingOverlay();
-    }
+  // Refresh dynamic lighting
+  updateLightingOverlay();
+}
 
     // Time HUD Control
     const timeControl = L.control({ position: 'topright' });
