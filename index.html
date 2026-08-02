@@ -93,16 +93,9 @@
       background: #2a2e37;
     }
 
-    /* Pop-In Animation */
     @keyframes popIn {
-      0% {
-        opacity: 0;
-        transform: scale(0.2);
-      }
-      100% {
-        opacity: 1;
-        transform: scale(1);
-      }
+      0% { opacity: 0; transform: scale(0.2); }
+      100% { opacity: 1; transform: scale(1); }
     }
     
     /* Dark Fantasy Popup Card Styling */
@@ -115,9 +108,7 @@
       padding: 4px;
     }
 
-    .leaflet-popup-tip {
-      background: #181b20;
-    }
+    .leaflet-popup-tip { background: #181b20; }
 
     .popup-card {
       min-width: 220px;
@@ -163,16 +154,8 @@
       border-bottom: 1px solid #2e3440;
     }
 
-    .shop-table th {
-      color: #e0def4;
-      font-weight: 600;
-    }
-
-    .shop-table td.cost {
-      text-align: right;
-      color: #f6c177;
-      font-weight: 600;
-    }
+    .shop-table th { color: #e0def4; font-weight: 600; }
+    .shop-table td.cost { text-align: right; color: #f6c177; font-weight: 600; }
 
     /* Custom Map Pin Styling */
     .custom-pin {
@@ -188,16 +171,13 @@
       transition: transform 0.2s ease;
     }
 
-    .custom-pin:hover {
-      transform: scale(1.25);
-      cursor: pointer;
-    }
+    .custom-pin:hover { transform: scale(1.25); cursor: pointer; }
 
     .pin-tavern { background: #eb6f92; }
     .pin-armor  { background: #31748f; }
     .pin-quest  { background: #f6c177; }
 
-    /* Control Panel Styling */
+    /* Layer Controls */
     .leaflet-control-layers {
       background: #181b20 !important;
       color: #e2e8f0 !important;
@@ -206,11 +186,118 @@
       font-family: 'Inter', sans-serif;
       font-size: 0.85rem;
     }
+
+    /* ===================================================================
+       ENCOUNTER BANNER MODAL STYLING
+       =================================================================== */
+    .encounter-overlay {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-150%);
+      z-index: 2000;
+      width: 90%;
+      max-width: 480px;
+      background: #181b20;
+      border: 2px solid #eb6f92;
+      border-radius: 8px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.85);
+      padding: 16px 20px;
+      color: #e2e8f0;
+      transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .encounter-overlay.active {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .encounter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #3b4252;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+    }
+
+    .encounter-header h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.15rem;
+      color: #eb6f92;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .encounter-tag {
+      font-size: 0.7rem;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .tag-danger { background: rgba(235, 111, 146, 0.2); color: #eb6f92; border: 1px solid #eb6f92; }
+    .tag-hazard { background: rgba(246, 193, 119, 0.2); color: #f6c177; border: 1px solid #f6c177; }
+    .tag-flavor { background: rgba(156, 207, 216, 0.2); color: #9ccfd8; border: 1px solid #9ccfd8; }
+
+    .encounter-body {
+      font-size: 0.88rem;
+      line-height: 1.45;
+      color: #e0def4;
+      margin-bottom: 14px;
+    }
+
+    .encounter-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .encounter-btn {
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .btn-dismiss {
+      background: #2a2e37;
+      color: #e2e8f0;
+      border-color: #3b4252;
+    }
+    .btn-dismiss:hover { background: #3b4252; }
+
+    .btn-action {
+      background: #eb6f92;
+      color: #181b20;
+    }
+    .btn-action:hover { background: #f6c177; }
   </style>
 </head>
 <body>
 
   <div id="map"></div>
+
+  <!-- Random Encounter Banner Overlay -->
+  <div id="encounter-modal" class="encounter-overlay">
+    <div class="encounter-header">
+      <h2 id="encounter-title">⚠️ Encounter!</h2>
+      <span id="encounter-tag" class="encounter-tag tag-danger">Danger</span>
+    </div>
+    <div id="encounter-body" class="encounter-body">
+      An unexpected threat approaches...
+    </div>
+    <div class="encounter-actions">
+      <button class="encounter-btn btn-dismiss" onclick="dismissEncounter()">Dismiss</button>
+      <button class="encounter-btn btn-action" onclick="dismissEncounter()">Roll Initiative</button>
+    </div>
+  </div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -249,11 +336,106 @@
     };
     L.control.layers(null, overlays, { collapsed: false }).addTo(map);
 
-    // Global Sub-menu Close Function Reference
     let closeSubMenu = function() {};
 
     // ===================================================================
-    // 2. TIME CLOCK SYSTEM
+    // 2. RANDOM ENCOUNTER ENGINE & TABLES
+    // ===================================================================
+    const ENCOUNTER_THRESHOLD = 15; // DC 15 on d20 (30% chance per hour passed)
+
+    const dayEncounters = [
+      {
+        title: "Frost Goblins Ambush",
+        type: "danger",
+        tag: "Combat",
+        text: "3 Frost Goblins leap from behind a snowbank demanding your supplies!"
+      },
+      {
+        title: "Sudden Blizzard",
+        type: "hazard",
+        tag: "Environmental",
+        text: "Temperatures plummet rapidly. DC 12 Constitution save or suffer 1 level of Exhaustion."
+      },
+      {
+        title: "Wandering Merchant",
+        type: "flavor",
+        tag: "Social",
+        text: "A shivering fur-trader offers rare potions in exchange for warm rations."
+      },
+      {
+        title: "Dire Wolf Tracks",
+        type: "hazard",
+        tag: "Tracking",
+        text: "Fresh wolf prints circle your path. DC 13 Wisdom (Survival) to avoid a surprise attack."
+      }
+    ];
+
+    const nightEncounters = [
+      {
+        title: "Ice Specter Attack",
+        type: "danger",
+        tag: "Undead Combat",
+        text: "A freezing mist takes humanoid form. The temperature drops below zero as a specter attacks!"
+      },
+      {
+        title: "Cultist Patrol",
+        type: "danger",
+        tag: "Hostile NPCs",
+        text: "2 Sewer Cultists carrying dark lanterns spot your light in the darkness."
+      },
+      {
+        title: "Eerie Distant Howls",
+        type: "flavor",
+        tag: "Atmosphere",
+        text: "Chilling howls echo through the valley. The party feels watched from the dark."
+      }
+    ];
+
+    function rollD20() {
+      return Math.floor(Math.random() * 20) + 1;
+    }
+
+    function triggerRandomEncounter(hourCount = 1) {
+      // Roll once for every hour passed
+      for (let i = 0; i < hourCount; i++) {
+        const d20Roll = rollD20();
+        console.log(`🎲 Hourly Encounter Check (Hour ${i + 1}/${hourCount}): Rolled ${d20Roll} vs DC ${ENCOUNTER_THRESHOLD}`);
+
+        if (d20Roll >= ENCOUNTER_THRESHOLD) {
+          // Determine Day vs Night pool (Night is 8 PM - 6 AM)
+          const currentHour24 = Math.floor(currentMinutes / 60);
+          const isNight = (currentHour24 >= 20 || currentHour24 < 6);
+          const pool = isNight ? nightEncounters : dayEncounters;
+          
+          const encounter = pool[Math.floor(Math.random() * pool.length)];
+          showEncounterModal(encounter, d20Roll);
+          break; // Trigger one encounter max per time advance batch
+        }
+      }
+    }
+
+    function showEncounterModal(encounter, rollValue) {
+      const modal = document.getElementById('encounter-modal');
+      const titleEl = document.getElementById('encounter-title');
+      const tagEl = document.getElementById('encounter-tag');
+      const bodyEl = document.getElementById('encounter-body');
+
+      titleEl.innerText = `⚔️ ${encounter.title}`;
+      bodyEl.innerHTML = `<p>${encounter.text}</p><p style="margin-top: 8px; font-size: 0.75rem; color: #9ccfd8;"><em>(Encounter triggered: Rolled a natural ${rollValue} on d20)</em></p>`;
+
+      // Apply tag class
+      tagEl.innerText = encounter.tag;
+      tagEl.className = `encounter-tag tag-${encounter.type}`;
+
+      modal.classList.add('active');
+    }
+
+    function dismissEncounter() {
+      document.getElementById('encounter-modal').classList.remove('active');
+    }
+
+    // ===================================================================
+    // 3. TIME CLOCK SYSTEM (With Hourly Hook)
     // ===================================================================
     let currentDay = 1;
     let currentMinutes = 480; // Starts at 08:00 AM
@@ -273,7 +455,7 @@
     }
 
     function advanceTime(minutesToAdd = 15) {
-      const previousHour = Math.floor(currentMinutes / 60);
+      const previousTotalHours = Math.floor((currentDay - 1) * 24 + currentMinutes / 60);
       
       currentMinutes += minutesToAdd;
 
@@ -282,8 +464,10 @@
         currentDay += 1;
       }
 
-      const currentHour = Math.floor(currentMinutes / 60);
+      const newTotalHours = Math.floor((currentDay - 1) * 24 + currentMinutes / 60);
+      const hoursPassed = newTotalHours - previousTotalHours;
 
+      // Update HUD text
       const timeDisplay = document.getElementById('time-display');
       const dayDisplay = document.getElementById('day-display');
       
@@ -292,8 +476,10 @@
         dayDisplay.innerText = `Day ${currentDay}`;
       }
 
-      if (currentHour !== previousHour) {
-        console.log(`⏰ An hour has passed! Current Hour: ${currentHour}:00`);
+      // HOURLY ENCOUNTER HOOK
+      if (hoursPassed > 0) {
+        console.log(`⏰ ${hoursPassed} hour(s) passed! Checking random encounters...`);
+        triggerRandomEncounter(hoursPassed);
       }
     }
 
@@ -315,7 +501,7 @@
     });
 
     // ===================================================================
-    // 3. DYNAMIC DATA STORAGE & FETCHING (With Fallbacks)
+    // 4. DYNAMIC DATA STORAGE & FETCHING
     // ===================================================================
     let rumorPool = [
       { source: "Local Guard", text: "Goblins were spotted along the northern trade route." },
@@ -355,13 +541,12 @@
       } catch (error) {
         console.warn('JSON files not loaded (using fallback data):', error);
       } finally {
-        // Always initialize markers, even if fetch fails
         initMapMarkers();
       }
     }
 
     // ===================================================================
-    // 4. HTML GENERATOR HELPERS
+    // 5. HTML GENERATOR HELPERS
     // ===================================================================
     function buildShopTableHTML(merchantKey) {
       const merchant = merchantData[merchantKey];
@@ -436,7 +621,7 @@
     };
 
     // ===================================================================
-    // 5. CUSTOM PIN ICON GENERATORS & MATH HELPERS
+    // 6. CUSTOM PIN ICON GENERATORS & MATH HELPERS
     // ===================================================================
     function createPinIcon(className, iconEmoji) {
       return L.divIcon({
@@ -472,7 +657,7 @@
     }
 
     // ===================================================================
-    // 6. MARKER INITIALIZATION
+    // 7. MARKER INITIALIZATION
     // ===================================================================
     function initMapMarkers() {
       tavernsLayer.clearLayers();
@@ -561,7 +746,7 @@
     }
 
     // ===================================================================
-    // 7. GLOBAL CLICK & HUD HANDLERS
+    // 8. GLOBAL CLICK & HUD HANDLERS
     // ===================================================================
     map.on('click', function(e) {
       closeSubMenu();
@@ -585,7 +770,7 @@
     });
 
     // ===================================================================
-    // 8. START CAMPAIGN LOADING
+    // 9. START CAMPAIGN LOADING
     // ===================================================================
     loadCampaignData();
   </script>
