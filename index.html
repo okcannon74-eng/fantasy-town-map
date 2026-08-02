@@ -41,7 +41,7 @@
     .time-hud {
       background: rgba(24, 27, 32, 0.95) !important;
       color: #f6c177 !important;
-      padding: 10px 14px !important;
+      padding: 10px 16px !important;
       border-radius: 6px !important;
       border: 1px solid #3b4252 !important;
       font-family: 'Inter', sans-serif !important;
@@ -50,14 +50,15 @@
       pointer-events: auto;
       display: flex;
       flex-direction: column;
-      gap: 2px;
-      min-width: 120px;
+      gap: 3px;
+      min-width: 160px;
       text-align: center;
+      white-space: nowrap;
     }
 
     .time-hud .day-text {
       font-family: 'Cinzel', serif;
-      font-size: 0.75rem;
+      font-size: 0.78rem;
       color: #9ccfd8;
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -494,11 +495,41 @@
     }
 
     // ===================================================================
-    // 4. TIME CLOCK SYSTEM (Synced with real-world time)
+    // 4. TIME CLOCK & FANTASY CALENDAR SYSTEM
     // ===================================================================
-    const now = new Date();
-    let currentDay = 1;
-    let currentMinutes = (now.getHours() * 60) + now.getMinutes(); // Syncs initial time with real-world local time
+    const FANTASY_MONTHS = [
+      "Deepfrost",   // Jan
+      "Frostfade",   // Feb
+      "Awakening",   // Mar
+      "Rainbloom",   // Apr
+      "Highbloom",   // May
+      "Sunpeak",     // Jun
+      "Solstice",    // Jul
+      "Ember",       // Aug
+      "Harvestide",  // Sep
+      "Shadowfall",  // Oct
+      "Chillwind",   // Nov
+      "Rhimetime"    // Dec
+    ];
+
+    function getOrdinalSuffix(day) {
+      if (day > 3 && day < 21) return 'th';
+      switch (day % 10) {
+        case 1:  return 'st';
+        case 2:  return 'nd';
+        case 3:  return 'rd';
+        default: return 'th';
+      }
+    }
+
+    function formatFantasyDate(date) {
+      const day = date.getDate();
+      const monthName = FANTASY_MONTHS[date.getMonth()];
+      return `The ${day}${getOrdinalSuffix(day)} day of ${monthName}`;
+    }
+
+    const currentDate = new Date();
+    let currentMinutes = (currentDate.getHours() * 60) + currentDate.getMinutes();
     let minutesSinceEncounterCheck = 0;
 
     function formatClockTime(totalMins) {
@@ -521,7 +552,8 @@
 
       if (currentMinutes >= 1440) {
         currentMinutes -= 1440;
-        currentDay += 1;
+        // Roll standard JS date forward by 1 day to naturally update month/day
+        currentDate.setDate(currentDate.getDate() + 1);
       }
 
       // Update HUD text
@@ -530,7 +562,7 @@
       
       if (timeDisplay && dayDisplay) {
         timeDisplay.innerText = formatClockTime(currentMinutes);
-        dayDisplay.innerText = `Day ${currentDay}`;
+        dayDisplay.innerText = formatFantasyDate(currentDate);
       }
 
       // Update ambient lighting tint
@@ -546,12 +578,12 @@
       }
     }
 
-    // Clean Time Display HUD (Without increment buttons)
+    // Fantasy Time Display HUD
     const timeControl = L.control({ position: 'topright' });
     timeControl.onAdd = function() {
       const div = L.DomUtil.create('div', 'time-hud');
       div.innerHTML = `
-        <div class="day-text" id="day-display">Day ${currentDay}</div>
+        <div class="day-text" id="day-display">${formatFantasyDate(currentDate)}</div>
         <div class="clock-text" id="time-display">${formatClockTime(currentMinutes)}</div>
       `;
       return div;
