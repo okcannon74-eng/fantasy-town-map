@@ -17,7 +17,38 @@
     /* Reset & Fullscreen Setup */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body, html { width: 100%; height: 100%; overflow: hidden; background-color: #0d0e12; font-family: 'Inter', sans-serif; }
-    
+
+    /* Time Clock HUD */
+.time-hud {
+  background: rgba(24, 27, 32, 0.95) !important;
+  color: #f6c177 !important;
+  padding: 8px 14px !important;
+  border-radius: 6px !important;
+  border: 1px solid #3b4252 !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.85rem !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 130px;
+}
+
+.time-hud .day-text {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  color: #9ccfd8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.time-hud .clock-text {
+  font-family: monospace;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #f6c177;
+}
     #map {
       width: 100vw;
       height: 100vh;
@@ -475,7 +506,80 @@
     // 7. INITIALIZE CAMPAIGN DATA LOADING
     // ===================================================================
     loadCampaignData();
+// ===================================================================
+// TIME CLOCK SYSTEM
+// ===================================================================
 
+// Starting Time: Day 1 at 08:00 AM (8 * 60 = 480 minutes)
+let currentDay = 1;
+let currentMinutes = 480; 
+
+// Format raw minutes (0 - 1439) into 12-hour display string
+function formatClockTime(totalMins) {
+  const hours24 = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  
+  const period = hours24 >= 12 ? 'PM' : 'AM';
+  let hours12 = hours24 % 12;
+  if (hours12 === 0) hours12 = 12; // Handle 12 AM and 12 PM
+
+  const paddedMins = mins < 10 ? `0${mins}` : mins;
+  const paddedHours = hours12 < 10 ? `0${hours12}` : hours12;
+
+  return `${paddedHours}:${paddedMins} ${period}`;
+}
+
+// Function to advance clock and update UI
+function advanceTime(minutesToAdd = 15) {
+  const previousHour = Math.floor(currentMinutes / 60);
+  
+  currentMinutes += minutesToAdd;
+
+  // 24-Hour Rollover check (1440 mins in a day)
+  if (currentMinutes >= 1440) {
+    currentMinutes -= 1440;
+    currentDay += 1;
+  }
+
+  const currentHour = Math.floor(currentMinutes / 60);
+
+  // Update HUD text
+  const timeDisplay = document.getElementById('time-display');
+  const dayDisplay = document.getElementById('day-display');
+  
+  if (timeDisplay && dayDisplay) {
+    timeDisplay.innerText = formatClockTime(currentMinutes);
+    dayDisplay.innerText = `Day ${currentDay}`;
+  }
+
+  // Check if a full hour has passed (Hook for Encounter Engine later!)
+  if (currentHour !== previousHour) {
+    console.log(`⏰ An hour has passed! Current Hour: ${currentHour}:00`);
+  }
+}
+
+// ===================================================================
+// LEAFLET HUD CONTROL & POPUP HOOK
+// ===================================================================
+
+// Create Floating Time HUD in Top-Right Corner
+const timeControl = L.control({ position: 'topright' });
+
+timeControl.onAdd = function() {
+  const div = L.DomUtil.create('div', 'time-hud');
+  div.innerHTML = `
+    <div class="day-text" id="day-display">Day ${currentDay}</div>
+    <div class="clock-text" id="time-display">${formatClockTime(currentMinutes)}</div>
+  `;
+  return div;
+};
+
+timeControl.addTo(map);
+
+// Auto-advance time by 15 mins whenever ANY popup is opened on the map
+map.on('popupopen', function() {
+  advanceTime(15);
+});
   </script>
 </body>
 </html>
