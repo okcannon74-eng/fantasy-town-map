@@ -494,10 +494,11 @@
     }
 
     // ===================================================================
-    // 4. TIME CLOCK SYSTEM
+    // 4. TIME CLOCK SYSTEM (Synced with real-world time)
     // ===================================================================
+    const now = new Date();
     let currentDay = 1;
-    let currentMinutes = 480; // Starts at 08:00 AM
+    let currentMinutes = (now.getHours() * 60) + now.getMinutes(); // Syncs initial time with real-world local time
     let minutesSinceEncounterCheck = 0;
 
     function formatClockTime(totalMins) {
