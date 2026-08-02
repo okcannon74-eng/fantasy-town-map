@@ -24,11 +24,24 @@
       background-color: #0d0e12;
     }
 
+    /* DAY/NIGHT LIGHTING OVERLAY */
+    #lighting-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 650; /* Above tiles & markers (600), below popups (700) and controls (1000) */
+      pointer-events: none; /* Allows pan/zoom mouse interactions to pass through */
+      mix-blend-mode: multiply;
+      transition: background-color 0.8s ease-in-out;
+    }
+
     /* Time Clock HUD */
     .time-hud {
       background: rgba(24, 27, 32, 0.95) !important;
       color: #f6c177 !important;
-      padding: 8px 14px !important;
+      padding: 10px 14px !important;
       border-radius: 6px !important;
       border: 1px solid #3b4252 !important;
       font-family: 'Inter', sans-serif !important;
@@ -37,8 +50,8 @@
       pointer-events: auto;
       display: flex;
       flex-direction: column;
-      gap: 2px;
-      min-width: 130px;
+      gap: 4px;
+      min-width: 140px;
     }
 
     .time-hud .day-text {
@@ -53,6 +66,30 @@
       font-family: monospace;
       font-size: 1.1rem;
       font-weight: bold;
+      color: #f6c177;
+    }
+
+    .time-hud .time-btn-row {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .time-hud button {
+      flex: 1;
+      background: #2a2e37;
+      border: 1px solid #3b4252;
+      color: #e0def4;
+      font-size: 0.7rem;
+      padding: 3px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .time-hud button:hover {
+      background: #3b4252;
+      border-color: #f6c177;
       color: #f6c177;
     }
 
@@ -187,9 +224,7 @@
       font-size: 0.85rem;
     }
 
-    /* ===================================================================
-       ENCOUNTER BANNER MODAL STYLING
-       =================================================================== */
+    /* ENCOUNTER BANNER MODAL STYLING */
     .encounter-overlay {
       position: fixed;
       top: 20px;
@@ -283,6 +318,9 @@
 <body>
 
   <div id="map"></div>
+  
+  <!-- DYNAMIC TINT OVERLAY LAYER -->
+  <div id="lighting-overlay"></div>
 
   <!-- Random Encounter Banner Overlay -->
   <div id="encounter-modal" class="encounter-overlay">
@@ -339,7 +377,54 @@
     let closeSubMenu = function() {};
 
     // ===================================================================
-    // 2. RANDOM ENCOUNTER ENGINE & TABLES
+    // 2. DAY/NIGHT LIGHTING OVERLAY SYSTEM
+    // ===================================================================
+    const lightingKeyframes = [
+      { h: 0,   r: 15,  g: 20,  b: 50,  a: 0.85 }, // 12:00 AM - Midnight Indigo
+      { h: 4.5, r: 25,  g: 30,  b: 65,  a: 0.75 }, // 04:30 AM - Deep Pre-Dawn
+      { h: 6,   r: 255, g: 150, b: 85,  a: 0.45 }, // 06:00 AM - Dawn Gold & Coral
+      { h: 8,   r: 255, g: 235, b: 200, a: 0.15 }, // 08:00 AM - Morning Soft Light
+      { h: 12,  r: 255, g: 255, b: 255, a: 0.00 }, // 12:00 PM - Midday Clear
+      { h: 17,  r: 255, g: 185, b: 120, a: 0.25 }, // 05:00 PM - Golden Hour
+      { h: 19,  r: 215, g: 75,  b: 110, a: 0.50 }, // 07:00 PM - Sunset Crimson
+      { h: 21,  r: 30,  g: 35,  b: 80,  a: 0.75 }, // 09:00 PM - Twilight Nightfall
+      { h: 24,  r: 15,  g: 20,  b: 50,  a: 0.85 }  // 12:00 AM - Midnight Loop
+    ];
+
+    function getLightingTint(totalMinutes) {
+      const hour = (totalMinutes % 1440) / 60;
+      
+      let k1 = lightingKeyframes[0];
+      let k2 = lightingKeyframes[lightingKeyframes.length - 1];
+
+      for (let i = 0; i < lightingKeyframes.length - 1; i++) {
+        if (hour >= lightingKeyframes[i].h && hour <= lightingKeyframes[i+1].h) {
+          k1 = lightingKeyframes[i];
+          k2 = lightingKeyframes[i+1];
+          break;
+        }
+      }
+
+      const range = k2.h - k1.h;
+      const progress = range === 0 ? 0 : (hour - k1.h) / range;
+
+      const r = Math.round(k1.r + (k2.r - k1.r) * progress);
+      const g = Math.round(k1.g + (k2.g - k1.g) * progress);
+      const b = Math.round(k1.b + (k2.b - k1.b) * progress);
+      const a = (k1.a + (k2.a - k1.a) * progress).toFixed(2);
+
+      return `rgba(${r}, ${g}, ${b}, ${a})`;
+    }
+
+    function updateLightingOverlay() {
+      const overlay = document.getElementById('lighting-overlay');
+      if (overlay) {
+        overlay.style.backgroundColor = getLightingTint(currentMinutes);
+      }
+    }
+
+    // ===================================================================
+    // 3. RANDOM ENCOUNTER ENGINE & TABLES
     // ===================================================================
     const ENCOUNTER_THRESHOLD = 15; // DC 15 on d20 (30% chance per hour passed)
 
@@ -396,20 +481,18 @@
     }
 
     function triggerRandomEncounter(hourCount = 1) {
-      // Roll once for every hour passed
       for (let i = 0; i < hourCount; i++) {
         const d20Roll = rollD20();
         console.log(`🎲 Hourly Encounter Check (Hour ${i + 1}/${hourCount}): Rolled ${d20Roll} vs DC ${ENCOUNTER_THRESHOLD}`);
 
         if (d20Roll >= ENCOUNTER_THRESHOLD) {
-          // Determine Day vs Night pool (Night is 8 PM - 6 AM)
           const currentHour24 = Math.floor(currentMinutes / 60);
           const isNight = (currentHour24 >= 20 || currentHour24 < 6);
           const pool = isNight ? nightEncounters : dayEncounters;
           
           const encounter = pool[Math.floor(Math.random() * pool.length)];
           showEncounterModal(encounter, d20Roll);
-          break; // Trigger one encounter max per time advance batch
+          break; // Max 1 encounter popup per time-advance batch
         }
       }
     }
@@ -423,7 +506,6 @@
       titleEl.innerText = `⚔️ ${encounter.title}`;
       bodyEl.innerHTML = `<p>${encounter.text}</p><p style="margin-top: 8px; font-size: 0.75rem; color: #9ccfd8;"><em>(Encounter triggered: Rolled a natural ${rollValue} on d20)</em></p>`;
 
-      // Apply tag class
       tagEl.innerText = encounter.tag;
       tagEl.className = `encounter-tag tag-${encounter.type}`;
 
@@ -435,7 +517,7 @@
     }
 
     // ===================================================================
-    // 3. TIME CLOCK SYSTEM (With Hourly Hook)
+    // 4. TIME CLOCK SYSTEM (With Shading & Encounter Hooks)
     // ===================================================================
     let currentDay = 1;
     let currentMinutes = 480; // Starts at 08:00 AM
@@ -476,6 +558,9 @@
         dayDisplay.innerText = `Day ${currentDay}`;
       }
 
+      // Update ambient lighting tint
+      updateLightingOverlay();
+
       // HOURLY ENCOUNTER HOOK
       if (hoursPassed > 0) {
         console.log(`⏰ ${hoursPassed} hour(s) passed! Checking random encounters...`);
@@ -483,13 +568,17 @@
       }
     }
 
-    // Time HUD Control
+    // Time HUD Control with manual +15m / +1h buttons
     const timeControl = L.control({ position: 'topright' });
     timeControl.onAdd = function() {
       const div = L.DomUtil.create('div', 'time-hud');
       div.innerHTML = `
         <div class="day-text" id="day-display">Day ${currentDay}</div>
         <div class="clock-text" id="time-display">${formatClockTime(currentMinutes)}</div>
+        <div class="time-btn-row">
+          <button onclick="advanceTime(15)">+15m</button>
+          <button onclick="advanceTime(60)">+1h</button>
+        </div>
       `;
       return div;
     };
@@ -501,7 +590,7 @@
     });
 
     // ===================================================================
-    // 4. DYNAMIC DATA STORAGE & FETCHING
+    // 5. DYNAMIC DATA STORAGE & FETCHING
     // ===================================================================
     let rumorPool = [
       { source: "Local Guard", text: "Goblins were spotted along the northern trade route." },
@@ -542,11 +631,12 @@
         console.warn('JSON files not loaded (using fallback data):', error);
       } finally {
         initMapMarkers();
+        updateLightingOverlay();
       }
     }
 
     // ===================================================================
-    // 5. HTML GENERATOR HELPERS
+    // 6. HTML GENERATOR HELPERS
     // ===================================================================
     function buildShopTableHTML(merchantKey) {
       const merchant = merchantData[merchantKey];
@@ -621,7 +711,7 @@
     };
 
     // ===================================================================
-    // 6. CUSTOM PIN ICON GENERATORS & MATH HELPERS
+    // 7. CUSTOM PIN ICON GENERATORS & MATH HELPERS
     // ===================================================================
     function createPinIcon(className, iconEmoji) {
       return L.divIcon({
@@ -657,7 +747,7 @@
     }
 
     // ===================================================================
-    // 7. MARKER INITIALIZATION
+    // 8. MARKER INITIALIZATION
     // ===================================================================
     function initMapMarkers() {
       tavernsLayer.clearLayers();
@@ -746,7 +836,7 @@
     }
 
     // ===================================================================
-    // 8. GLOBAL CLICK & HUD HANDLERS
+    // 9. GLOBAL CLICK & HUD HANDLERS
     // ===================================================================
     map.on('click', function(e) {
       closeSubMenu();
@@ -770,7 +860,7 @@
     });
 
     // ===================================================================
-    // 9. START CAMPAIGN LOADING
+    // 10. START CAMPAIGN LOADING
     // ===================================================================
     loadCampaignData();
   </script>
