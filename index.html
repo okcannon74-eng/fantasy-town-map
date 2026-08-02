@@ -50,8 +50,9 @@
       pointer-events: auto;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      min-width: 140px;
+      gap: 2px;
+      min-width: 120px;
+      text-align: center;
     }
 
     .time-hud .day-text {
@@ -64,32 +65,8 @@
 
     .time-hud .clock-text {
       font-family: monospace;
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       font-weight: bold;
-      color: #f6c177;
-    }
-
-    .time-hud .time-btn-row {
-      display: flex;
-      gap: 4px;
-      margin-top: 4px;
-    }
-
-    .time-hud button {
-      flex: 1;
-      background: #2a2e37;
-      border: 1px solid #3b4252;
-      color: #e0def4;
-      font-size: 0.7rem;
-      padding: 3px 6px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background 0.2s, border-color 0.2s;
-    }
-
-    .time-hud button:hover {
-      background: #3b4252;
-      border-color: #f6c177;
       color: #f6c177;
     }
 
@@ -517,10 +494,11 @@
     }
 
     // ===================================================================
-    // 4. TIME CLOCK SYSTEM (With Shading & Encounter Hooks)
+    // 4. TIME CLOCK SYSTEM
     // ===================================================================
     let currentDay = 1;
     let currentMinutes = 480; // Starts at 08:00 AM
+    let minutesSinceEncounterCheck = 0;
 
     function formatClockTime(totalMins) {
       const hours24 = Math.floor(totalMins / 60);
@@ -537,17 +515,13 @@
     }
 
     function advanceTime(minutesToAdd = 15) {
-      const previousTotalHours = Math.floor((currentDay - 1) * 24 + currentMinutes / 60);
-      
       currentMinutes += minutesToAdd;
+      minutesSinceEncounterCheck += minutesToAdd;
 
       if (currentMinutes >= 1440) {
         currentMinutes -= 1440;
         currentDay += 1;
       }
-
-      const newTotalHours = Math.floor((currentDay - 1) * 24 + currentMinutes / 60);
-      const hoursPassed = newTotalHours - previousTotalHours;
 
       // Update HUD text
       const timeDisplay = document.getElementById('time-display');
@@ -561,24 +535,23 @@
       // Update ambient lighting tint
       updateLightingOverlay();
 
-      // HOURLY ENCOUNTER HOOK
-      if (hoursPassed > 0) {
+      // ACCUMULATED ENCOUNTER HOOK (Triggers every 60 total minutes passed)
+      if (minutesSinceEncounterCheck >= 60) {
+        const hoursPassed = Math.floor(minutesSinceEncounterCheck / 60);
+        minutesSinceEncounterCheck %= 60; // Keep remaining sub-hour minutes
+
         console.log(`⏰ ${hoursPassed} hour(s) passed! Checking random encounters...`);
         triggerRandomEncounter(hoursPassed);
       }
     }
 
-    // Time HUD Control with manual +15m / +1h buttons
+    // Clean Time Display HUD (Without increment buttons)
     const timeControl = L.control({ position: 'topright' });
     timeControl.onAdd = function() {
       const div = L.DomUtil.create('div', 'time-hud');
       div.innerHTML = `
         <div class="day-text" id="day-display">Day ${currentDay}</div>
         <div class="clock-text" id="time-display">${formatClockTime(currentMinutes)}</div>
-        <div class="time-btn-row">
-          <button onclick="advanceTime(15)">+15m</button>
-          <button onclick="advanceTime(60)">+1h</button>
-        </div>
       `;
       return div;
     };
