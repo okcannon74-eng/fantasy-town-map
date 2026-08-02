@@ -3,346 +3,239 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rhimefrost</title>
+  <title>Interactive Map with Time & Encounters</title>
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  
-  <!-- Fantasy Typography -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
-    /* Reset & Fullscreen Setup */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background-color: #0d0e12; font-family: 'Inter', sans-serif; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #191724;
+      color: #e0def4;
+      overflow: hidden;
+    }
 
     #map {
       width: 100vw;
       height: 100vh;
-      background-color: #0d0e12;
+      background: #191724;
     }
 
-    /* DAY/NIGHT LIGHTING OVERLAY */
-    #lighting-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 650; /* Above tiles & markers (600), below popups (700) and controls (1000) */
-      pointer-events: none; /* Allows pan/zoom mouse interactions to pass through */
-      mix-blend-mode: multiply;
-      transition: background-color 0.8s ease-in-out;
-    }
-
-    /* Time Clock HUD */
+    /* Rosé Pine styled HUD & Popups */
     .time-hud {
-      background: rgba(24, 27, 32, 0.95) !important;
-      color: #f6c177 !important;
-      padding: 10px 14px !important;
-      border-radius: 6px !important;
-      border: 1px solid #3b4252 !important;
-      font-family: 'Inter', sans-serif !important;
-      font-size: 0.85rem !important;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-      pointer-events: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+      background: rgba(38, 35, 58, 0.9);
+      border: 1px solid #403d52;
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #e0def4;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      text-align: center;
       min-width: 140px;
     }
 
     .time-hud .day-text {
-      font-family: 'Cinzel', serif;
-      font-size: 0.75rem;
-      color: #9ccfd8;
+      font-size: 0.85rem;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 1px;
+      color: #9ccfd8;
+      margin-bottom: 4px;
+      font-weight: 600;
     }
 
     .time-hud .clock-text {
-      font-family: monospace;
-      font-size: 1.1rem;
+      font-size: 1.4rem;
       font-weight: bold;
       color: #f6c177;
+      margin-bottom: 8px;
+      font-family: monospace;
     }
 
-    .time-hud .time-btn-row {
+    .time-btn-row {
       display: flex;
-      gap: 4px;
-      margin-top: 4px;
+      gap: 6px;
+      justify-content: center;
     }
 
-    .time-hud button {
-      flex: 1;
-      background: #2a2e37;
-      border: 1px solid #3b4252;
+    .time-btn-row button {
+      background: #31748f;
       color: #e0def4;
-      font-size: 0.7rem;
-      padding: 3px 6px;
+      border: none;
+      padding: 6px 10px;
       border-radius: 4px;
       cursor: pointer;
-      transition: background 0.2s, border-color 0.2s;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: background 0.2s ease;
     }
 
-    .time-hud button:hover {
-      background: #3b4252;
-      border-color: #f6c177;
-      color: #f6c177;
+    .time-btn-row button:hover {
+      background: #ebbcba;
+      color: #191724;
     }
 
-    /* Coord HUD */ 
-    .coord-hud {
-      background: rgba(24, 27, 32, 0.9) !important;
-      color: #f6c177 !important;
-      padding: 6px 12px !important;
-      border-radius: 6px !important;
-      border: 1px solid #3b4252 !important;
-      font-family: monospace !important;
-      font-size: 0.85rem !important;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-      pointer-events: none;
-    }
-
-    /* Sub-Icon Radial Menu Styling */
-    .radial-sub-pin {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: #181b20;
-      border: 2px solid #f6c177;
-      color: #ffffff;
-      font-size: 14px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.8);
-      cursor: pointer;
-      transition: transform 0.2s ease, border-color 0.2s ease;
-      animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    }
-
-    .radial-sub-pin:hover {
-      transform: scale(1.3);
-      border-color: #eb6f92;
-      background: #2a2e37;
-    }
-
-    /* Pop-In Animation */
-    @keyframes popIn {
-      0% {
-        opacity: 0;
-        transform: scale(0.2);
-      }
-      100% {
-        opacity: 1;
-        transform: scale(1);
-      }
-    }
-    
-    /* Dark Fantasy Popup Card Styling */
+    /* Popup Styling */
     .leaflet-popup-content-wrapper {
-      background: #181b20;
-      color: #e2e8f0;
-      border: 1px solid #3b4252;
+      background: #26233a;
+      color: #e0def4;
       border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
-      padding: 4px;
+      border: 1px solid #403d52;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
     }
 
     .leaflet-popup-tip {
-      background: #181b20;
-    }
-
-    .popup-card {
-      min-width: 220px;
-      max-width: 280px;
+      background: #26233a;
     }
 
     .popup-card h3 {
-      font-family: 'Cinzel', serif;
-      color: #f6c177;
-      border-bottom: 1px solid #2e3440;
-      padding-bottom: 6px;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
       font-size: 1.1rem;
     }
 
     .popup-card .subtitle {
       font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
       color: #9ccfd8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       margin-bottom: 8px;
-      font-weight: 600;
     }
 
     .popup-card p {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       line-height: 1.4;
       color: #c4a7e7;
-      margin-bottom: 8px;
     }
 
-    /* Merchant Inventory Table */
-    .shop-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 8px;
-      font-size: 0.8rem;
-    }
-
-    .shop-table th, .shop-table td {
-      padding: 4px 6px;
-      text-align: left;
-      border-bottom: 1px solid #2e3440;
-    }
-
-    .shop-table th {
-      color: #e0def4;
-      font-weight: 600;
-    }
-
-    .shop-table td.cost {
-      text-align: right;
-      color: #f6c177;
-      font-weight: 600;
-    }
-
-    /* Custom Map Pin Styling */
-    .custom-pin {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 2px solid #ffffff;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.6);
-      font-size: 16px;
-      transition: transform 0.2s ease;
-    }
-
-    .custom-pin:hover {
-      transform: scale(1.25);
-      cursor: pointer;
-    }
-
-    .pin-tavern { background: #eb6f92; }
-    .pin-armor  { background: #31748f; }
-    .pin-quest  { background: #f6c177; }
-
-    /* Control Panel Styling */
-    .leaflet-control-layers {
-      background: #181b20 !important;
-      color: #e2e8f0 !important;
-      border: 1px solid #3b4252 !important;
-      border-radius: 8px !important;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.85rem;
+    /* Ambient Lighting Overlay */
+    #lighting-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 400;
+      transition: background-color 1s ease;
     }
   </style>
 </head>
 <body>
 
   <div id="map"></div>
-  <!-- DYNAMIC TINT OVERLAY LAYER -->
   <div id="lighting-overlay"></div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <script>
     // ===================================================================
-    // 1. MAP CONFIGURATION (Pixel-based grid)
+    // 1. MAP INITIALIZATION
     // ===================================================================
-    const imgWidth = 2000;
-    const imgHeight = 1500;
-    const bounds = [[0, 0], [imgHeight, imgWidth]];
-
     const map = L.map('map', {
-      crs: L.CRS.Simple,
-      minZoom: -1,
-      maxZoom: 2,
-      zoomSnap: 0.25,
-      maxBounds: bounds,
-      maxBoundsViscosity: 0.8
-    });
+      zoomControl: true
+    }).setView([51.505, -0.09], 13);
 
-    const mapImageUrl = 'Rhimefrost.jpg'; 
-    L.imageOverlay(mapImageUrl, bounds).addTo(map);
-    map.fitBounds(bounds);
+    // Dark base tiles
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
+    }).addTo(map);
 
-    // Layer Groups
-    const tavernsLayer = L.layerGroup().addTo(map);
-    const merchantsLayer = L.layerGroup().addTo(map);
-    const questsLayer = L.layerGroup().addTo(map);
-    const subMenuLayer = L.layerGroup().addTo(map);
-
-    // Layer Filter Control
-    const overlays = {
-      "🍺 Taverns & Inns": tavernsLayer,
-      "🛡️ Merchants": merchantsLayer,
-      "📜 Quests & Notices": questsLayer
-    };
-    L.control.layers(null, overlays, { collapsed: false }).addTo(map);
-
-    // Global Sub-menu Close Function Reference
-    let closeSubMenu = function() {};
-
-    // ===================================================================
-    // 2. DAY/NIGHT LIGHTING OVERLAY SYSTEM
-    // ===================================================================
-    const lightingKeyframes = [
-      { h: 0,   r: 15,  g: 20,  b: 50,  a: 0.85 }, // 12:00 AM - Midnight Indigo
-      { h: 4.5, r: 25,  g: 30,  b: 65,  a: 0.75 }, // 04:30 AM - Deep Pre-Dawn
-      { h: 6,   r: 255, g: 150, b: 85,  a: 0.45 }, // 06:00 AM - Dawn Gold & Coral
-      { h: 8,   r: 255, g: 235, b: 200, a: 0.15 }, // 08:00 AM - Morning Soft Light
-      { h: 12,  r: 255, g: 255, b: 255, a: 0.00 }, // 12:00 PM - Midday Clear
-      { h: 17,  r: 255, g: 185, b: 120, a: 0.25 }, // 05:00 PM - Golden Hour
-      { h: 19,  r: 215, g: 75,  b: 110, a: 0.50 }, // 07:00 PM - Sunset Crimson
-      { h: 21,  r: 30,  g: 35,  b: 80,  a: 0.75 }, // 09:00 PM - Twilight Nightfall
-      { h: 24,  r: 15,  g: 20,  b: 50,  a: 0.85 }  // 12:00 AM - Midnight Loop
+    // Sample Map Locations
+    const locations = [
+      { coords: [51.505, -0.09], title: "Ancient Ruins", text: "Crumbled stone pillars whispering old secrets." },
+      { coords: [51.515, -0.1], title: "Crossroads Tavern", text: "Warm firelight and cheap ale await inside." },
+      { coords: [51.495, -0.08], title: "Dark Watchtower", text: "An abandoned guard tower overlooking the valley." }
     ];
 
-    function getLightingTint(totalMinutes) {
-      const hour = (totalMinutes % 1440) / 60;
-      
-      let k1 = lightingKeyframes[0];
-      let k2 = lightingKeyframes[lightingKeyframes.length - 1];
+    locations.forEach(loc => {
+      L.marker(loc.coords).addTo(map).bindPopup(`
+        <div class="popup-card">
+          <h3 style="color: #9ccfd8;">${loc.title}</h3>
+          <p>${loc.text}</p>
+        </div>
+      `);
+    });
 
-      for (let i = 0; i < lightingKeyframes.length - 1; i++) {
-        if (hour >= lightingKeyframes[i].h && hour <= lightingKeyframes[i+1].h) {
-          k1 = lightingKeyframes[i];
-          k2 = lightingKeyframes[i+1];
-          break;
-        }
-      }
-
-      const range = k2.h - k1.h;
-      const progress = range === 0 ? 0 : (hour - k1.h) / range;
-
-      const r = Math.round(k1.r + (k2.r - k1.r) * progress);
-      const g = Math.round(k1.g + (k2.g - k1.g) * progress);
-      const b = Math.round(k1.b + (k2.b - k1.b) * progress);
-      const a = (k1.a + (k2.a - k1.a) * progress).toFixed(2);
-
-      return `rgba(${r}, ${g}, ${b}, ${a})`;
-    }
-
+    // ===================================================================
+    // 2. DYNAMIC LIGHTING OVERLAY
+    // ===================================================================
     function updateLightingOverlay() {
       const overlay = document.getElementById('lighting-overlay');
-      if (overlay) {
-        overlay.style.backgroundColor = getLightingTint(currentMinutes);
+      if (!overlay) return;
+
+      const hours = currentMinutes / 60;
+      let alpha = 0;
+      let tint = "rgba(10, 10, 25, "; // Dark blue tint for night
+
+      // Daytime (6 AM to 6 PM)
+      if (hours >= 6 && hours <= 18) {
+        alpha = 0; // Clear daylight
+      } 
+      // Sunset (6 PM to 9 PM)
+      else if (hours > 18 && hours < 21) {
+        alpha = ((hours - 18) / 3) * 0.55;
+        tint = "rgba(40, 15, 30, "; // Dusk tint
+      } 
+      // Deep Night (9 PM to 4 AM)
+      else if (hours >= 21 || hours <= 4) {
+        alpha = 0.65;
+      } 
+      // Sunrise (4 AM to 6 AM)
+      else {
+        alpha = ((6 - hours) / 2) * 0.55;
+        tint = "rgba(30, 20, 40, "; // Dawn tint
       }
+
+      overlay.style.backgroundColor = `${tint}${alpha})`;
     }
 
     // ===================================================================
-    // 3. TIME CLOCK SYSTEM
+    // 3. TIME CLOCK & ENCOUNTER SYSTEM
     // ===================================================================
     let currentDay = 1;
     let currentMinutes = 480; // Starts at 08:00 AM
+
+    let encounterPool = [
+      { title: "Wandering Frost Wolves", text: "A pack of hungry wolves emerges from the treeline!", threat: "Hard" },
+      { title: "Merchant in Distress", text: "A trade wagon with a broken axle is stranded by the road.", threat: "Easy" },
+      { title: "Sudden Blizzard", text: "Freezing winds reduce visibility to zero. Survival check required!", threat: "Medium" },
+      { title: "Suspicious Travelers", text: "A cloaked group watches you silently from a nearby ridge.", threat: "Medium" }
+    ];
+
+    function triggerRandomEncounter() {
+      if (!encounterPool.length) return;
+
+      const encounter = encounterPool[Math.floor(Math.random() * encounterPool.length)];
+      const mapCenter = map.getCenter();
+
+      L.popup({ maxWidth: 280, className: 'encounter-popup' })
+        .setLatLng(mapCenter)
+        .setContent(`
+          <div class="popup-card">
+            <h3 style="color: #eb6f92;">⚠️ Random Encounter!</h3>
+            <div class="subtitle">Threat Level: ${encounter.threat}</div>
+            <p><strong>${encounter.title}</strong></p>
+            <p>${encounter.text}</p>
+          </div>
+        `)
+        .openOn(map);
+    }
+
+    function checkForEncounter(chancePercentage = 25) {
+      const roll = Math.floor(Math.random() * 100) + 1;
+      if (roll <= chancePercentage) {
+        triggerRandomEncounter();
+      }
+    }
 
     function formatClockTime(totalMins) {
       const hours24 = Math.floor(totalMins / 60);
@@ -358,37 +251,37 @@
       return `${paddedHours}:${paddedMins} ${period}`;
     }
 
-function advanceTime(minutesToAdd = 15) {
-  const previousHour = Math.floor(currentMinutes / 60);
-  
-  currentMinutes += minutesToAdd;
+    function advanceTime(minutesToAdd = 15) {
+      const previousHour = Math.floor(currentMinutes / 60);
+      
+      currentMinutes += minutesToAdd;
 
-  if (currentMinutes >= 1440) {
-    currentMinutes -= 1440;
-    currentDay += 1;
-  }
+      if (currentMinutes >= 1440) {
+        currentMinutes -= 1440;
+        currentDay += 1;
+      }
 
-  const currentHour = Math.floor(currentMinutes / 60);
+      const currentHour = Math.floor(currentMinutes / 60);
 
-  const timeDisplay = document.getElementById('time-display');
-  const dayDisplay = document.getElementById('day-display');
-  
-  if (timeDisplay && dayDisplay) {
-    timeDisplay.innerText = formatClockTime(currentMinutes);
-    dayDisplay.innerText = `Day ${currentDay}`;
-  }
+      const timeDisplay = document.getElementById('time-display');
+      const dayDisplay = document.getElementById('day-display');
+      
+      if (timeDisplay && dayDisplay) {
+        timeDisplay.innerText = formatClockTime(currentMinutes);
+        dayDisplay.innerText = `Day ${currentDay}`;
+      }
 
-  // Trigger encounter roll when an hour passes (e.g., 25% chance)
-  if (currentHour !== previousHour) {
-    console.log(`⏰ An hour has passed! Current Hour: ${currentHour}:00`);
-    checkForEncounter(25); 
-  }
+      // Roll encounter check whenever an in-game hour passes
+      if (currentHour !== previousHour) {
+        console.log(`⏰ Hour passed! Checking for random encounter...`);
+        checkForEncounter(25); // 25% chance of encounter per hour passed
+      }
 
-  // Refresh dynamic lighting
-  updateLightingOverlay();
-}
+      // Refresh dynamic ambient lighting
+      updateLightingOverlay();
+    }
 
-    // Time HUD Control
+    // Time HUD Leaflet Control
     const timeControl = L.control({ position: 'topright' });
     timeControl.onAdd = function() {
       const div = L.DomUtil.create('div', 'time-hud');
@@ -404,323 +297,17 @@ function advanceTime(minutesToAdd = 15) {
     };
     timeControl.addTo(map);
 
-    // Auto-advance time on opening popups
-    map.on('popupopen', function() {
+    // Auto-advance time on opening location popups (bypassing encounter popups to prevent infinite loop)
+    map.on('popupopen', function(e) {
+      if (e.popup.options && e.popup.options.className === 'encounter-popup') {
+        return;
+      }
       advanceTime(15);
     });
 
-    // ===================================================================
-// ENCOUNTER SYSTEM
-// ===================================================================
-let encounterPool = [
-  { title: "Wandering Frost Wolves", text: "A pack of hungry wolves emerges from the treeline!", threat: "Hard" },
-  { title: "Merchant in Distress", text: "A trade wagon with a broken axle is stranded by the road.", threat: "Easy" },
-  { title: "Sudden Blizzard", text: "Freezing winds reduce visibility to zero. Survival check required!", threat: "Medium" },
-  { title: "Suspicious Travelers", text: "A cloaked group watches you silently from a nearby ridge.", threat: "Medium" }
-];
-
-function triggerRandomEncounter() {
-  if (!encounterPool.length) return;
-
-  const encounter = encounterPool[Math.floor(Math.random() * encounterPool.length)];
-  const mapCenter = map.getCenter();
-
-  L.popup({ maxWidth: 280 })
-    .setLatLng(mapCenter)
-    .setContent(`
-      <div class="popup-card">
-        <h3 style="color: #eb6f92;">⚠️ Random Encounter!</h3>
-        <div class="subtitle">Threat Level: ${encounter.threat}</div>
-        <p><strong>${encounter.title}</strong></p>
-        <p>${encounter.text}</p>
-      </div>
-    `)
-    .openOn(map);
-}
-
-function checkForEncounter(chancePercentage = 25) {
-  const roll = Math.floor(Math.random() * 100) + 1;
-  if (roll <= chancePercentage) {
-    triggerRandomEncounter();
-  }
-}
-
-    // ===================================================================
-    // 4. DYNAMIC DATA STORAGE & FETCHING (With Fallbacks)
-    // ===================================================================
-    let rumorPool = [
-      { source: "Local Guard", text: "Goblins were spotted along the northern trade route." },
-      { source: "Drunken Merchant", text: "The smith at Ironhand Armory is overcharging for steel!" }
-    ];
-    
-    let merchantData = {
-      tall_dwarf_inn: {
-        title: "The Tall Dwarf Inn",
-        subtitle: "Food & Drinks",
-        description: "A warm refuge from the Rhimefrost cold.",
-        inventory: [
-          { item: "Ale (Tankard)", stock: "∞", price: "4 cp" },
-          { item: "Spiced Wine", stock: "12", price: "1 sp" },
-          { item: "Mutton Stew", stock: "8", price: "1 sp" }
-        ]
-      },
-      ironhand_armory: {
-        title: "Ironhand Armory",
-        subtitle: "Weapons & Armor",
-        inventory: [
-          { item: "Longsword", stock: "2", price: "15 gp" },
-          { item: "Chain Shirt", stock: "1", price: "45 gp" }
-        ]
-      }
-    };
-
-    async function loadCampaignData() {
-      try {
-        const [rumorsResponse, merchantsResponse] = await Promise.all([
-          fetch('data/rumors.json'),
-          fetch('data/merchants.json')
-        ]);
-
-        if (rumorsResponse.ok) rumorPool = await rumorsResponse.json();
-        if (merchantsResponse.ok) merchantData = await merchantsResponse.json();
-      } catch (error) {
-        console.warn('JSON files not loaded (using fallback data):', error);
-      } finally {
-        // Always initialize markers, even if fetch fails
-        initMapMarkers();
-        // Initialize lighting state on load
-        updateLightingOverlay();
-      }
-    }
-
-    // ===================================================================
-    // 5. HTML GENERATOR HELPERS
-    // ===================================================================
-    function buildShopTableHTML(merchantKey) {
-      const merchant = merchantData[merchantKey];
-      if (!merchant) return '<div class="popup-card"><p>No inventory available.</p></div>';
-
-      const rows = merchant.inventory.map(row => `
-        <tr>
-          <td>${row.item}</td>
-          <td style="text-align: center;">${row.stock}</td>
-          <td class="cost">${row.price}</td>
-        </tr>
-      `).join('');
-
-      return `
-        <div class="popup-card">
-          <h3>${merchant.title}</h3>
-          <div class="subtitle">${merchant.subtitle}</div>
-          ${merchant.description ? `<p>${merchant.description}</p>` : ''}
-          <table class="shop-table">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th style="text-align: center;">Stock</th>
-                <th style="text-align: right;">Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows}
-            </tbody>
-          </table>
-        </div>
-      `;
-    }
-
-    function getRandomRumorHTML() {
-      if (!rumorPool.length) return '<div class="popup-card"><p>No rumors heard.</p></div>';
-
-      const randomRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
-      
-      return `
-        <div class="popup-card" id="rumor-card">
-          <h3>Tavern Gossip</h3>
-          <div class="subtitle">${randomRumor.source}</div>
-          <p style="min-height: 48px;">"${randomRumor.text}"</p>
-          
-          <button onclick="rerollRumor()" style="
-            width: 100%;
-            margin-top: 6px;
-            padding: 6px 10px;
-            background: #2a2e37;
-            border: 1px solid #f6c177;
-            color: #f6c177;
-            border-radius: 4px;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: background 0.2s;
-          " onmouseover="this.style.background='#3b4252'" onmouseout="this.style.background='#2a2e37'">
-            🎲 Hear Another Rumor
-          </button>
-        </div>
-      `;
-    }
-
-    window.rerollRumor = function() {
-      const cardContainer = document.getElementById('rumor-card');
-      if (cardContainer && rumorPool.length) {
-        const freshRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
-        cardContainer.querySelector('.subtitle').innerText = freshRumor.source;
-        cardContainer.querySelector('p').innerText = `"${freshRumor.text}"`;
-      }
-    };
-
-    // ===================================================================
-    // 6. CUSTOM PIN ICON GENERATORS & MATH HELPERS
-    // ===================================================================
-    function createPinIcon(className, iconEmoji) {
-      return L.divIcon({
-        className: 'custom-icon-wrapper',
-        html: `<div class="custom-pin ${className}">${iconEmoji}</div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
-        popupAnchor: [0, -16]
-      });
-    }
-
-    function createSubIcon(emoji) {
-      return L.divIcon({
-        className: 'custom-sub-wrapper',
-        html: `<div class="radial-sub-pin">${emoji}</div>`,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
-        popupAnchor: [0, -14]
-      });
-    }
-
-    const icons = {
-      tavern: createPinIcon('pin-tavern', '🍺'),
-      armor:  createPinIcon('pin-armor', '🛡️'),
-      quest:  createPinIcon('pin-quest', '📜')
-    };
-
-    function getRadialPosition(centerLatLng, radiusInPixels, angleInDegrees) {
-      const angleRad = (angleInDegrees * Math.PI) / 180;
-      const newY = centerLatLng[0] + radiusInPixels * Math.sin(angleRad);
-      const newX = centerLatLng[1] + radiusInPixels * Math.cos(angleRad);
-      return [newY, newX];
-    }
-
-    // ===================================================================
-    // 7. MARKER INITIALIZATION
-    // ===================================================================
-    function initMapMarkers() {
-      tavernsLayer.clearLayers();
-      merchantsLayer.clearLayers();
-      questsLayer.clearLayers();
-
-      // --- LOCATION 1: THE TALL DWARF INN (RADIAL SUB-MENU) ---
-      const innCoords = [419, 1182];
-      const tallDwarfInn = L.marker(innCoords, { icon: icons.tavern });
-      tavernsLayer.addLayer(tallDwarfInn);
-
-      const innSubItems = [
-        {
-          emoji: '🍺',
-          angle: 150,
-          title: 'Drink & Food Menu',
-          get popupHtml() { return buildShopTableHTML('tall_dwarf_inn'); }
-        },
-        {
-          emoji: '👤',
-          angle: 90,
-          title: 'Notable NPCs',
-          popupHtml: `
-            <div class="popup-card">
-              <h3>Tavern Patrons</h3>
-              <div class="subtitle">Key Characters</div>
-              <ul style="font-size: 0.8rem; padding-left: 14px; color: #c4a7e7; line-height: 1.5;">
-                <li><strong>Thorin High-Reach:</strong> Dwarf barkeep with an eye for trade.</li>
-                <li><strong>Sera:</strong> Local rogue selling whisper rumors.</li>
-              </ul>
-            </div>`
-        },
-        {
-          emoji: '📜',
-          angle: 30,
-          title: 'Rumors & Gossip',
-          get popupHtml() { return getRandomRumorHTML(); }
-        }
-      ];
-
-      let isSubMenuOpen = false;
-
-      closeSubMenu = function() {
-        subMenuLayer.clearLayers();
-        isSubMenuOpen = false;
-      };
-
-      tallDwarfInn.on('click', function (e) {
-        L.DomEvent.stopPropagation(e);
-
-        if (isSubMenuOpen) {
-          closeSubMenu();
-          return;
-        }
-
-        const radius = 80;
-
-        innSubItems.forEach(item => {
-          const subPos = getRadialPosition(innCoords, radius, item.angle);
-          
-          const subMarker = L.marker(subPos, { icon: createSubIcon(item.emoji) })
-            .bindTooltip(item.title, { direction: 'top', offset: [0, -10] })
-            .bindPopup(() => item.popupHtml, { maxWidth: 320, minWidth: 240 });
-
-          subMenuLayer.addLayer(subMarker);
-        });
-
-        isSubMenuOpen = true;
-      });
-
-      // --- LOCATION 2: IRONHAND ARMORY ---
-      const armorMarker = L.marker([436, 871], { icon: icons.armor })
-        .bindPopup(() => buildShopTableHTML('ironhand_armory'));
-      merchantsLayer.addLayer(armorMarker);
-
-      // --- LOCATION 3: QUEST BOARD ---
-      const questMarker = L.marker([664, 1147], { icon: icons.quest })
-        .bindPopup(`
-          <div class="popup-card">
-            <h3>Town Square Notice</h3>
-            <div class="subtitle">Quest Hub</div>
-            <p><strong>Bounty:</strong> 100 gold pieces for information leading to the capture of the Sewer Cultist master.</p>
-          </div>
-        `);
-      questsLayer.addLayer(questMarker);
-    }
-
-    // ===================================================================
-    // 8. GLOBAL CLICK & HUD HANDLERS
-    // ===================================================================
-    map.on('click', function(e) {
-      closeSubMenu();
-      const y = Math.round(e.latlng.lat);
-      const x = Math.round(e.latlng.lng);
-      console.log(`Clicked Location -> [${y}, ${x}]`);
-    });
-
-    const coordControl = L.control({ position: 'bottomleft' });
-    coordControl.onAdd = function() {
-      const div = L.DomUtil.create('div', 'coord-hud');
-      div.innerHTML = 'Coords: [0, 0]';
-      return div;
-    };
-    coordControl.addTo(map);
-
-    map.on('mousemove', function(e) {
-      const y = Math.round(e.latlng.lat);
-      const x = Math.round(e.latlng.lng);
-      document.querySelector('.coord-hud').innerHTML = `Coords: [${y}, ${x}]`;
-    });
-
-    // ===================================================================
-    // 9. START CAMPAIGN LOADING
-    // ===================================================================
-    loadCampaignData();
+    // Initial lighting initialization
+    updateLightingOverlay();
   </script>
+
 </body>
 </html>
