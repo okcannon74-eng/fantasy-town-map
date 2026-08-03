@@ -595,52 +595,40 @@
       advanceTime(15);
     });
 
-    // ===================================================================
-    // 5. DYNAMIC DATA STORAGE & FETCHING
-    // ===================================================================
-    let rumorPool = [
-      { source: "Local Guard", text: "Goblins were spotted along the northern trade route." },
-      { source: "Drunken Merchant", text: "The smith at Ironhand Armory is overcharging for steel!" }
-    ];
+// ===================================================================
+// 5. DYNAMIC DATA STORAGE & FETCHING
+// ===================================================================
+let rumorPool = [];
+let merchantData = {};
+let dayEncounters = [];
+let nightEncounters = [];
+
+async function loadCampaignData() {
+  try {
+    // Fetch all external campaign datasets concurrently
+    const [rumorsRes, merchantsRes, encountersRes] = await Promise.all([
+      fetch('data/rumors.json'),
+      fetch('data/merchants.json'),
+      fetch('data/encounters.json')
+    ]);
+
+    if (rumorsRes.ok) rumorPool = await rumorsRes.json();
+    if (merchantsRes.ok) merchantData = await merchantsRes.json();
     
-    let merchantData = {
-      tall_dwarf_inn: {
-        title: "The Tall Dwarf Inn",
-        subtitle: "Food & Drinks",
-        description: "A warm refuge from the Rhimefrost cold.",
-        inventory: [
-          { item: "Ale (Tankard)", stock: "∞", price: "4 cp" },
-          { item: "Spiced Wine", stock: "12", price: "1 sp" },
-          { item: "Mutton Stew", stock: "8", price: "1 sp" }
-        ]
-      },
-      ironhand_armory: {
-        title: "Ironhand Armory",
-        subtitle: "Weapons & Armor",
-        inventory: [
-          { item: "Longsword", stock: "2", price: "15 gp" },
-          { item: "Chain Shirt", stock: "1", price: "45 gp" }
-        ]
-      }
-    };
-
-    async function loadCampaignData() {
-      try {
-        const [rumorsResponse, merchantsResponse] = await Promise.all([
-          fetch('data/rumors.json'),
-          fetch('data/merchants.json')
-        ]);
-
-        if (rumorsResponse.ok) rumorPool = await rumorsResponse.json();
-        if (merchantsResponse.ok) merchantData = await merchantsResponse.json();
-      } catch (error) {
-        console.warn('JSON files not loaded (using fallback data):', error);
-      } finally {
-        initMapMarkers();
-        updateLightingOverlay();
-      }
+    if (encountersRes.ok) {
+      const encounterData = await encountersRes.json();
+      dayEncounters = encounterData.day || [];
+      nightEncounters = encounterData.night || [];
     }
 
+    console.log('✅ Campaign data loaded successfully!');
+  } catch (error) {
+    console.warn('⚠️ Error loading external JSON files (check local server/paths):', error);
+  } finally {
+    initMapMarkers();
+    updateLightingOverlay();
+  }
+}
     // ===================================================================
     // 6. HTML GENERATOR HELPERS
     // ===================================================================
