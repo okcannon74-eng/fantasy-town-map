@@ -1,0 +1,48 @@
+{
+  "day": [
+    {
+      "title": "Frost Goblins Ambush",
+      "type": "danger",
+      "tag": "Combat",
+      "text": "3 Frost Goblins leap from behind a snowbank demanding your supplies!"
+    },
+    {
+      "title": "Sudden Blizzard",
+      "type": "hazard",
+      "tag": "Environmental",
+      "text": "Temperatures plummet rapidly. DC 12 Constitution save or suffer 1 level of Exhaustion."
+    },
+    {
+      "title": "Wandering Merchant",
+      "type": "flavor",
+      "tag": "Social",
+      "text": "A shivering fur-trader offers rare potions in exchange for warm rations."
+    },
+    {
+      "title": "Dire Wolf Tracks",
+      "type": "hazard",
+      "tag": "Tracking",
+      "text": "Fresh wolf prints circle your path. DC 13 Wisdom (Survival) to avoid a surprise attack."
+    }
+  ],
+  "night": [
+    {
+      "title": "Ice Specter Attack",
+      "type": "danger",
+      "tag": "Undead Combat",
+      "text": "A freezing mist takes humanoid form. The temperature drops below zero as a specter attacks!"
+    },
+    {
+      "title": "Cultist Patrol",
+      "type": "danger",
+      "tag": "Hostile NPCs",
+      "text": "2 Sewer Cultists carrying dark lanterns spot your light in the darkness."
+    },
+    {
+      "title": "Eerie Distant Howls",
+      "type": "flavor",
+      "tag": "Atmosphere",
+      "text": "Chilling howls echo through the valley. The party feels watched from the dark."
+    }
+  ]
+}
