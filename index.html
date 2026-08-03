@@ -406,7 +406,7 @@
     // ===================================================================
     const ENCOUNTER_THRESHOLD = 15; // DC 15 on d20 (30% chance per hour passed)
 
-    const dayEncounters = [
+    let dayEncounters = [
       {
         title: "Frost Goblins Ambush",
         type: "danger",
@@ -433,7 +433,7 @@
       }
     ];
 
-    const nightEncounters = [
+    let nightEncounters = [
       {
         title: "Ice Specter Attack",
         type: "danger",
@@ -600,12 +600,10 @@
 // ===================================================================
 let rumorPool = [];
 let merchantData = {};
-let dayEncounters = [];
-let nightEncounters = [];
+// Note: dayEncounters and nightEncounters are already declared above!
 
 async function loadCampaignData() {
   try {
-    // Fetch all external campaign datasets concurrently
     const [rumorsRes, merchantsRes, encountersRes] = await Promise.all([
       fetch('data/rumors.json'),
       fetch('data/merchants.json'),
@@ -623,7 +621,7 @@ async function loadCampaignData() {
 
     console.log('✅ Campaign data loaded successfully!');
   } catch (error) {
-    console.warn('⚠️ Error loading external JSON files (check local server/paths):', error);
+    console.warn('⚠️ Error loading external JSON files:', error);
   } finally {
     initMapMarkers();
     updateLightingOverlay();
