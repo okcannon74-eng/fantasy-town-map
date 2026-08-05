@@ -1,1002 +1,513 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
   <meta charset="UTF-8">
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Rhimefrost</title>
-
   
-
   <!-- Leaflet CSS -->
-
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
   
-
   <!-- Fantasy Typography -->
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
-
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-
-
   <style>
-
     /* Reset & Fullscreen Setup */
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body, html { width: 100%; height: 100%; overflow: hidden; background-color: #0d0e12; font-family: 'Inter', sans-serif; }
 
-
-
     #map {
-
       width: 100vw;
-
       height: 100vh;
-
       background-color: #0d0e12;
-
     }
-
-
 
     /* DAY/NIGHT LIGHTING OVERLAY */
-
     #lighting-overlay {
-
       position: fixed;
-
       top: 0;
-
       left: 0;
-
       width: 100vw;
-
       height: 100vh;
-
       z-index: 650; /* Above tiles & markers (600), below popups (700) and controls (1000) */
-
       pointer-events: none; /* Allows pan/zoom mouse interactions to pass through */
-
       mix-blend-mode: multiply;
-
       transition: background-color 0.8s ease-in-out;
-
     }
-
-
 
     /* Time Clock HUD */
-
     .time-hud {
-
       background: rgba(24, 27, 32, 0.95) !important;
-
       color: #f6c177 !important;
-
       padding: 10px 16px !important;
-
       border-radius: 6px !important;
-
       border: 1px solid #3b4252 !important;
-
       font-family: 'Inter', sans-serif !important;
-
       font-size: 0.85rem !important;
-
       box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-
       pointer-events: auto;
-
       display: flex;
-
       flex-direction: column;
-
       gap: 3px;
-
       min-width: 160px;
-
       text-align: center;
-
       white-space: nowrap;
-
     }
-
-
 
     .time-hud .day-text {
-
       font-family: 'Cinzel', serif;
-
       font-size: 0.78rem;
-
       color: #9ccfd8;
-
       text-transform: uppercase;
-
       letter-spacing: 0.05em;
-
     }
-
-
 
     .time-hud .clock-text {
-
       font-family: monospace;
-
       font-size: 1.15rem;
-
       font-weight: bold;
-
       color: #f6c177;
-
     }
-
-
 
     /* Coord HUD */ 
-
     .coord-hud {
-
       background: rgba(24, 27, 32, 0.9) !important;
-
       color: #f6c177 !important;
-
       padding: 6px 12px !important;
-
       border-radius: 6px !important;
-
       border: 1px solid #3b4252 !important;
-
       font-family: monospace !important;
-
       font-size: 0.85rem !important;
-
       box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-
       pointer-events: none;
-
     }
-
-
 
     /* Sub-Icon Radial Menu Styling */
-
     .radial-sub-pin {
-
       display: flex;
-
       align-items: center;
-
       justify-content: center;
-
       width: 28px;
-
       height: 28px;
-
       border-radius: 50%;
-
       background: #181b20;
-
       border: 2px solid #f6c177;
-
       color: #ffffff;
-
       font-size: 14px;
-
       box-shadow: 0 4px 12px rgba(0,0,0,0.8);
-
       cursor: pointer;
-
       transition: transform 0.2s ease, border-color 0.2s ease;
-
       animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-
     }
-
-
 
     .radial-sub-pin:hover {
-
       transform: scale(1.3);
-
       border-color: #eb6f92;
-
       background: #2a2e37;
-
     }
-
-
 
     @keyframes popIn {
-
       0% { opacity: 0; transform: scale(0.2); }
-
       100% { opacity: 1; transform: scale(1); }
-
     }
-
     
-
     /* Dark Fantasy Popup Card Styling */
-
     .leaflet-popup-content-wrapper {
-
       background: #181b20;
-
       color: #e2e8f0;
-
       border: 1px solid #3b4252;
-
       border-radius: 8px;
-
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
-
       padding: 4px;
-
     }
-
-
 
     .leaflet-popup-tip { background: #181b20; }
 
-
-
     .popup-card {
-
       min-width: 220px;
-
       max-width: 280px;
-
     }
-
-
 
     .popup-card h3 {
-
       font-family: 'Cinzel', serif;
-
       color: #f6c177;
-
       border-bottom: 1px solid #2e3440;
-
       padding-bottom: 6px;
-
       margin-bottom: 8px;
-
       font-size: 1.1rem;
-
     }
-
-
 
     .popup-card .subtitle {
-
       font-size: 0.75rem;
-
       text-transform: uppercase;
-
       letter-spacing: 0.05em;
-
       color: #9ccfd8;
-
       margin-bottom: 8px;
-
       font-weight: 600;
-
     }
-
-
 
     .popup-card p {
-
       font-size: 0.85rem;
-
       line-height: 1.4;
-
       color: #c4a7e7;
-
       margin-bottom: 8px;
-
     }
-
-
 
     /* Merchant Inventory Table */
-
     .shop-table {
-
       width: 100%;
-
       border-collapse: collapse;
-
       margin-top: 8px;
-
       font-size: 0.8rem;
-
     }
-
-
 
     .shop-table th, .shop-table td {
-
       padding: 4px 6px;
-
       text-align: left;
-
       border-bottom: 1px solid #2e3440;
-
     }
-
-
 
     .shop-table th { color: #e0def4; font-weight: 600; }
-
     .shop-table td.cost { text-align: right; color: #f6c177; font-weight: 600; }
 
-
-
     /* Custom Map Pin Styling */
-
     .custom-pin {
-
       display: flex;
-
       align-items: center;
-
       justify-content: center;
-
       width: 32px;
-
       height: 32px;
-
       border-radius: 50%;
-
       border: 2px solid #ffffff;
-
       box-shadow: 0 4px 10px rgba(0,0,0,0.6);
-
       font-size: 16px;
-
       transition: transform 0.2s ease;
-
     }
-
-
 
     .custom-pin:hover { transform: scale(1.25); cursor: pointer; }
 
-
-
     .pin-tavern { background: #eb6f92; }
-
     .pin-armor  { background: #31748f; }
-
     .pin-quest  { background: #f6c177; }
 
-
-
     /* Layer Controls */
-
     .leaflet-control-layers {
-
       background: #181b20 !important;
-
       color: #e2e8f0 !important;
-
       border: 1px solid #3b4252 !important;
-
       border-radius: 8px !important;
-
       font-family: 'Inter', sans-serif;
-
       font-size: 0.85rem;
-
     }
-
-
 
     /* ENCOUNTER BANNER MODAL STYLING */
-
     .encounter-overlay {
-
       position: fixed;
-
       top: 20px;
-
       left: 50%;
-
       transform: translateX(-50%) translateY(-150%);
-
       z-index: 2000;
-
       width: 90%;
-
       max-width: 480px;
-
       background: #181b20;
-
       border: 2px solid #eb6f92;
-
       border-radius: 8px;
-
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.85);
-
       padding: 16px 20px;
-
       color: #e2e8f0;
-
       transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-
     }
-
-
 
     .encounter-overlay.active {
-
       transform: translateX(-50%) translateY(0);
-
     }
-
-
 
     .encounter-header {
-
       display: flex;
-
       justify-content: space-between;
-
       align-items: center;
-
       border-bottom: 1px solid #3b4252;
-
       padding-bottom: 8px;
-
       margin-bottom: 10px;
-
     }
-
-
 
     .encounter-header h2 {
-
       font-family: 'Cinzel', serif;
-
       font-size: 1.15rem;
-
       color: #eb6f92;
-
       display: flex;
-
       align-items: center;
-
       gap: 8px;
-
     }
-
-
 
     .encounter-tag {
-
       font-size: 0.7rem;
-
       font-weight: bold;
-
       padding: 2px 8px;
-
       border-radius: 4px;
-
       text-transform: uppercase;
-
       letter-spacing: 0.05em;
-
     }
-
-
 
     .tag-danger { background: rgba(235, 111, 146, 0.2); color: #eb6f92; border: 1px solid #eb6f92; }
-
     .tag-hazard { background: rgba(246, 193, 119, 0.2); color: #f6c177; border: 1px solid #f6c177; }
-
     .tag-flavor { background: rgba(156, 207, 216, 0.2); color: #9ccfd8; border: 1px solid #9ccfd8; }
 
-
-
     .encounter-body {
-
       font-size: 0.88rem;
-
       line-height: 1.45;
-
       color: #e0def4;
-
       margin-bottom: 14px;
-
     }
-
-
 
     .encounter-actions {
-
       display: flex;
-
       gap: 10px;
-
       justify-content: flex-end;
-
     }
-
-
 
     .encounter-btn {
-
       padding: 6px 14px;
-
       border-radius: 4px;
-
       font-family: 'Inter', sans-serif;
-
       font-size: 0.8rem;
-
       font-weight: 600;
-
       cursor: pointer;
-
       border: 1px solid transparent;
-
       transition: all 0.2s ease;
-
     }
-
-
 
     .btn-dismiss {
-
       background: #2a2e37;
-
       color: #e2e8f0;
-
       border-color: #3b4252;
-
     }
-
     .btn-dismiss:hover { background: #3b4252; }
 
-
-
     .btn-action {
-
       background: #eb6f92;
-
       color: #181b20;
-
     }
-
     .btn-action:hover { background: #f6c177; }
-
   </style>
-
 </head>
-
 <body>
 
-
-
   <div id="map"></div>
-
   
-
   <!-- DYNAMIC TINT OVERLAY LAYER -->
-
   <div id="lighting-overlay"></div>
 
-
-
   <!-- Random Encounter Banner Overlay -->
-
   <div id="encounter-modal" class="encounter-overlay">
-
     <div class="encounter-header">
-
       <h2 id="encounter-title">⚠️ Encounter!</h2>
-
       <span id="encounter-tag" class="encounter-tag tag-danger">Danger</span>
-
     </div>
-
     <div id="encounter-body" class="encounter-body">
-
       An unexpected threat approaches...
-
     </div>
-
     <div class="encounter-actions">
-
       <button class="encounter-btn btn-dismiss" onclick="dismissEncounter()">Dismiss</button>
-
       <button class="encounter-btn btn-action" onclick="dismissEncounter()">Roll Initiative</button>
-
     </div>
-
   </div>
 
-
-
   <!-- Leaflet JS -->
-
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <script>
-
     // ===================================================================
-
     // 1. MAP CONFIGURATION (Pixel-based grid)
-
     // ===================================================================
-
     const imgWidth = 2000;
-
     const imgHeight = 1500;
-
     const bounds = [[0, 0], [imgHeight, imgWidth]];
 
-
-
     const map = L.map('map', {
-
       crs: L.CRS.Simple,
-
       minZoom: -1,
-
       maxZoom: 2,
-
       zoomSnap: 0.25,
-
       maxBounds: bounds,
-
       maxBoundsViscosity: 0.8
-
     });
 
-
-
     const mapImageUrl = 'Rhimefrost.jpg'; 
-
     L.imageOverlay(mapImageUrl, bounds).addTo(map);
-
     map.fitBounds(bounds);
 
-
-
     // Layer Groups
-
     const tavernsLayer = L.layerGroup().addTo(map);
-
     const merchantsLayer = L.layerGroup().addTo(map);
-
     const questsLayer = L.layerGroup().addTo(map);
-
     const subMenuLayer = L.layerGroup().addTo(map);
 
-
-
     // Layer Filter Control
-
     const overlays = {
-
       "🍺 Taverns & Inns": tavernsLayer,
-
       "🛡️ Merchants": merchantsLayer,
-
       "📜 Quests & Notices": questsLayer
-
     };
-
     L.control.layers(null, overlays, { collapsed: false }).addTo(map);
 
-
-
-    let closeSubMenu = function() {};
-
-
-
     // ===================================================================
-
     // 2. DAY/NIGHT LIGHTING OVERLAY SYSTEM
-
     // ===================================================================
-
     const lightingKeyframes = [
-
       { h: 0,   r: 15,  g: 20,  b: 50,  a: 0.85 }, // 12:00 AM - Midnight Indigo
-
       { h: 4.5, r: 25,  g: 30,  b: 65,  a: 0.75 }, // 04:30 AM - Deep Pre-Dawn
-
       { h: 6,   r: 255, g: 150, b: 85,  a: 0.45 }, // 06:00 AM - Dawn Gold & Coral
-
       { h: 8,   r: 255, g: 235, b: 200, a: 0.15 }, // 08:00 AM - Morning Soft Light
-
       { h: 12,  r: 255, g: 255, b: 255, a: 0.00 }, // 12:00 PM - Midday Clear
-
       { h: 17,  r: 255, g: 185, b: 120, a: 0.25 }, // 05:00 PM - Golden Hour
-
       { h: 19,  r: 215, g: 75,  b: 110, a: 0.50 }, // 07:00 PM - Sunset Crimson
-
       { h: 21,  r: 30,  g: 35,  b: 80,  a: 0.75 }, // 09:00 PM - Twilight Nightfall
-
       { h: 24,  r: 15,  g: 20,  b: 50,  a: 0.85 }  // 12:00 AM - Midnight Loop
-
     ];
-
-
 
     function getLightingTint(totalMinutes) {
-
       const hour = (totalMinutes % 1440) / 60;
-
       
-
       let k1 = lightingKeyframes[0];
-
       let k2 = lightingKeyframes[lightingKeyframes.length - 1];
 
-
-
       for (let i = 0; i < lightingKeyframes.length - 1; i++) {
-
         if (hour >= lightingKeyframes[i].h && hour <= lightingKeyframes[i+1].h) {
-
           k1 = lightingKeyframes[i];
-
           k2 = lightingKeyframes[i+1];
-
           break;
-
         }
-
       }
-
-
 
       const range = k2.h - k1.h;
-
       const progress = range === 0 ? 0 : (hour - k1.h) / range;
 
-
-
       const r = Math.round(k1.r + (k2.r - k1.r) * progress);
-
       const g = Math.round(k1.g + (k2.g - k1.g) * progress);
-
       const b = Math.round(k1.b + (k2.b - k1.b) * progress);
-
       const a = (k1.a + (k2.a - k1.a) * progress).toFixed(2);
 
-
-
       return `rgba(${r}, ${g}, ${b}, ${a})`;
-
     }
-
-
 
     function updateLightingOverlay() {
-
       const overlay = document.getElementById('lighting-overlay');
-
       if (overlay) {
-
         overlay.style.backgroundColor = getLightingTint(currentMinutes);
-
       }
-
     }
 
-
-
     // ===================================================================
-
     // 3. RANDOM ENCOUNTER ENGINE & TABLES
-
     // ===================================================================
-
     const ENCOUNTER_THRESHOLD = 15; // DC 15 on d20 (30% chance per hour passed)
 
-
-
     let dayEncounters = [
-
       {
-
         title: "Frost Goblins Ambush",
-
         type: "danger",
-
         tag: "Combat",
-
         text: "3 Frost Goblins leap from behind a snowbank demanding your supplies!"
-
       },
-
       {
-
         title: "Sudden Blizzard",
-
         type: "hazard",
-
         tag: "Environmental",
-
         text: "Temperatures plummet rapidly. DC 12 Constitution save or suffer 1 level of Exhaustion."
-
       },
-
       {
-
         title: "Wandering Merchant",
-
         type: "flavor",
-
         tag: "Social",
-
         text: "A shivering fur-trader offers rare potions in exchange for warm rations."
-
       },
-
       {
-
         title: "Dire Wolf Tracks",
-
         type: "hazard",
-
         tag: "Tracking",
-
         text: "Fresh wolf prints circle your path. DC 13 Wisdom (Survival) to avoid a surprise attack."
-
       }
-
     ];
-
-
 
     let nightEncounters = [
-
       {
-
         title: "Ice Specter Attack",
-
         type: "danger",
-
         tag: "Undead Combat",
-
         text: "A freezing mist takes humanoid form. The temperature drops below zero as a specter attacks!"
-
       },
-
       {
-
         title: "Cultist Patrol",
-
         type: "danger",
-
         tag: "Hostile NPCs",
-
         text: "2 Sewer Cultists carrying dark lanterns spot your light in the darkness."
-
       },
-
       {
-
         title: "Eerie Distant Howls",
-
         type: "flavor",
-
         tag: "Atmosphere",
-
         text: "Chilling howls echo through the valley. The party feels watched from the dark."
-
       }
-
     ];
 
-
-
     function rollD20() {
-
       return Math.floor(Math.random() * 20) + 1;
-
     }
-
-
 
     function triggerRandomEncounter(hourCount = 1) {
-
       for (let i = 0; i < hourCount; i++) {
-
         const d20Roll = rollD20();
-
         console.log(`🎲 Hourly Encounter Check (Hour ${i + 1}/${hourCount}): Rolled ${d20Roll} vs DC ${ENCOUNTER_THRESHOLD}`);
 
-
-
         if (d20Roll >= ENCOUNTER_THRESHOLD) {
-
           const currentHour24 = Math.floor(currentMinutes / 60);
-
           const isNight = (currentHour24 >= 20 || currentHour24 < 6);
-
           const pool = isNight ? nightEncounters : dayEncounters;
-
           
-
           const encounter = pool[Math.floor(Math.random() * pool.length)];
-
           showEncounterModal(encounter, d20Roll);
-
           break; // Max 1 encounter popup per time-advance batch
-
         }
-
       }
-
     }
-
-
 
     function showEncounterModal(encounter, rollValue) {
-
       const modal = document.getElementById('encounter-modal');
-
       const titleEl = document.getElementById('encounter-title');
-
       const tagEl = document.getElementById('encounter-tag');
-
       const bodyEl = document.getElementById('encounter-body');
 
-
-
       titleEl.innerText = `⚔️ ${encounter.title}`;
-
       bodyEl.innerHTML = `<p>${encounter.text}</p><p style="margin-top: 8px; font-size: 0.75rem; color: #9ccfd8;"><em>(Encounter triggered: Rolled a natural ${rollValue} on d20)</em></p>`;
 
-
-
       tagEl.innerText = encounter.tag;
-
       tagEl.className = `encounter-tag tag-${encounter.type}`;
 
-
-
       modal.classList.add('active');
-
     }
-
-
 
     function dismissEncounter() {
-
       document.getElementById('encounter-modal').classList.remove('active');
-
     }
 
-
-
-// ===================================================================
+    // ===================================================================
     // 4. TIME CLOCK & FANTASY CALENDAR SYSTEM
     // ===================================================================
     const FANTASY_MONTHS = [
-      "Deepfrost", "Frostfade", "Awakening", "Rainbloom", 
-      "Highbloom", "Sunpeak", "Solstice", "Ember", 
-      "Harvestide", "Shadowfall", "Chillwind", "Rhimetime"
+      "Deepfrost",   // Jan
+      "Frostfade",   // Feb
+      "Awakening",   // Mar
+      "Rainbloom",   // Apr
+      "Highbloom",   // May
+      "Sunpeak",     // Jun
+      "Solstice",    // Jul
+      "Ember",       // Aug
+      "Harvestide",  // Sep
+      "Shadowfall",  // Oct
+      "Chillwind",   // Nov
+      "Rhimetime"    // Dec
     ];
 
     function getOrdinalSuffix(day) {
@@ -1055,6 +566,8 @@
       if (minutesSinceEncounterCheck >= 60) {
         const hoursPassed = Math.floor(minutesSinceEncounterCheck / 60);
         minutesSinceEncounterCheck %= 60;
+
+        console.log(`⏰ ${hoursPassed} hour(s) passed! Checking random encounters...`);
         triggerRandomEncounter(hoursPassed);
       }
     }
@@ -1080,6 +593,41 @@
     // ===================================================================
     let rumorPool = [];
     let merchantData = {};
+
+    const locationData = [
+      {
+        id: 'tall_dwarf_inn',
+        layer: 'taverns',
+        icon: 'tavern',
+        coords: [419, 1182],
+        hasRadialMenu: true,
+        minZoom: -1,
+        maxZoom: 2
+      },
+      {
+        id: 'ironhand_armory',
+        layer: 'merchants',
+        icon: 'armor',
+        coords: [436, 871],
+        minZoom: -1,
+        maxZoom: 2
+      },
+      {
+        id: 'town_square_notice',
+        layer: 'quests',
+        icon: 'quest',
+        coords: [664, 1147],
+        minZoom: -0.5,
+        maxZoom: 2,
+        popupHtml: `
+          <div class="popup-card">
+            <h3>Town Square Notice</h3>
+            <div class="subtitle">Quest Hub</div>
+            <p><strong>Bounty:</strong> 100 gold pieces for information leading to the capture of the Sewer Cultist master.</p>
+          </div>
+        `
+      }
+    ];
 
     async function loadCampaignData() {
       try {
@@ -1135,7 +683,9 @@
                 <th style="text-align: right;">Price</th>
               </tr>
             </thead>
-            <tbody>${rows}</tbody>
+            <tbody>
+              ${rows}
+            </tbody>
           </table>
         </div>
       `;
@@ -1145,16 +695,25 @@
       if (!rumorPool.length) return '<div class="popup-card"><p>No rumors heard.</p></div>';
 
       const randomRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
+      
       return `
         <div class="popup-card" id="rumor-card">
           <h3>Tavern Gossip</h3>
           <div class="subtitle">${randomRumor.source}</div>
           <p style="min-height: 48px;">"${randomRumor.text}"</p>
+          
           <button onclick="rerollRumor()" style="
-            width: 100%; margin-top: 6px; padding: 6px 10px;
-            background: #2a2e37; border: 1px solid #f6c177;
-            color: #f6c177; border-radius: 4px; font-family: 'Inter', sans-serif;
-            font-size: 0.75rem; cursor: pointer; transition: background 0.2s;
+            width: 100%;
+            margin-top: 6px;
+            padding: 6px 10px;
+            background: #2a2e37;
+            border: 1px solid #f6c177;
+            color: #f6c177;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: background 0.2s;
           " onmouseover="this.style.background='#3b4252'" onmouseout="this.style.background='#2a2e37'">
             🎲 Hear Another Rumor
           </button>
@@ -1208,12 +767,106 @@
     }
 
     // ===================================================================
-    // 8. MARKER INITIALIZATION & ZOOM VISIBILITY TRACKER
+    // 8. MARKER INITIALIZATION & VISIBILITY MANAGER
     // ===================================================================
     let trackedMarkers = [];
+    let closeSubMenu = function() {};
 
-    function addTrackedMarker(marker, layer, minZoom = -Infinity, maxZoom = Infinity) {
-      trackedMarkers.push({ marker, layer, minZoom, maxZoom });
+    function attachRadialMenu(marker, innCoords) {
+      const innSubItems = [
+        {
+          emoji: '🍺',
+          angle: 150,
+          title: 'Drink & Food Menu',
+          get popupHtml() { return buildShopTableHTML('tall_dwarf_inn'); }
+        },
+        {
+          emoji: '👤',
+          angle: 90,
+          title: 'Notable NPCs',
+          popupHtml: `
+            <div class="popup-card">
+              <h3>Tavern Patrons</h3>
+              <div class="subtitle">Key Characters</div>
+              <ul style="font-size: 0.8rem; padding-left: 14px; color: #c4a7e7; line-height: 1.5;">
+                <li><strong>Thorin High-Reach:</strong> Dwarf barkeep with an eye for trade.</li>
+                <li><strong>Sera:</strong> Local rogue selling whisper rumors.</li>
+              </ul>
+            </div>`
+        },
+        {
+          emoji: '📜',
+          angle: 30,
+          title: 'Rumors & Gossip',
+          get popupHtml() { return getRandomRumorHTML(); }
+        }
+      ];
+
+      let isSubMenuOpen = false;
+
+      closeSubMenu = function() {
+        subMenuLayer.clearLayers();
+        isSubMenuOpen = false;
+      };
+
+      marker.on('click', function (e) {
+        L.DomEvent.stopPropagation(e);
+
+        if (isSubMenuOpen) {
+          closeSubMenu();
+          return;
+        }
+
+        const radius = 80;
+
+        innSubItems.forEach(item => {
+          const subPos = getRadialPosition(innCoords, radius, item.angle);
+          
+          const subMarker = L.marker(subPos, { icon: createSubIcon(item.emoji) })
+            .bindTooltip(item.title, { direction: 'top', offset: [0, -10] })
+            .bindPopup(() => item.popupHtml, { maxWidth: 320, minWidth: 240 });
+
+          subMenuLayer.addLayer(subMarker);
+        });
+
+        isSubMenuOpen = true;
+      });
+    }
+
+    function initMapMarkers() {
+      tavernsLayer.clearLayers();
+      merchantsLayer.clearLayers();
+      questsLayer.clearLayers();
+      trackedMarkers = [];
+
+      const layerMap = {
+        taverns: tavernsLayer,
+        merchants: merchantsLayer,
+        quests: questsLayer
+      };
+
+      locationData.forEach(loc => {
+        const markerIcon = icons[loc.icon] || icons.quest;
+        const targetLayer = layerMap[loc.layer] || questsLayer;
+        const marker = L.marker(loc.coords, { icon: markerIcon });
+
+        if (loc.hasRadialMenu) {
+          attachRadialMenu(marker, loc.coords);
+        } else if (merchantData[loc.id]) {
+          marker.bindPopup(() => buildShopTableHTML(loc.id));
+        } else if (loc.popupHtml) {
+          marker.bindPopup(loc.popupHtml);
+        }
+
+        trackedMarkers.push({
+          marker: marker,
+          layer: targetLayer,
+          minZoom: loc.minZoom !== undefined ? loc.minZoom : -Infinity,
+          maxZoom: loc.maxZoom !== undefined ? loc.maxZoom : Infinity
+        });
+      });
+
+      updateMarkerVisibility();
     }
 
     function updateMarkerVisibility() {
@@ -1233,134 +886,34 @@
 
     map.on('zoomend', updateMarkerVisibility);
 
-    function initMapMarkers() {
-      tavernsLayer.clearLayers();
-      merchantsLayer.clearLayers();
-      questsLayer.clearLayers();
-      trackedMarkers = [];
-
-      // 1. TALL DWARF INN (Visible at all zoom levels)
-      const innCoords = [419, 1182];
-      const tallDwarfInn = L.marker(innCoords, { icon: icons.tavern });
-      addTrackedMarker(tallDwarfInn, tavernsLayer, -1, 2);
-
-      const innSubItems = [
-        { emoji: '🍺', angle: 150, title: 'Drink & Food Menu', get popupHtml() { return buildShopTableHTML('tall_dwarf_inn'); } },
-        {
-          emoji: '👤', angle: 90, title: 'Notable NPCs',
-          popupHtml: `
-            <div class="popup-card">
-              <h3>Tavern Patrons</h3>
-              <div class="subtitle">Key Characters</div>
-              <ul style="font-size: 0.8rem; padding-left: 14px; color: #c4a7e7; line-height: 1.5;">
-                <li><strong>Thorin High-Reach:</strong> Dwarf barkeep with an eye for trade.</li>
-                <li><strong>Sera:</strong> Local rogue selling whisper rumors.</li>
-              </ul>
-            </div>`
-        },
-        { emoji: '📜', angle: 30, title: 'Rumors & Gossip', get popupHtml() { return getRandomRumorHTML(); } }
-      ];
-
-      let isSubMenuOpen = false;
-      closeSubMenu = function() {
-        subMenuLayer.clearLayers();
-        isSubMenuOpen = false;
-      };
-
-      tallDwarfInn.on('click', function (e) {
-        L.DomEvent.stopPropagation(e);
-        if (isSubMenuOpen) { closeSubMenu(); return; }
-
-        const radius = 80;
-        innSubItems.forEach(item => {
-          const subPos = getRadialPosition(innCoords, radius, item.angle);
-          const subMarker = L.marker(subPos, { icon: createSubIcon(item.emoji) })
-            .bindTooltip(item.title, { direction: 'top', offset: [0, -10] })
-            .bindPopup(() => item.popupHtml, { maxWidth: 320, minWidth: 240 });
-
-          subMenuLayer.addLayer(subMarker);
-        });
-        isSubMenuOpen = true;
-      });
-
-      // 2. IRONHAND ARMORY (Only visible when zoomed in to 0 or higher)
-      const armorMarker = L.marker([436, 871], { icon: icons.armor })
-        .bindPopup(() => buildShopTableHTML('ironhand_armory'));
-      addTrackedMarker(armorMarker, merchantsLayer, 0, 2);
-
-      // 3. QUEST BOARD (Visible at zoom 0 or higher)
-      const questMarker = L.marker([664, 1147], { icon: icons.quest })
-        .bindPopup(`
-          <div class="popup-card">
-            <h3>Town Square Notice</h3>
-            <div class="subtitle">Quest Hub</div>
-            <p><strong>Bounty:</strong> 100 gold pieces for information leading to the capture of the Sewer Cultist master.</p>
-          </div>
-        `);
-      addTrackedMarker(questMarker, questsLayer, 0, 2);
-
-      // Initial zoom check
-      updateMarkerVisibility();
-    }
-
     // ===================================================================
-
     // 9. GLOBAL CLICK & HUD HANDLERS
-
     // ===================================================================
-
     map.on('click', function(e) {
-
       closeSubMenu();
-
       const y = Math.round(e.latlng.lat);
-
       const x = Math.round(e.latlng.lng);
-
       console.log(`Clicked Location -> [${y}, ${x}]`);
-
     });
-
-
 
     const coordControl = L.control({ position: 'bottomleft' });
-
     coordControl.onAdd = function() {
-
       const div = L.DomUtil.create('div', 'coord-hud');
-
       div.innerHTML = 'Coords: [0, 0]';
-
       return div;
-
     };
-
     coordControl.addTo(map);
 
-
-
     map.on('mousemove', function(e) {
-
       const y = Math.round(e.latlng.lat);
-
       const x = Math.round(e.latlng.lng);
-
       document.querySelector('.coord-hud').innerHTML = `Coords: [${y}, ${x}]`;
-
     });
 
-
-
     // ===================================================================
-
     // 10. START CAMPAIGN LOADING
-
     // ===================================================================
-
     loadCampaignData();
-
   </script>
-
 </body>
-
 </html>
