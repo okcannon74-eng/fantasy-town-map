@@ -990,781 +990,318 @@
 
 
 
-    // ===================================================================
-
+// ===================================================================
     // 4. TIME CLOCK & FANTASY CALENDAR SYSTEM
-
     // ===================================================================
-
     const FANTASY_MONTHS = [
-
-      "Deepfrost",   // Jan
-
-      "Frostfade",   // Feb
-
-      "Awakening",   // Mar
-
-      "Rainbloom",   // Apr
-
-      "Highbloom",   // May
-
-      "Sunpeak",     // Jun
-
-      "Solstice",    // Jul
-
-      "Ember",       // Aug
-
-      "Harvestide",  // Sep
-
-      "Shadowfall",  // Oct
-
-      "Chillwind",   // Nov
-
-      "Rhimetime"    // Dec
-
+      "Deepfrost", "Frostfade", "Awakening", "Rainbloom", 
+      "Highbloom", "Sunpeak", "Solstice", "Ember", 
+      "Harvestide", "Shadowfall", "Chillwind", "Rhimetime"
     ];
 
-
-
     function getOrdinalSuffix(day) {
-
       if (day > 3 && day < 21) return 'th';
-
       switch (day % 10) {
-
         case 1:  return 'st';
-
         case 2:  return 'nd';
-
         case 3:  return 'rd';
-
         default: return 'th';
-
       }
-
     }
-
-
 
     function formatFantasyDate(date) {
-
       const day = date.getDate();
-
       const monthName = FANTASY_MONTHS[date.getMonth()];
-
       return `The ${day}${getOrdinalSuffix(day)} day of ${monthName}`;
-
     }
-
-
 
     const currentDate = new Date();
-
     let currentMinutes = (currentDate.getHours() * 60) + currentDate.getMinutes();
-
     let minutesSinceEncounterCheck = 0;
 
-
-
     function formatClockTime(totalMins) {
-
       const hours24 = Math.floor(totalMins / 60);
-
       const mins = totalMins % 60;
-
       
-
       const period = hours24 >= 12 ? 'PM' : 'AM';
-
       let hours12 = hours24 % 12;
-
       if (hours12 === 0) hours12 = 12;
 
-
-
       const paddedMins = mins < 10 ? `0${mins}` : mins;
-
       const paddedHours = hours12 < 10 ? `0${hours12}` : hours12;
 
-
-
       return `${paddedHours}:${paddedMins} ${period}`;
-
     }
 
-
-
     function advanceTime(minutesToAdd = 15) {
-
       currentMinutes += minutesToAdd;
-
       minutesSinceEncounterCheck += minutesToAdd;
 
-
-
       if (currentMinutes >= 1440) {
-
         currentMinutes -= 1440;
-
-        // Roll standard JS date forward by 1 day to naturally update month/day
-
         currentDate.setDate(currentDate.getDate() + 1);
-
       }
-
-
-
-      // Update HUD text
 
       const timeDisplay = document.getElementById('time-display');
-
       const dayDisplay = document.getElementById('day-display');
-
       
-
       if (timeDisplay && dayDisplay) {
-
         timeDisplay.innerText = formatClockTime(currentMinutes);
-
         dayDisplay.innerText = formatFantasyDate(currentDate);
-
       }
-
-
-
-      // Update ambient lighting tint
 
       updateLightingOverlay();
 
-
-
-      // ACCUMULATED ENCOUNTER HOOK (Triggers every 60 total minutes passed)
-
       if (minutesSinceEncounterCheck >= 60) {
-
         const hoursPassed = Math.floor(minutesSinceEncounterCheck / 60);
-
-        minutesSinceEncounterCheck %= 60; // Keep remaining sub-hour minutes
-
-
-
-        console.log(`⏰ ${hoursPassed} hour(s) passed! Checking random encounters...`);
-
+        minutesSinceEncounterCheck %= 60;
         triggerRandomEncounter(hoursPassed);
-
       }
-
     }
-
-
 
     // Fantasy Time Display HUD
-
     const timeControl = L.control({ position: 'topright' });
-
     timeControl.onAdd = function() {
-
       const div = L.DomUtil.create('div', 'time-hud');
-
       div.innerHTML = `
-
         <div class="day-text" id="day-display">${formatFantasyDate(currentDate)}</div>
-
         <div class="clock-text" id="time-display">${formatClockTime(currentMinutes)}</div>
-
       `;
-
       return div;
-
     };
-
     timeControl.addTo(map);
 
-
-
-    // Auto-advance time on opening popups
-
     map.on('popupopen', function() {
-
       advanceTime(15);
-
     });
-
-// Array to keep track of markers and their visibility thresholds
-
-let trackedMarkers = [];
-
-
-
-function initMapMarkers() {
-
-  tavernsLayer.clearLayers();
-
-  merchantsLayer.clearLayers();
-
-  questsLayer.clearLayers();
-
-  trackedMarkers = []; // Reset tracked list
-
-
-
-  const layerMap = {
-
-    taverns: tavernsLayer,
-
-    merchants: merchantsLayer,
-
-    quests: questsLayer
-
-  };
-
-
-
-  locationData.forEach(loc => {
-
-    const markerIcon = icons[loc.icon] || icons.quest;
-
-    const targetLayer = layerMap[loc.layer] || questsLayer;
-
-    const marker = L.marker(loc.coords, { icon: markerIcon });
-
-
-
-    // Handle popups/menus...
-
-    if (loc.hasRadialMenu && loc.id === 'tall_dwarf_inn') {
-
-      attachRadialMenu(marker, loc.coords);
-
-    } else if (merchantData[loc.id]) {
-
-      marker.bindPopup(() => buildShopTableHTML(loc.id));
-
-    }
-
-
-
-    // Save the marker and its zoom thresholds (-Infinity/Infinity as defaults)
-
-    trackedMarkers.push({
-
-      marker: marker,
-
-      layer: targetLayer,
-
-      minZoom: loc.minZoom !== undefined ? loc.minZoom : -Infinity,
-
-      maxZoom: loc.maxZoom !== undefined ? loc.maxZoom : Infinity
-
-    });
-
-  });
-
-
-
-  // Evaluate initial zoom state
-
-  updateMarkerVisibility();
-
-}
-
-    function updateMarkerVisibility() {
-
-  const currentZoom = map.getZoom();
-
-
-
-  trackedMarkers.forEach(item => {
-
-    const shouldBeVisible = currentZoom >= item.minZoom && currentZoom <= item.maxZoom;
-
-    const isCurrentlyOnLayer = item.layer.hasLayer(item.marker);
-
-
-
-    if (shouldBeVisible && !isCurrentlyOnLayer) {
-
-      item.layer.addLayer(item.marker);
-
-    } else if (!shouldBeVisible && isCurrentlyOnLayer) {
-
-      item.layer.removeLayer(item.marker);
-
-    }
-
-  });
-
-}
-
-
-
-// Re-check pin visibility whenever the user finishes zooming
-
-map.on('zoomend', updateMarkerVisibility);
-
-// ===================================================================
-
-// 5. DYNAMIC DATA STORAGE & FETCHING
-
-// ===================================================================
-
-let rumorPool = [];
-
-let merchantData = {};
-
-// Note: dayEncounters and nightEncounters are already declared above!
-
-
-
-async function loadCampaignData() {
-
-  try {
-
-    const [rumorsRes, merchantsRes, encountersRes] = await Promise.all([
-
-      fetch('data/rumors.json'),
-
-      fetch('data/merchants.json'),
-
-      fetch('data/encounters.json')
-
-    ]);
-
-
-
-    if (rumorsRes.ok) rumorPool = await rumorsRes.json();
-
-    if (merchantsRes.ok) merchantData = await merchantsRes.json();
-
-    
-
-    if (encountersRes.ok) {
-
-      const encounterData = await encountersRes.json();
-
-      dayEncounters = encounterData.day || [];
-
-      nightEncounters = encounterData.night || [];
-
-    }
-
-
-
-    console.log('✅ Campaign data loaded successfully!');
-
-  } catch (error) {
-
-    console.warn('⚠️ Error loading external JSON files:', error);
-
-  } finally {
-
-    initMapMarkers();
-
-    updateLightingOverlay();
-
-  }
-
-}
 
     // ===================================================================
+    // 5. DYNAMIC DATA STORAGE & FETCHING
+    // ===================================================================
+    let rumorPool = [];
+    let merchantData = {};
 
+    async function loadCampaignData() {
+      try {
+        const [rumorsRes, merchantsRes, encountersRes] = await Promise.all([
+          fetch('data/rumors.json'),
+          fetch('data/merchants.json'),
+          fetch('data/encounters.json')
+        ]);
+
+        if (rumorsRes.ok) rumorPool = await rumorsRes.json();
+        if (merchantsRes.ok) merchantData = await merchantsRes.json();
+        
+        if (encountersRes.ok) {
+          const encounterData = await encountersRes.json();
+          dayEncounters = encounterData.day || [];
+          nightEncounters = encounterData.night || [];
+        }
+
+        console.log('✅ Campaign data loaded successfully!');
+      } catch (error) {
+        console.warn('⚠️ Error loading external JSON files:', error);
+      } finally {
+        initMapMarkers();
+        updateLightingOverlay();
+      }
+    }
+
+    // ===================================================================
     // 6. HTML GENERATOR HELPERS
-
     // ===================================================================
-
     function buildShopTableHTML(merchantKey) {
-
       const merchant = merchantData[merchantKey];
-
       if (!merchant) return '<div class="popup-card"><p>No inventory available.</p></div>';
 
-
-
       const rows = merchant.inventory.map(row => `
-
         <tr>
-
           <td>${row.item}</td>
-
           <td style="text-align: center;">${row.stock}</td>
-
           <td class="cost">${row.price}</td>
-
         </tr>
-
       `).join('');
 
-
-
       return `
-
         <div class="popup-card">
-
           <h3>${merchant.title}</h3>
-
           <div class="subtitle">${merchant.subtitle}</div>
-
           ${merchant.description ? `<p>${merchant.description}</p>` : ''}
-
           <table class="shop-table">
-
             <thead>
-
               <tr>
-
                 <th>Item</th>
-
                 <th style="text-align: center;">Stock</th>
-
                 <th style="text-align: right;">Price</th>
-
               </tr>
-
             </thead>
-
-            <tbody>
-
-              ${rows}
-
-            </tbody>
-
+            <tbody>${rows}</tbody>
           </table>
-
         </div>
-
       `;
-
     }
-
-
 
     function getRandomRumorHTML() {
-
       if (!rumorPool.length) return '<div class="popup-card"><p>No rumors heard.</p></div>';
 
-
-
       const randomRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
-
-      
-
       return `
-
         <div class="popup-card" id="rumor-card">
-
           <h3>Tavern Gossip</h3>
-
           <div class="subtitle">${randomRumor.source}</div>
-
           <p style="min-height: 48px;">"${randomRumor.text}"</p>
-
-          
-
           <button onclick="rerollRumor()" style="
-
-            width: 100%;
-
-            margin-top: 6px;
-
-            padding: 6px 10px;
-
-            background: #2a2e37;
-
-            border: 1px solid #f6c177;
-
-            color: #f6c177;
-
-            border-radius: 4px;
-
-            font-family: 'Inter', sans-serif;
-
-            font-size: 0.75rem;
-
-            cursor: pointer;
-
-            transition: background 0.2s;
-
+            width: 100%; margin-top: 6px; padding: 6px 10px;
+            background: #2a2e37; border: 1px solid #f6c177;
+            color: #f6c177; border-radius: 4px; font-family: 'Inter', sans-serif;
+            font-size: 0.75rem; cursor: pointer; transition: background 0.2s;
           " onmouseover="this.style.background='#3b4252'" onmouseout="this.style.background='#2a2e37'">
-
             🎲 Hear Another Rumor
-
           </button>
-
         </div>
-
       `;
-
     }
-
-
 
     window.rerollRumor = function() {
-
       const cardContainer = document.getElementById('rumor-card');
-
       if (cardContainer && rumorPool.length) {
-
         const freshRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
-
         cardContainer.querySelector('.subtitle').innerText = freshRumor.source;
-
         cardContainer.querySelector('p').innerText = `"${freshRumor.text}"`;
-
       }
-
     };
 
-
-
     // ===================================================================
-
     // 7. CUSTOM PIN ICON GENERATORS & MATH HELPERS
-
     // ===================================================================
-
     function createPinIcon(className, iconEmoji) {
-
       return L.divIcon({
-
         className: 'custom-icon-wrapper',
-
         html: `<div class="custom-pin ${className}">${iconEmoji}</div>`,
-
         iconSize: [32, 32],
-
         iconAnchor: [16, 16],
-
         popupAnchor: [0, -16]
-
       });
-
     }
-
-
 
     function createSubIcon(emoji) {
-
       return L.divIcon({
-
         className: 'custom-sub-wrapper',
-
         html: `<div class="radial-sub-pin">${emoji}</div>`,
-
         iconSize: [28, 28],
-
         iconAnchor: [14, 14],
-
         popupAnchor: [0, -14]
-
       });
-
     }
-
-
 
     const icons = {
-
       tavern: createPinIcon('pin-tavern', '🍺'),
-
       armor:  createPinIcon('pin-armor', '🛡️'),
-
       quest:  createPinIcon('pin-quest', '📜')
-
     };
 
-
-
     function getRadialPosition(centerLatLng, radiusInPixels, angleInDegrees) {
-
       const angleRad = (angleInDegrees * Math.PI) / 180;
-
       const newY = centerLatLng[0] + radiusInPixels * Math.sin(angleRad);
-
       const newX = centerLatLng[1] + radiusInPixels * Math.cos(angleRad);
-
       return [newY, newX];
-
     }
 
-
-
     // ===================================================================
-
-    // 8. MARKER INITIALIZATION
-
+    // 8. MARKER INITIALIZATION & ZOOM VISIBILITY TRACKER
     // ===================================================================
+    let trackedMarkers = [];
+
+    function addTrackedMarker(marker, layer, minZoom = -Infinity, maxZoom = Infinity) {
+      trackedMarkers.push({ marker, layer, minZoom, maxZoom });
+    }
+
+    function updateMarkerVisibility() {
+      const currentZoom = map.getZoom();
+
+      trackedMarkers.forEach(item => {
+        const shouldBeVisible = currentZoom >= item.minZoom && currentZoom <= item.maxZoom;
+        const isCurrentlyOnLayer = item.layer.hasLayer(item.marker);
+
+        if (shouldBeVisible && !isCurrentlyOnLayer) {
+          item.layer.addLayer(item.marker);
+        } else if (!shouldBeVisible && isCurrentlyOnLayer) {
+          item.layer.removeLayer(item.marker);
+        }
+      });
+    }
+
+    map.on('zoomend', updateMarkerVisibility);
 
     function initMapMarkers() {
-
       tavernsLayer.clearLayers();
-
       merchantsLayer.clearLayers();
-
       questsLayer.clearLayers();
+      trackedMarkers = [];
 
-
-
-      // --- LOCATION 1: THE TALL DWARF INN (RADIAL SUB-MENU) ---
-
+      // 1. TALL DWARF INN (Visible at all zoom levels)
       const innCoords = [419, 1182];
-
       const tallDwarfInn = L.marker(innCoords, { icon: icons.tavern });
-
-      tavernsLayer.addLayer(tallDwarfInn);
-
-
+      addTrackedMarker(tallDwarfInn, tavernsLayer, -1, 2);
 
       const innSubItems = [
-
+        { emoji: '🍺', angle: 150, title: 'Drink & Food Menu', get popupHtml() { return buildShopTableHTML('tall_dwarf_inn'); } },
         {
-
-          emoji: '🍺',
-
-          angle: 150,
-
-          title: 'Drink & Food Menu',
-
-          get popupHtml() { return buildShopTableHTML('tall_dwarf_inn'); }
-
-        },
-
-        {
-
-          emoji: '👤',
-
-          angle: 90,
-
-          title: 'Notable NPCs',
-
+          emoji: '👤', angle: 90, title: 'Notable NPCs',
           popupHtml: `
-
             <div class="popup-card">
-
               <h3>Tavern Patrons</h3>
-
               <div class="subtitle">Key Characters</div>
-
               <ul style="font-size: 0.8rem; padding-left: 14px; color: #c4a7e7; line-height: 1.5;">
-
                 <li><strong>Thorin High-Reach:</strong> Dwarf barkeep with an eye for trade.</li>
-
                 <li><strong>Sera:</strong> Local rogue selling whisper rumors.</li>
-
               </ul>
-
             </div>`
-
         },
-
-        {
-
-          emoji: '📜',
-
-          angle: 30,
-
-          title: 'Rumors & Gossip',
-
-          get popupHtml() { return getRandomRumorHTML(); }
-
-        }
-
+        { emoji: '📜', angle: 30, title: 'Rumors & Gossip', get popupHtml() { return getRandomRumorHTML(); } }
       ];
 
-
-
       let isSubMenuOpen = false;
-
-
-
       closeSubMenu = function() {
-
         subMenuLayer.clearLayers();
-
         isSubMenuOpen = false;
-
       };
 
-
-
       tallDwarfInn.on('click', function (e) {
-
         L.DomEvent.stopPropagation(e);
-
-
-
-        if (isSubMenuOpen) {
-
-          closeSubMenu();
-
-          return;
-
-        }
-
-
+        if (isSubMenuOpen) { closeSubMenu(); return; }
 
         const radius = 80;
-
-
-
         innSubItems.forEach(item => {
-
           const subPos = getRadialPosition(innCoords, radius, item.angle);
-
-          
-
           const subMarker = L.marker(subPos, { icon: createSubIcon(item.emoji) })
-
             .bindTooltip(item.title, { direction: 'top', offset: [0, -10] })
-
             .bindPopup(() => item.popupHtml, { maxWidth: 320, minWidth: 240 });
 
-
-
           subMenuLayer.addLayer(subMarker);
-
         });
-
-
-
         isSubMenuOpen = true;
-
       });
 
-
-
-      // --- LOCATION 2: IRONHAND ARMORY ---
-
+      // 2. IRONHAND ARMORY (Only visible when zoomed in to 0 or higher)
       const armorMarker = L.marker([436, 871], { icon: icons.armor })
-
         .bindPopup(() => buildShopTableHTML('ironhand_armory'));
+      addTrackedMarker(armorMarker, merchantsLayer, 0, 2);
 
-      merchantsLayer.addLayer(armorMarker);
-
-
-
-      // --- LOCATION 3: QUEST BOARD ---
-
+      // 3. QUEST BOARD (Visible at zoom 0 or higher)
       const questMarker = L.marker([664, 1147], { icon: icons.quest })
-
         .bindPopup(`
-
           <div class="popup-card">
-
             <h3>Town Square Notice</h3>
-
             <div class="subtitle">Quest Hub</div>
-
             <p><strong>Bounty:</strong> 100 gold pieces for information leading to the capture of the Sewer Cultist master.</p>
-
           </div>
-
         `);
+      addTrackedMarker(questMarker, questsLayer, 0, 2);
 
-      questsLayer.addLayer(questMarker);
-
+      // Initial zoom check
+      updateMarkerVisibility();
     }
-
-
 
     // ===================================================================
 
