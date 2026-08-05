@@ -594,7 +594,62 @@
     map.on('popupopen', function() {
       advanceTime(15);
     });
+// Array to keep track of markers and their visibility thresholds
+let trackedMarkers = [];
 
+function initMapMarkers() {
+  tavernsLayer.clearLayers();
+  merchantsLayer.clearLayers();
+  questsLayer.clearLayers();
+  trackedMarkers = []; // Reset tracked list
+
+  const layerMap = {
+    taverns: tavernsLayer,
+    merchants: merchantsLayer,
+    quests: questsLayer
+  };
+
+  locationData.forEach(loc => {
+    const markerIcon = icons[loc.icon] || icons.quest;
+    const targetLayer = layerMap[loc.layer] || questsLayer;
+    const marker = L.marker(loc.coords, { icon: markerIcon });
+
+    // Handle popups/menus...
+    if (loc.hasRadialMenu && loc.id === 'tall_dwarf_inn') {
+      attachRadialMenu(marker, loc.coords);
+    } else if (merchantData[loc.id]) {
+      marker.bindPopup(() => buildShopTableHTML(loc.id));
+    }
+
+    // Save the marker and its zoom thresholds (-Infinity/Infinity as defaults)
+    trackedMarkers.push({
+      marker: marker,
+      layer: targetLayer,
+      minZoom: loc.minZoom !== undefined ? loc.minZoom : -Infinity,
+      maxZoom: loc.maxZoom !== undefined ? loc.maxZoom : Infinity
+    });
+  });
+
+  // Evaluate initial zoom state
+  updateMarkerVisibility();
+}
+    function updateMarkerVisibility() {
+  const currentZoom = map.getZoom();
+
+  trackedMarkers.forEach(item => {
+    const shouldBeVisible = currentZoom >= item.minZoom && currentZoom <= item.maxZoom;
+    const isCurrentlyOnLayer = item.layer.hasLayer(item.marker);
+
+    if (shouldBeVisible && !isCurrentlyOnLayer) {
+      item.layer.addLayer(item.marker);
+    } else if (!shouldBeVisible && isCurrentlyOnLayer) {
+      item.layer.removeLayer(item.marker);
+    }
+  });
+}
+
+// Re-check pin visibility whenever the user finishes zooming
+map.on('zoomend', updateMarkerVisibility);
 // ===================================================================
 // 5. DYNAMIC DATA STORAGE & FETCHING
 // ===================================================================
