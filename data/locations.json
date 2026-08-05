@@ -1,0 +1,21 @@
+[
+  {
+    "id": "ironhand_armory",
+    "name": "Ironhand Armory",
+    "icon": "armor",
+    "coords": [436, 871],
+    "layer": "merchants",
+    "minZoom": 0,
+    "maxZoom": 2
+  },
+  {
+    "id": "tall_dwarf_inn",
+    "name": "The Tall Dwarf Inn",
+    "icon": "tavern",
+    "coords": [419, 1182],
+    "layer": "taverns",
+    "hasRadialMenu": true,
+    "minZoom": -1,
+    "maxZoom": 2
+  }
+]
