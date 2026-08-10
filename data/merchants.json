@@ -1,22 +1,65 @@
 {
-  "ironhand_armory": {
-    "title": "Ironhand Armory",
-    "subtitle": "Blacksmith & Armor",
-    "description": "Masterwork plate and shield reinforcement.",
+  "the_ashen_crucible": {
+    "title": "The Ashen Crucible",
+    "subtitle": "Single-Use Martial Armory",
+    "description": "Run by Murn Ember-Spite (Duergar). Built inside a giant forge ash-catcher. Specializes in single-use martial gear and forge coatings.",
     "inventory": [
-      { "item": "Chainmail", "stock": 2, "price": "75 gp" },
-      { "item": "Shield (+1)", "stock": 1, "price": "250 gp" },
-      { "item": "Longsword", "stock": 5, "price": "15 gp" }
+      { "item": "Magma-Grit Whetstone", "stock": 3, "price": "45 gp" },
+      { "item": "Flash-Rivet Plates (Pack of 2)", "stock": 2, "price": "75 gp" },
+      { "item": "Slag-Melter Oil", "stock": 4, "price": "50 gp" },
+      { "item": "Iron-Skin Quench Polish", "stock": 2, "price": "40 gp" },
+      { "item": "Cinder-Burst Bolt / Arrow", "stock": 12, "price": "25 gp" }
     ]
   },
-  "tall_dwarf_inn": {
-    "title": "The Tall Dwarf Inn",
-    "subtitle": "Drink & Lodging",
+  "the_single_stanza": {
+    "title": "The Single Stanza",
+    "subtitle": "Arcane Consumables & Wards",
+    "description": "Run by Nixie 'Ink-Fingers' Flit (Sprite). Built inside the hollowed spine of a giant tome. Specializes in single-use spell catalysts.",
     "inventory": [
-      { "item": "Tall Dwarf Stout", "stock": "∞", "price": "5 cp" },
-      { "item": "Elven White Wine", "stock": 4, "price": "2 sp" },
-      { "item": "Hearty Mutton Stew", "stock": 12, "price": "1 sp" },
-      { "item": "Private Room (Night)", "stock": 3, "price": "8 sp" }
+      { "item": "Ink of the Rapid Mind", "stock": 2, "price": "50 gp" },
+      { "item": "Shatter-Prism Focus", "stock": 4, "price": "35 gp" },
+      { "item": "Glyph-Stained Vellum Patch", "stock": 3, "price": "45 gp" },
+      { "item": "Ley-Line Snuff", "stock": 2, "price": "60 gp" },
+      { "item": "Starlight Incense Cone", "stock": 5, "price": "30 gp" },
+      { "item": "Wild-Arcana Wafer", "stock": 4, "price": "40 gp" }
+    ]
+  },
+  "the_copper_alembic": {
+    "title": "The Copper Alembic",
+    "subtitle": "Apothecary & Diluted Elixirs",
+    "description": "Run by Gideon Vane (Halfling) & Brawn (Hill Giant). Suspended 40ft in the rafters in a giant copper still. Micro-diluted giant potions.",
+    "inventory": [
+      { "item": "Marrow-Stout Elixir", "stock": 5, "price": "40 gp" },
+      { "item": "Draught of Cloud-Skimmer", "stock": 3, "price": "35 gp" },
+      { "item": "Liquid Brawn Tincture", "stock": 2, "price": "50 gp" },
+      { "item": "Spark-Tongue Cordial", "stock": 4, "price": "45 gp" },
+      { "item": "Stone-Gaze Eye Drops", "stock": 3, "price": "30 gp" },
+      { "item": "Siphon-Moss Tonic", "stock": 2, "price": "60 gp" }
+    ]
+  },
+  "the_clockwork_alcove": {
+    "title": "The Clockwork Alcove",
+    "subtitle": "Salvage & Clockwork Gadgets",
+    "description": "Run by Keeva Copperpin (Rock Gnome). Located inside a giant wall-clock pendulum. Specializes in single-use mechanical tools.",
+    "inventory": [
+      { "item": "Spring-Loaded Decoy Sphere", "stock": 3, "price": "35 gp" },
+      { "item": "Overcharged Capacitive Rivet", "stock": 4, "price": "45 gp" },
+      { "item": "Clockwork Eye-Fly", "stock": 1, "price": "50 gp" },
+      { "item": "Pneumatic Anchor-Pistol", "stock": 2, "price": "40 gp" },
+      { "item": "Flash-Weld Paste", "stock": 5, "price": "30 gp" },
+      { "item": "Gyroscopic Counter-Rivet", "stock": 2, "price": "60 gp" }
+    ]
+  },
+  "the_sunken_hearth": {
+    "title": "The Sunken Hearth",
+    "subtitle": "Tavern, Food & Lodging",
+    "description": "Run by Barney Chubb (Halfling) & Lady Thrum (Cloud Giant Matriarch). Built into the Great Refectory fireplace.",
+    "inventory": [
+      { "item": "Flue-Side Cot (Night)", "stock": "∞", "price": "5 sp" },
+      { "item": "Hearth-Fire Suite (Night)", "stock": 2, "price": "2 gp" },
+      { "item": "Roast Boar & Herb Stew", "stock": "∞", "price": "8 sp" },
+      { "item": "Cloud-Melt Mineral Soak", "stock": 3, "price": "1 gp" },
+      { "item": "Lady Thrum’s Nightcap Tea", "stock": 6, "price": "5 sp" }
     ]
   }
 }
