@@ -1,17 +1,18 @@
 [
   {
-    "id": "r1",
-    "source": "Overheard at the bar",
-    "text": "The blacksmith on East Street hasn't received iron shipments in three weeks."
+    "source": "Lady Thrum (The Sunken Hearth)",
+    "text": "The second stage of the Orrery is humming in harmonic tune with the stars once more. Those who listen closely near the glass dome can hear the voice of Annam whispering planar truths."
   },
   {
-    "id": "r2",
-    "source": "Whispered by a street urchin",
-    "text": "Strange blue lights were seen flickering in the old sewer grates past midnight."
+    "source": "Murn Ember-Spite (The Ashen Crucible)",
+    "text": "A pack of rogue gnomes tried sneaking into the low furnace to harvest slag-glass. The Peace of Annam kept me from burning 'em, but I chased 'em out with a bellow full of sulfur gas!"
   },
   {
-    "id": "r3",
-    "source": "A drunken acolyte",
-    "text": "The High Priest is secretly purchasing large quantities of silver dust."
+    "source": "Gideon Vane (The Copper Alembic)",
+    "text": "A house-sized owl-cat has been nesting in the abandoned pet store on the east gallery. It won't bite thanks to the Peace, but it's knocked over three of my apothecary barrels!"
+  },
+  {
+    "source": "Keeva Copperpin (The Clockwork Alcove)",
+    "text": "If you hear loud clicking behind the Scriptorium walls, don't panic—it's just the ancient ventilation gears trying to un-rust themselves after a thousand years."
   }
 ]
