@@ -402,55 +402,10 @@
     // ===================================================================
     // 3. RANDOM ENCOUNTER ENGINE & TABLES
     // ===================================================================
-    const ENCOUNTER_THRESHOLD = 15; // DC 15 on d20 (30% chance per hour passed)
+    const ENCOUNTER_THRESHOLD = 15;
 
-    let dayEncounters = [
-      {
-        title: "Frost Goblins Ambush",
-        type: "danger",
-        tag: "Combat",
-        text: "3 Frost Goblins leap from behind a snowbank demanding your supplies!"
-      },
-      {
-        title: "Sudden Blizzard",
-        type: "hazard",
-        tag: "Environmental",
-        text: "Temperatures plummet rapidly. DC 12 Constitution save or suffer 1 level of Exhaustion."
-      },
-      {
-        title: "Wandering Merchant",
-        type: "flavor",
-        tag: "Social",
-        text: "A shivering fur-trader offers rare potions in exchange for warm rations."
-      },
-      {
-        title: "Dire Wolf Tracks",
-        type: "hazard",
-        tag: "Tracking",
-        text: "Fresh wolf prints circle your path. DC 13 Wisdom (Survival) to avoid a surprise attack."
-      }
-    ];
-
-    let nightEncounters = [
-      {
-        title: "Ice Specter Attack",
-        type: "danger",
-        tag: "Undead Combat",
-        text: "A freezing mist takes humanoid form. The temperature drops below zero as a specter attacks!"
-      },
-      {
-        title: "Cultist Patrol",
-        type: "danger",
-        tag: "Hostile NPCs",
-        text: "2 Sewer Cultists carrying dark lanterns spot your light in the darkness."
-      },
-      {
-        title: "Eerie Distant Howls",
-        type: "flavor",
-        tag: "Atmosphere",
-        text: "Chilling howls echo through the valley. The party feels watched from the dark."
-      }
-    ];
+    let dayEncounters = [];
+    let nightEncounters = [];
 
     function rollD20() {
       return Math.floor(Math.random() * 20) + 1;
@@ -461,14 +416,16 @@
         const d20Roll = rollD20();
         console.log(`🎲 Hourly Encounter Check (Hour ${i + 1}/${hourCount}): Rolled ${d20Roll} vs DC ${ENCOUNTER_THRESHOLD}`);
 
-        if (d20Roll >= ENCOUNTER_THRESHOLD) {
+        if (d20Roll >= ENCOUNTER_THRESHOLD && (dayEncounters.length || nightEncounters.length)) {
           const currentHour24 = Math.floor(currentMinutes / 60);
           const isNight = (currentHour24 >= 20 || currentHour24 < 6);
-          const pool = isNight ? nightEncounters : dayEncounters;
+          const pool = (isNight && nightEncounters.length) ? nightEncounters : dayEncounters;
           
-          const encounter = pool[Math.floor(Math.random() * pool.length)];
-          showEncounterModal(encounter, d20Roll);
-          break; // Max 1 encounter popup per time-advance batch
+          if (pool.length) {
+            const encounter = pool[Math.floor(Math.random() * pool.length)];
+            showEncounterModal(encounter, d20Roll);
+            break;
+          }
         }
       }
     }
@@ -496,18 +453,9 @@
     // 4. TIME CLOCK & FANTASY CALENDAR SYSTEM
     // ===================================================================
     const FANTASY_MONTHS = [
-      "Deepfrost",   // Jan
-      "Frostfade",   // Feb
-      "Awakening",   // Mar
-      "Rainbloom",   // Apr
-      "Highbloom",   // May
-      "Sunpeak",     // Jun
-      "Solstice",    // Jul
-      "Ember",       // Aug
-      "Harvestide",  // Sep
-      "Shadowfall",  // Oct
-      "Chillwind",   // Nov
-      "Rhimetime"    // Dec
+      "Deepfrost", "Frostfade", "Awakening", "Rainbloom",
+      "Highbloom", "Sunpeak", "Solstice", "Ember",
+      "Harvestide", "Shadowfall", "Chillwind", "Rhimetime"
     ];
 
     function getOrdinalSuffix(day) {
@@ -572,7 +520,6 @@
       }
     }
 
-    // Fantasy Time Display HUD
     const timeControl = L.control({ position: 'topright' });
     timeControl.onAdd = function() {
       const div = L.DomUtil.create('div', 'time-hud');
@@ -588,35 +535,46 @@
       advanceTime(15);
     });
 
-let locationData = [];
+    // ===================================================================
+    // 5. DYNAMIC DATA STORAGE & FETCHING
+    // ===================================================================
+    let locationData = [];
+    let rumorPool = [];
+    let merchantData = {};
+    let npcData = {};
 
-async function loadCampaignData() {
-  try {
-    const [locationsRes, rumorsRes, merchantsRes, encountersRes] = await Promise.all([
-      fetch('data/locations.json'),
-      fetch('data/rumors.json'),
-      fetch('data/merchants.json'),
-      fetch('data/encounters.json')
-    ]);
+    async function loadCampaignData() {
+      try {
+        const [locationsRes, rumorsRes, merchantsRes, encountersRes, npcsRes] = await Promise.all([
+          fetch('data/locations.json'),
+          fetch('data/rumors.json'),
+          fetch('data/merchants.json'),
+          fetch('data/encounters.json'),
+          fetch('data/npcs.json').catch(() => ({ ok: false })) // Optional fetch
+        ]);
 
-    if (locationsRes.ok) locationData = await locationsRes.json();
-    if (rumorsRes.ok) rumorPool = await rumorsRes.json();
-    if (merchantsRes.ok) merchantData = await merchantsRes.json();
-    
-    if (encountersRes.ok) {
-      const encounterData = await encountersRes.json();
-      dayEncounters = encounterData.day || [];
-      nightEncounters = encounterData.night || [];
+        if (locationsRes.ok) locationData = await locationsRes.json();
+        else console.error('❌ Failed to load data/locations.json');
+
+        if (rumorsRes.ok) rumorPool = await rumorsRes.json();
+        if (merchantsRes.ok) merchantData = await merchantsRes.json();
+        if (npcsRes.ok) npcData = await npcsRes.json();
+        
+        if (encountersRes.ok) {
+          const encounterData = await encountersRes.json();
+          dayEncounters = encounterData.day || [];
+          nightEncounters = encounterData.night || [];
+        }
+
+        console.log('✅ Campaign data loaded successfully!');
+      } catch (error) {
+        console.error('⚠️ Error loading external JSON files. If running locally, make sure you are using a local web server (e.g. VS Code Live Server).', error);
+      } finally {
+        initMapMarkers();
+        updateLightingOverlay();
+      }
     }
 
-    console.log('✅ Campaign data loaded successfully!');
-  } catch (error) {
-    console.warn('⚠️ Error loading external JSON files:', error);
-  } finally {
-    initMapMarkers();
-    updateLightingOverlay();
-  }
-}
     // ===================================================================
     // 6. HTML GENERATOR HELPERS
     // ===================================================================
@@ -715,10 +673,14 @@ async function loadCampaignData() {
       });
     }
 
+    // Extended icon set so new shop/location types render properly
     const icons = {
-      tavern: createPinIcon('pin-tavern', '🍺'),
-      armor:  createPinIcon('pin-armor', '🛡️'),
-      quest:  createPinIcon('pin-quest', '📜')
+      tavern:    createPinIcon('pin-tavern', '🍺'),
+      armor:     createPinIcon('pin-armor',  '🛡️'),
+      anvil:     createPinIcon('pin-armor',  '⚒️'),
+      potion:    createPinIcon('pin-armor',  '🧪'),
+      clockwork: createPinIcon('pin-armor',  '⚙️'),
+      quest:     createPinIcon('pin-quest',  '📜')
     };
 
     function getRadialPosition(centerLatLng, radiusInPixels, angleInDegrees) {
@@ -734,13 +696,13 @@ async function loadCampaignData() {
     let trackedMarkers = [];
     let closeSubMenu = function() {};
 
-    function attachRadialMenu(marker, innCoords) {
+    function attachRadialMenu(marker, loc) {
       const innSubItems = [
         {
           emoji: '🍺',
           angle: 150,
           title: 'Drink & Food Menu',
-          get popupHtml() { return buildShopTableHTML('tall_dwarf_inn'); }
+          get popupHtml() { return buildShopTableHTML(loc.id); } // DYNAMIC LOCATION ID
         },
         {
           emoji: '👤',
@@ -751,8 +713,8 @@ async function loadCampaignData() {
               <h3>Tavern Patrons</h3>
               <div class="subtitle">Key Characters</div>
               <ul style="font-size: 0.8rem; padding-left: 14px; color: #c4a7e7; line-height: 1.5;">
-                <li><strong>Thorin High-Reach:</strong> Dwarf barkeep with an eye for trade.</li>
-                <li><strong>Sera:</strong> Local rogue selling whisper rumors.</li>
+                <li><strong>Barney Chubb:</strong> Busy halfling innkeeper.</li>
+                <li><strong>Lady Thrum:</strong> Cloud Giant matriarch sitting by the hearth.</li>
               </ul>
             </div>`
         },
@@ -782,7 +744,7 @@ async function loadCampaignData() {
         const radius = 80;
 
         innSubItems.forEach(item => {
-          const subPos = getRadialPosition(innCoords, radius, item.angle);
+          const subPos = getRadialPosition(loc.coords, radius, item.angle);
           
           const subMarker = L.marker(subPos, { icon: createSubIcon(item.emoji) })
             .bindTooltip(item.title, { direction: 'top', offset: [0, -10] })
@@ -813,7 +775,7 @@ async function loadCampaignData() {
         const marker = L.marker(loc.coords, { icon: markerIcon });
 
         if (loc.hasRadialMenu) {
-          attachRadialMenu(marker, loc.coords);
+          attachRadialMenu(marker, loc);
         } else if (merchantData[loc.id]) {
           marker.bindPopup(() => buildShopTableHTML(loc.id));
         } else if (loc.popupHtml) {
