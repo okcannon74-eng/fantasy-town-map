@@ -1,21 +1,48 @@
 [
   {
-    "id": "ironhand_armory",
-    "name": "Ironhand Armory",
-    "icon": "armor",
-    "coords": [436, 871],
+    "id": "the_sunken_hearth",
+    "name": "The Sunken Hearth",
+    "layer": "taverns",
+    "icon": "tavern",
+    "coords": [419, 1182],
+    "hasRadialMenu": true,
+    "minZoom": -1,
+    "maxZoom": 2
+  },
+  {
+    "id": "the_ashen_crucible",
+    "name": "The Ashen Crucible",
     "layer": "merchants",
+    "icon": "armor",
+    "coords": [450, 850],
+    "minZoom": -1,
+    "maxZoom": 2
+  },
+  {
+    "id": "the_copper_alembic",
+    "name": "The Copper Alembic",
+    "layer": "merchants",
+    "icon": "armor",
+    "coords": [720, 930],
+    "minZoom": -0.5,
+    "maxZoom": 2
+  },
+  {
+    "id": "the_single_stanza",
+    "name": "The Single Stanza",
+    "layer": "merchants",
+    "icon": "quest",
+    "coords": [1150, 620],
     "minZoom": 0,
     "maxZoom": 2
   },
   {
-    "id": "tall_dwarf_inn",
-    "name": "The Tall Dwarf Inn",
-    "icon": "tavern",
-    "coords": [419, 1182],
-    "layer": "taverns",
-    "hasRadialMenu": true,
-    "minZoom": -1,
+    "id": "the_clockwork_alcove",
+    "name": "The Clockwork Alcove",
+    "layer": "merchants",
+    "icon": "armor",
+    "coords": [980, 1050],
+    "minZoom": 0,
     "maxZoom": 2
   }
 ]
