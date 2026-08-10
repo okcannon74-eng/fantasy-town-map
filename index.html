@@ -588,73 +588,35 @@
       advanceTime(15);
     });
 
-    // ===================================================================
-    // 5. DYNAMIC DATA STORAGE & FETCHING
-    // ===================================================================
-    let rumorPool = [];
-    let merchantData = {};
+let locationData = [];
 
-    const locationData = [
-      {
-        id: 'tall_dwarf_inn',
-        layer: 'taverns',
-        icon: 'tavern',
-        coords: [419, 1182],
-        hasRadialMenu: true,
-        minZoom: -1,
-        maxZoom: 2
-      },
-      {
-        id: 'ironhand_armory',
-        layer: 'merchants',
-        icon: 'armor',
-        coords: [436, 871],
-        minZoom: -1,
-        maxZoom: 2
-      },
-      {
-        id: 'town_square_notice',
-        layer: 'quests',
-        icon: 'quest',
-        coords: [664, 1147],
-        minZoom: -0.5,
-        maxZoom: 2,
-        popupHtml: `
-          <div class="popup-card">
-            <h3>Town Square Notice</h3>
-            <div class="subtitle">Quest Hub</div>
-            <p><strong>Bounty:</strong> 100 gold pieces for information leading to the capture of the Sewer Cultist master.</p>
-          </div>
-        `
-      }
-    ];
+async function loadCampaignData() {
+  try {
+    const [locationsRes, rumorsRes, merchantsRes, encountersRes] = await Promise.all([
+      fetch('data/locations.json'),
+      fetch('data/rumors.json'),
+      fetch('data/merchants.json'),
+      fetch('data/encounters.json')
+    ]);
 
-    async function loadCampaignData() {
-      try {
-        const [rumorsRes, merchantsRes, encountersRes] = await Promise.all([
-          fetch('data/rumors.json'),
-          fetch('data/merchants.json'),
-          fetch('data/encounters.json')
-        ]);
-
-        if (rumorsRes.ok) rumorPool = await rumorsRes.json();
-        if (merchantsRes.ok) merchantData = await merchantsRes.json();
-        
-        if (encountersRes.ok) {
-          const encounterData = await encountersRes.json();
-          dayEncounters = encounterData.day || [];
-          nightEncounters = encounterData.night || [];
-        }
-
-        console.log('✅ Campaign data loaded successfully!');
-      } catch (error) {
-        console.warn('⚠️ Error loading external JSON files:', error);
-      } finally {
-        initMapMarkers();
-        updateLightingOverlay();
-      }
+    if (locationsRes.ok) locationData = await locationsRes.json();
+    if (rumorsRes.ok) rumorPool = await rumorsRes.json();
+    if (merchantsRes.ok) merchantData = await merchantsRes.json();
+    
+    if (encountersRes.ok) {
+      const encounterData = await encountersRes.json();
+      dayEncounters = encounterData.day || [];
+      nightEncounters = encounterData.night || [];
     }
 
+    console.log('✅ Campaign data loaded successfully!');
+  } catch (error) {
+    console.warn('⚠️ Error loading external JSON files:', error);
+  } finally {
+    initMapMarkers();
+    updateLightingOverlay();
+  }
+}
     // ===================================================================
     // 6. HTML GENERATOR HELPERS
     // ===================================================================
