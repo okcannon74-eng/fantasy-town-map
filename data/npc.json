@@ -1,0 +1,37 @@
+{
+  "murn_ember_spite": {
+    "name": "Murn Ember-Spite",
+    "race": "Duergar (Gray Dwarf)",
+    "location": "the_ashen_crucible",
+    "role": "Master Metalsmith & Martial Alchemist",
+    "quote": "You don't need a sword that glows for a thousand years. You need a blade that melts an ogre's face off right now."
+  },
+  "nixie_flit": {
+    "name": "Nixie 'Ink-Fingers' Flit",
+    "race": "Sprite / Pixie",
+    "location": "the_single_stanza",
+    "role": "Sylvan Arcane Apothecary",
+    "quote": "Save your spell slots for when you're actually dying, darling."
+  },
+  "gideon_and_brawn": {
+    "name": "Gideon Vane & Master Brawn",
+    "race": "Halfling & Hill Giant",
+    "location": "the_copper_alembic",
+    "role": "Giant-Formula Apothecaries",
+    "quote": "The trick is diluting a brew meant for a storm giant so it doesn't melt a halfling's stomach lining."
+  },
+  "keeva_copperpin": {
+    "name": "Keeva 'Sprocket-Wren' Copperpin",
+    "race": "Rock Gnome",
+    "location": "the_clockwork_alcove",
+    "role": "Clockwork Specialist",
+    "quote": "Give me two gears, a piston, and copper wire, and I'll solve whatever problem is trying to eat you."
+  },
+  "barney_and_thrum": {
+    "name": "Barney Chubb & Lady Thrum",
+    "race": "Halfling & Cloud Giant",
+    "location": "the_sunken_hearth",
+    "role": "Innkeepers & Storykeepers",
+    "quote": "Keep the beer cold, the hearth warm, and never stand directly under a Cloud Giant when they sneeze."
+  }
+}
