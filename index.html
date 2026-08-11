@@ -590,30 +590,29 @@ if (lightingOverlay) {
     // ===================================================================
     // 6. HTML GENERATOR HELPERS
     // ===================================================================
-   function buildShopTableHTML(merchantKey) {
+function buildShopTableHTML(merchantKey) {
   const merchant = merchantData[merchantKey];
   if (!merchant) return '<div class="popup-card"><p>No inventory available.</p></div>';
 
   const rows = merchant.inventory.map(row => `
     <tr>
-      <td>
-        <strong style="color: #e2e8f0;">${row.item}</strong>
-        ${row.description ? `<div style="font-size: 0.72rem; color: #9ccfd8; margin-top: 2px; line-height: 1.3;">${row.description}</div>` : ''}
-      </td>
+      <td style="font-weight: 600; vertical-align: top;">${row.item}</td>
+      <td style="font-size: 0.73rem; color: #9ccfd8; line-height: 1.3; vertical-align: top;">${row.description || ''}</td>
       <td style="text-align: center; vertical-align: top;">${row.stock}</td>
       <td class="cost" style="vertical-align: top;">${row.price}</td>
     </tr>
   `).join('');
 
   return `
-    <div class="popup-card" style="max-width: 340px;">
+    <div class="popup-card" style="max-width: 420px;">
       <h3>${merchant.title}</h3>
       <div class="subtitle">${merchant.subtitle}</div>
       ${merchant.description ? `<p>${merchant.description}</p>` : ''}
       <table class="shop-table">
         <thead>
           <tr>
-            <th>Item & Effect</th>
+            <th>Item</th>
+            <th>Effect</th>
             <th style="text-align: center;">Stock</th>
             <th style="text-align: right;">Price</th>
           </tr>
