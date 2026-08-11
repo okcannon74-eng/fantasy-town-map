@@ -4,11 +4,36 @@
     "subtitle": "Single-Use Martial Armory",
     "description": "Run by Murn Ember-Spite (Duergar). Built inside a giant forge ash-catcher. Specializes in single-use martial gear and forge coatings.",
     "inventory": [
-      { "item": "Magma-Grit Whetstone", "stock": 3, "price": "45 gp" },
-      { "item": "Flash-Rivet Plates (Pack of 2)", "stock": 2, "price": "75 gp" },
-      { "item": "Slag-Melter Oil", "stock": 4, "price": "50 gp" },
-      { "item": "Iron-Skin Quench Polish", "stock": 2, "price": "40 gp" },
-      { "item": "Cinder-Burst Bolt / Arrow", "stock": 12, "price": "25 gp" }
+      {
+        "item": "Magma-Grit Whetstone",
+        "stock": 3,
+        "price": "45 gp",
+        "description": "Sharpening a bladed or piercing weapon for 1 min coats the edge in molten grit. Weapon deals +1d4 fire damage on hits for 1 hour."
+      },
+      {
+        "item": "Flash-Rivet Plates (Pack of 2)",
+        "stock": 2,
+        "price": "75 gp",
+        "description": "Hammered into armor during a short rest. Reaction when hit by a melee attack: Detonate a rivet to blind the attacker until end of their next turn (DC 12 Con save)."
+      },
+      {
+        "item": "Slag-Melter Oil",
+        "stock": 4,
+        "price": "50 gp",
+        "description": "Coat a weapon or 3 arrows as an action. Next hit against metal/stone armor or construct deals 2d4 acid damage and reduces target AC by 1 for the encounter."
+      },
+      {
+        "item": "Iron-Skin Quench Polish",
+        "stock": 2,
+        "price": "40 gp",
+        "description": "Applied to leather armor or shield in 1 min. Hardens into an iron shell granting +1 AC for 1 hour (shatters upon taking bludgeoning or critical damage)."
+      },
+      {
+        "item": "Cinder-Burst Bolt / Arrow",
+        "stock": 12,
+        "price": "25 gp",
+        "description": "Single-use ammunition capped with black powder. Deals weapon damage + 1d6 fire damage to target and 1 fire damage to all creatures within 5 ft."
+      }
     ]
   },
   "the_single_stanza": {
@@ -16,12 +41,42 @@
     "subtitle": "Arcane Consumables & Wards",
     "description": "Run by Nixie 'Ink-Fingers' Flit (Sprite). Built inside the hollowed spine of a giant tome. Specializes in single-use spell catalysts.",
     "inventory": [
-      { "item": "Ink of the Rapid Mind", "stock": 2, "price": "50 gp" },
-      { "item": "Shatter-Prism Focus", "stock": 4, "price": "35 gp" },
-      { "item": "Glyph-Stained Vellum Patch", "stock": 3, "price": "45 gp" },
-      { "item": "Ley-Line Snuff", "stock": 2, "price": "60 gp" },
-      { "item": "Starlight Incense Cone", "stock": 5, "price": "30 gp" },
-      { "item": "Wild-Arcana Wafer", "stock": 4, "price": "40 gp" }
+      {
+        "item": "Ink of the Rapid Mind",
+        "stock": 2,
+        "price": "50 gp",
+        "description": "Paint a rune on your forehead while casting a Ritual spell as an action to cast it instantly (1 action) instead of adding 10 minutes."
+      },
+      {
+        "item": "Shatter-Prism Focus",
+        "stock": 4,
+        "price": "35 gp",
+        "description": "Crush as a somatic component when casting an elemental spell (acid/cold/fire/lightning/thunder) to ignore target damage resistance for that cast."
+      },
+      {
+        "item": "Glyph-Stained Vellum Patch",
+        "stock": 3,
+        "price": "45 gp",
+        "description": "Wearable patch. Reaction when targeted by an attack or spell: Triggers Shield or Absorb Elements at 1st level without expending a spell slot."
+      },
+      {
+        "item": "Ley-Line Snuff",
+        "stock": 2,
+        "price": "60 gp",
+        "description": "Bonus Action: Inhale a pinch to regain one 1st-level spell slot. You take 1d4 force damage and cannot cast non-cantrip spells until end of next turn."
+      },
+      {
+        "item": "Starlight Incense Cone",
+        "stock": 5,
+        "price": "30 gp",
+        "description": "Bonus Action: Light before casting a spell. Illuminates 15 ft radius for 1 round; spell deals +1d4 radiant damage and gains advantage on attack roll (+1 to DC)."
+      },
+      {
+        "item": "Wild-Arcana Wafer",
+        "stock": 4,
+        "price": "40 gp",
+        "description": "Bonus Action snack: Allows you to cast a known cantrip as a Bonus Action this turn. Natural 1 or target natural 20 triggers a harmless wild magic surge."
+      }
     ]
   },
   "the_copper_alembic": {
@@ -29,12 +84,42 @@
     "subtitle": "Apothecary & Diluted Elixirs",
     "description": "Run by Gideon Vane (Halfling) & Brawn (Hill Giant). Suspended 40ft in the rafters in a giant copper still. Micro-diluted giant potions.",
     "inventory": [
-      { "item": "Marrow-Stout Elixir", "stock": 5, "price": "40 gp" },
-      { "item": "Draught of Cloud-Skimmer", "stock": 3, "price": "35 gp" },
-      { "item": "Liquid Brawn Tincture", "stock": 2, "price": "50 gp" },
-      { "item": "Spark-Tongue Cordial", "stock": 4, "price": "45 gp" },
-      { "item": "Stone-Gaze Eye Drops", "stock": 3, "price": "30 gp" },
-      { "item": "Siphon-Moss Tonic", "stock": 2, "price": "60 gp" }
+      {
+        "item": "Marrow-Stout Elixir",
+        "stock": 5,
+        "price": "40 gp",
+        "description": "Thick, savory brew. Drinking grants 1d6 + 2 temporary hit points and advantage on saving throws against poison and fright for 1 hour."
+      },
+      {
+        "item": "Draught of Cloud-Skimmer",
+        "stock": 3,
+        "price": "35 gp",
+        "description": "Bonus Action drink: Grants Feather Fall for 1 minute and triples your jump distance for the duration."
+      },
+      {
+        "item": "Liquid Brawn Tincture",
+        "stock": 2,
+        "price": "50 gp",
+        "description": "Micro-diluted Hill Giant potion. For 1 minute, count as one size larger for carrying/pushing/lifting and gain +2 to Strength melee damage rolls."
+      },
+      {
+        "item": "Spark-Tongue Cordial",
+        "stock": 4,
+        "price": "45 gp",
+        "description": "Bonus Action drink: Next weapon attack or cantrip hit within 1 minute deals +1d6 lightning damage and prevents target from taking reactions until their next turn."
+      },
+      {
+        "item": "Stone-Gaze Eye Drops",
+        "stock": 3,
+        "price": "30 gp",
+        "description": "Apply 2 drops to eyes: Grants 60 ft darkvision for 1 hour (or allows seeing clearly through light fog, snow, and smoke if you already have darkvision)."
+      },
+      {
+        "item": "Siphon-Moss Tonic",
+        "stock": 2,
+        "price": "60 gp",
+        "description": "Action drink: Instantly neutralizes one poison or cures one disease affecting you, and restores 1d4 hit points."
+      }
     ]
   },
   "the_clockwork_alcove": {
@@ -42,12 +127,42 @@
     "subtitle": "Salvage & Clockwork Gadgets",
     "description": "Run by Keeva Copperpin (Rock Gnome). Located inside a giant wall-clock pendulum. Specializes in single-use mechanical tools.",
     "inventory": [
-      { "item": "Spring-Loaded Decoy Sphere", "stock": 3, "price": "35 gp" },
-      { "item": "Overcharged Capacitive Rivet", "stock": 4, "price": "45 gp" },
-      { "item": "Clockwork Eye-Fly", "stock": 1, "price": "50 gp" },
-      { "item": "Pneumatic Anchor-Pistol", "stock": 2, "price": "40 gp" },
-      { "item": "Flash-Weld Paste", "stock": 5, "price": "30 gp" },
-      { "item": "Gyroscopic Counter-Rivet", "stock": 2, "price": "60 gp" }
+      {
+        "item": "Spring-Loaded Decoy Sphere",
+        "stock": 3,
+        "price": "35 gp",
+        "description": "Action: Throw up to 30 ft. Rattles, sparks, and makes loud noise for 1 round. Nearby enemies take disadv. on Perception; first attack against distracted target has adv."
+      },
+      {
+        "item": "Overcharged Capacitive Rivet",
+        "stock": 4,
+        "price": "45 gp",
+        "description": "Bonus Action: Attach to weapon/ammo. Next hit deals +1d8 lightning damage and target must pass a DC 12 Con save or be incapacitated until start of next turn."
+      },
+      {
+        "item": "Clockwork Eye-Fly",
+        "stock": 1,
+        "price": "50 gp",
+        "description": "Action: Wind and release. Flies 30 ft/round for 1 minute while you view through a monocular lens (with 30 ft darkvision). Breaks after use."
+      },
+      {
+        "item": "Pneumatic Anchor-Pistol",
+        "stock": 2,
+        "price": "40 gp",
+        "description": "Fires a piton & wire tether up to 40 ft into stone/wood/dirt. Automatically reels up to 300 lbs directly to the point of impact."
+      },
+      {
+        "item": "Flash-Weld Paste",
+        "stock": 5,
+        "price": "30 gp",
+        "description": "Action: Smear on metal lock/hinge to ignite with intense heat. Fuses metal shut (DC 20 Strength to break) or melts through locks up to 1 inch thick."
+      },
+      {
+        "item": "Gyroscopic Counter-Rivet",
+        "stock": 2,
+        "price": "60 gp",
+        "description": "Affix to armor/shield (1 min). Reaction when targeted by prone or forced movement effects: Automatically pass the save/check to stay rooted."
+      }
     ]
   },
   "the_sunken_hearth": {
@@ -55,11 +170,36 @@
     "subtitle": "Tavern, Food & Lodging",
     "description": "Run by Barney Chubb (Halfling) & Lady Thrum (Cloud Giant Matriarch). Built into the Great Refectory fireplace.",
     "inventory": [
-      { "item": "Flue-Side Cot (Night)", "stock": "∞", "price": "5 sp" },
-      { "item": "Hearth-Fire Suite (Night)", "stock": 2, "price": "2 gp" },
-      { "item": "Roast Boar & Herb Stew", "stock": "∞", "price": "8 sp" },
-      { "item": "Cloud-Melt Mineral Soak", "stock": 3, "price": "1 gp" },
-      { "item": "Lady Thrum’s Nightcap Tea", "stock": 6, "price": "5 sp" }
+      {
+        "item": "Flue-Side Cot (Night)",
+        "stock": "∞",
+        "price": "5 sp",
+        "description": "Hammock in warm chimney drafts. Full night rest grants +5 ft movement speed during your next adventuring day."
+      },
+      {
+        "item": "Hearth-Fire Suite (Night)",
+        "stock": 2,
+        "price": "2 gp",
+        "description": "Plush alcove beds in match-flint storage room. Start your next adventuring day with 5 temporary hit points."
+      },
+      {
+        "item": "Roast Boar & Herb Stew",
+        "stock": "∞",
+        "price": "8 sp",
+        "description": "Hearty meal served with hearth bread. Grants advantage on Con saves against extreme cold and environmental hazards next adventuring day."
+      },
+      {
+        "item": "Cloud-Melt Mineral Soak",
+        "stock": 3,
+        "price": "1 gp",
+        "description": "1-hour geothermal tub soak removes 1 level of exhaustion and grants a +1 bonus to Strength saves during your next adventuring day."
+      },
+      {
+        "item": "Lady Thrum’s Nightcap Tea",
+        "stock": 6,
+        "price": "5 sp",
+        "description": "A shimmering lavender tea. Completing a long rest after drinking regains 1 additional spent Hit Die."
+      }
     ]
   }
 }
