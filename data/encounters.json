@@ -1,48 +1,78 @@
 {
   "day": [
     {
-      "title": "Frost Goblins Ambush",
-      "type": "danger",
-      "tag": "Combat",
-      "text": "3 Frost Goblins leap from behind a snowbank demanding your supplies!"
-    },
-    {
-      "title": "Sudden Blizzard",
+      "title": "The Giant-Scale Treadmill",
       "type": "hazard",
-      "tag": "Environmental",
-      "text": "Temperatures plummet rapidly. DC 12 Constitution save or suffer 1 level of Exhaustion."
+      "tag": "Architecture",
+      "text": "A 15ft ventilation gear is rusted shut. DC 18 Athletics or DC 18 History/Investigation.<br><strong>Success (Boon):</strong> +10 ft speed next adventuring day.<br><strong>Failure (Bane):</strong> 2d6 bludgeoning damage & disadv. on Dex saves next adventuring day."
     },
     {
-      "title": "Wandering Merchant",
+      "title": "The Warden’s Scales",
       "type": "flavor",
-      "tag": "Social",
-      "text": "A shivering fur-trader offers rare potions in exchange for warm rations."
+      "tag": "Peace of Annam",
+      "text": "A warding pedestal judges your bloodlust. DC 16 Insight or DC 16 Religion.<br><strong>Success (Boon):</strong> First damage taken next day reduced by 1d8 + Wis mod.<br><strong>Failure (Bane):</strong> -2 penalty to initiative next adventuring day."
     },
     {
-      "title": "Dire Wolf Tracks",
+      "title": "The Titan’s Playpen",
       "type": "hazard",
-      "tag": "Tracking",
-      "text": "Fresh wolf prints circle your path. DC 13 Wisdom (Survival) to avoid a surprise attack."
+      "tag": "Giant Pet",
+      "text": "A house-sized dire owl-cat treats you like a squeaky toy! DC 16 Animal Handling or DC 16 Athletics.<br><strong>Success (Boon):</strong> Beast creatures have disadv. on attack rolls against you next day.<br><strong>Failure (Bane):</strong> 2d6 bludgeoning damage & -10 ft movement speed next day."
+    },
+    {
+      "title": "The Artificer’s Pressure Valve",
+      "type": "hazard",
+      "tag": "Artificer Shop",
+      "text": "A clockwork invention vents high-pressure steam! DC 18 Arcana or DC 18 Sleight of Hand.<br><strong>Success (Boon):</strong> +1 bonus to weapon attack rolls next adventuring day.<br><strong>Failure (Bane):</strong> 2d6 fire damage & disadv. on initiative next day."
+    },
+    {
+      "title": "The Fuming Crucible",
+      "type": "hazard",
+      "tag": "Potion Shop",
+      "text": "A 10ft apothecary jar of giant strength potion cracks! DC 17 Nature/Medicine or DC 17 Sleight of Hand.<br><strong>Success (Boon):</strong> Poison resistance & immunity to poisoned condition next day.<br><strong>Failure (Bane):</strong> 2d6 acid damage & disadv. on Con saves next day."
+    },
+    {
+      "title": "The Rafter Crossing",
+      "type": "hazard",
+      "tag": "Rafters",
+      "text": "Walk across a fallen giant bookshelf over a 40ft chasm. DC 15 Athletics or DC 15 Nature/Survival.<br><strong>Success (Boon):</strong> Adv. on Acrobatics & Athletics checks next adventuring day.<br><strong>Failure (Bane):</strong> 2d6 bludgeoning damage & 1 random non-magical item breaks."
     }
   ],
   "night": [
     {
-      "title": "Ice Specter Attack",
+      "title": "Echoes of the Sundering",
       "type": "danger",
-      "tag": "Undead Combat",
-      "text": "A freezing mist takes humanoid form. The temperature drops below zero as a specter attacks!"
+      "tag": "Wild Magic",
+      "text": "Gravity flickers in a lingering shockwave of Annam's strike. DC 17 Arcana or DC 17 Wisdom Save.<br><strong>Success (Boon):</strong> Adv. on Arcana and History checks next adventuring day.<br><strong>Failure (Bane):</strong> Poisoned condition (motion sickness) during next adventuring day."
     },
     {
-      "title": "Cultist Patrol",
-      "type": "danger",
-      "tag": "Hostile NPCs",
-      "text": "2 Sewer Cultists carrying dark lanterns spot your light in the darkness."
+      "title": "The Dust of Centuries",
+      "type": "hazard",
+      "tag": "Scriptorium",
+      "text": "Opening a cabinet releases petrified vellum spores. DC 17 Con Save or DC 17 Sleight of Hand.<br><strong>Success (Boon):</strong> Adv. on your first attack roll or spell attack roll next day.<br><strong>Failure (Bane):</strong> Disadv. on Stealth checks during next adventuring day."
     },
     {
-      "title": "Eerie Distant Howls",
+      "title": "Resonance of the Second Stage",
+      "type": "danger",
+      "tag": "Orrery",
+      "text": "A beam of concentrated starlight hums across the walkway. DC 19 Acrobatics or DC 19 Perception.<br><strong>Success (Boon):</strong> +2 bonus to Dexterity saving throws next adventuring day.<br><strong>Failure (Bane):</strong> -1 penalty to spell attack rolls, spell save DCs, and weapon attacks next day."
+    },
+    {
+      "title": "The Astrolabe Alignment",
       "type": "flavor",
-      "tag": "Atmosphere",
-      "text": "Chilling howls echo through the valley. The party feels watched from the dark."
+      "tag": "Observatory",
+      "text": "A giant brass astrolabe distorts time perception. DC 17 Investigation or DC 17 Perception.<br><strong>Success (Boon):</strong> Adv. on Wisdom saving throws during next adventuring day.<br><strong>Failure (Bane):</strong> -2 penalty to passive Perception and Initiative next day."
+    },
+    {
+      "title": "The Arcane Lockbox",
+      "type": "danger",
+      "tag": "Magic Shop",
+      "text": "An ancient display orb is locked shut by a rune puzzle. DC 18 Arcana or DC 18 Sleight of Hand.<br><strong>Success (Boon):</strong> Gain 1 temporary 1st-level spell slot (or +1d6 force damage) next day.<br><strong>Failure (Bane):</strong> 2d6 force damage & -1 penalty to spell attacks, save DCs, and spell saves."
+    },
+    {
+      "title": "The Press of Knowledge",
+      "type": "hazard",
+      "tag": "Archives",
+      "text": "A giant automated book-binding press clacks to life! DC 16 History or DC 16 Acrobatics.<br><strong>Success (Boon):</strong> Adv. on Investigation checks & weapon attacks crit on 19-20 next day.<br><strong>Failure (Bane):</strong> 2d6 bludgeoning damage & disadv. on Strength checks next day."
     }
   ]
 }
