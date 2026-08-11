@@ -771,7 +771,7 @@ function buildShopTableHTML(merchantKey) {
       });
     }
 
-    function initMapMarkers() {
+function initMapMarkers() {
       tavernsLayer.clearLayers();
       merchantsLayer.clearLayers();
       questsLayer.clearLayers();
@@ -791,9 +791,10 @@ function buildShopTableHTML(merchantKey) {
         if (loc.hasRadialMenu) {
           attachRadialMenu(marker, loc);
         } else if (merchantData[loc.id]) {
-          marker.bindPopup(() => buildShopTableHTML(loc.id));
+          // Pass the options object here so Leaflet lets the popup widen!
+          marker.bindPopup(() => buildShopTableHTML(loc.id), { maxWidth: 600, minWidth: 480 });
         } else if (loc.popupHtml) {
-          marker.bindPopup(loc.popupHtml);
+          marker.bindPopup(loc.popupHtml, { maxWidth: 600, minWidth: 480 });
         }
 
         trackedMarkers.push({
@@ -803,6 +804,9 @@ function buildShopTableHTML(merchantKey) {
           maxZoom: loc.maxZoom !== undefined ? loc.maxZoom : Infinity
         });
       });
+
+      updateMarkerVisibility();
+    }
 
       updateMarkerVisibility();
     }
