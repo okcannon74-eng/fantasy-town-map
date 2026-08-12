@@ -344,7 +344,7 @@
     <!-- Container to display the roll result inside the modal -->
     <div id="encounter-roll-result" style="display: none; margin-bottom: 12px; padding: 10px; background: #2a2e37; border: 1px solid #3b4252; border-radius: 6px; text-align: center; font-weight: bold; color: #f6c177;"></div>
 
-<div class="encounter-actions">
+    <div class="encounter-actions">
       <button id="encounter-dismiss-btn" class="encounter-btn btn-dismiss" onclick="dismissEncounter()" style="display: none;">Dismiss</button>
       <button id="encounter-roll-btn" class="encounter-btn btn-action" onclick="rollEncounterDie()">Roll the Die</button>
     </div>
@@ -492,7 +492,8 @@
         }
       }
     }
-function showEncounterModal(encounter, rollValue) {
+
+    function showEncounterModal(encounter, rollValue) {
       const modal = document.getElementById('encounter-modal');
       const titleEl = document.getElementById('encounter-title');
       const tagEl = document.getElementById('encounter-tag');
@@ -548,6 +549,13 @@ function showEncounterModal(encounter, rollValue) {
       // Swap buttons: Hide "Roll the Die", reveal "Dismiss"
       if (rollBtn) rollBtn.style.display = 'none';
       if (dismissBtn) dismissBtn.style.display = 'inline-block';
+    }
+
+    function dismissEncounter() {
+      const modal = document.getElementById('encounter-modal');
+      if (modal) {
+        modal.classList.remove('active');
+      }
     }
 
     // Dev Helper: Type forceEncounter() in browser console to test instantly
