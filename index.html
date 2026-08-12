@@ -31,7 +31,6 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      z-index: 650; /* Above tiles & markers (600), below popups (700) and controls (1000) */
       pointer-events: none; /* Allows pan/zoom mouse interactions to pass through */
       mix-blend-mode: multiply;
       transition: background-color 0.8s ease-in-out;
@@ -127,7 +126,6 @@
 
     .popup-card {
       min-width: 220px;
-      max-width: 280px;
     }
 
     .popup-card h3 {
@@ -164,7 +162,7 @@
     }
 
     .shop-table th, .shop-table td {
-      padding: 4px 6px;
+      padding: 6px 8px;
       text-align: left;
       border-bottom: 1px solid #2e3440;
     }
@@ -324,8 +322,7 @@
     const imgWidth = 2000;
     const imgHeight = 1500;
     const bounds = [[0, 0], [imgHeight, imgWidth]];
- 
-    // 1. Initialize your map
+
     const map = L.map('map', {
       crs: L.CRS.Simple,
       minZoom: -1,
@@ -335,17 +332,16 @@
       maxBoundsViscosity: 0.8
     });
 
+    // Custom Lighting Pane (keeps popups untinted)
+    map.createPane('lightingPane');
+    map.getPane('lightingPane').style.zIndex = 650;
+    map.getPane('lightingPane').style.pointerEvents = 'none';
 
-// 2. CREATE A CUSTOM LIGHTING PANE (Sits between Markers [600] and Popups [700])
-map.createPane('lightingPane');
-map.getPane('lightingPane').style.zIndex = 650;
-map.getPane('lightingPane').style.pointerEvents = 'none';
+    const lightingOverlay = document.getElementById('lighting-overlay');
+    if (lightingOverlay) {
+      map.getPane('lightingPane').appendChild(lightingOverlay);
+    }
 
-// 3. MOVE YOUR LIGHTING OVERLAY DIV INTO THIS PANE
-const lightingOverlay = document.getElementById('lighting-overlay');
-if (lightingOverlay) {
-  map.getPane('lightingPane').appendChild(lightingOverlay);
-}
     const mapImageUrl = 'Scriptorium.jpg'; 
     L.imageOverlay(mapImageUrl, bounds).addTo(map);
     map.fitBounds(bounds);
@@ -368,15 +364,15 @@ if (lightingOverlay) {
     // 2. DAY/NIGHT LIGHTING OVERLAY SYSTEM
     // ===================================================================
     const lightingKeyframes = [
-      { h: 0,   r: 15,  g: 20,  b: 50,  a: 0.85 }, // 12:00 AM - Midnight Indigo
-      { h: 4.5, r: 25,  g: 30,  b: 65,  a: 0.75 }, // 04:30 AM - Deep Pre-Dawn
-      { h: 6,   r: 255, g: 150, b: 85,  a: 0.45 }, // 06:00 AM - Dawn Gold & Coral
-      { h: 8,   r: 255, g: 235, b: 200, a: 0.15 }, // 08:00 AM - Morning Soft Light
-      { h: 12,  r: 255, g: 255, b: 255, a: 0.00 }, // 12:00 PM - Midday Clear
-      { h: 17,  r: 255, g: 185, b: 120, a: 0.25 }, // 05:00 PM - Golden Hour
-      { h: 19,  r: 215, g: 75,  b: 110, a: 0.50 }, // 07:00 PM - Sunset Crimson
-      { h: 21,  r: 30,  g: 35,  b: 80,  a: 0.75 }, // 09:00 PM - Twilight Nightfall
-      { h: 24,  r: 15,  g: 20,  b: 50,  a: 0.85 }  // 12:00 AM - Midnight Loop
+      { h: 0,   r: 15,  g: 20,  b: 50,  a: 0.85 }, // Midnight
+      { h: 4.5, r: 25,  g: 30,  b: 65,  a: 0.75 }, // Pre-Dawn
+      { h: 6,   r: 255, g: 150, b: 85,  a: 0.45 }, // Dawn
+      { h: 8,   r: 255, g: 235, b: 200, a: 0.15 }, // Morning
+      { h: 12,  r: 255, g: 255, b: 255, a: 0.00 }, // Midday
+      { h: 17,  r: 255, g: 185, b: 120, a: 0.25 }, // Golden Hour
+      { h: 19,  r: 215, g: 75,  b: 110, a: 0.50 }, // Sunset
+      { h: 21,  r: 30,  g: 35,  b: 80,  a: 0.75 }, // Twilight
+      { h: 24,  r: 15,  g: 20,  b: 50,  a: 0.85 }  // Midnight Loop
     ];
 
     function getLightingTint(totalMinutes) {
@@ -562,7 +558,7 @@ if (lightingOverlay) {
           fetch('data/rumors.json'),
           fetch('data/merchants.json'),
           fetch('data/encounters.json'),
-          fetch('data/npcs.json').catch(() => ({ ok: false })) // Optional fetch
+          fetch('data/npcs.json').catch(() => ({ ok: false }))
         ]);
 
         if (locationsRes.ok) locationData = await locationsRes.json();
@@ -580,7 +576,7 @@ if (lightingOverlay) {
 
         console.log('✅ Campaign data loaded successfully!');
       } catch (error) {
-        console.error('⚠️ Error loading external JSON files. If running locally, make sure you are using a local web server (e.g. VS Code Live Server).', error);
+        console.error('⚠️ Error loading external JSON files.', error);
       } finally {
         initMapMarkers();
         updateLightingOverlay();
@@ -590,40 +586,40 @@ if (lightingOverlay) {
     // ===================================================================
     // 6. HTML GENERATOR HELPERS
     // ===================================================================
-function buildShopTableHTML(merchantKey) {
-  const merchant = merchantData[merchantKey];
-  if (!merchant) return '<div class="popup-card"><p>No inventory available.</p></div>';
+    function buildShopTableHTML(merchantKey) {
+      const merchant = merchantData[merchantKey];
+      if (!merchant) return '<div class="popup-card"><p>No inventory available.</p></div>';
 
-  const rows = merchant.inventory.map(row => `
-    <tr>
-      <td style="font-weight: 600; vertical-align: top;">${row.item}</td>
-      <td style="font-size: 0.73rem; color: #9ccfd8; line-height: 1.3; vertical-align: top;">${row.description || ''}</td>
-      <td style="text-align: center; vertical-align: top;">${row.stock}</td>
-      <td class="cost" style="vertical-align: top;">${row.price}</td>
-    </tr>
-  `).join('');
+      const rows = merchant.inventory.map(row => `
+        <tr>
+          <td style="font-weight: 600; vertical-align: top; white-space: nowrap;">${row.item}</td>
+          <td style="font-size: 0.73rem; color: #9ccfd8; line-height: 1.3; vertical-align: top;">${row.description || ''}</td>
+          <td style="text-align: center; vertical-align: top;">${row.stock}</td>
+          <td class="cost" style="vertical-align: top; white-space: nowrap;">${row.price}</td>
+        </tr>
+      `).join('');
 
-  return `
-    <div class="popup-card" style="max-width: 580px;">
-      <h3>${merchant.title}</h3>
-      <div class="subtitle">${merchant.subtitle}</div>
-      ${merchant.description ? `<p>${merchant.description}</p>` : ''}
-      <table class="shop-table">
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Effect</th>
-            <th style="text-align: center;">Stock</th>
-            <th style="text-align: right;">Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
+      return `
+        <div class="popup-card" style="width: 500px; max-width: 90vw;">
+          <h3>${merchant.title}</h3>
+          <div class="subtitle">${merchant.subtitle}</div>
+          ${merchant.description ? `<p>${merchant.description}</p>` : ''}
+          <table class="shop-table">
+            <thead>
+              <tr>
+                <th style="width: 25%;">Item</th>
+                <th style="width: 50%;">Effect</th>
+                <th style="width: 12%; text-align: center;">Stock</th>
+                <th style="width: 13%; text-align: right;">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
 
     function getRandomRumorHTML() {
       if (!rumorPool.length) return '<div class="popup-card"><p>No rumors heard.</p></div>';
@@ -687,7 +683,6 @@ function buildShopTableHTML(merchantKey) {
       });
     }
 
-    // Extended icon set so new shop/location types render properly
     const icons = {
       tavern:    createPinIcon('pin-tavern', '🍺'),
       armor:     createPinIcon('pin-armor',  '🛡️'),
@@ -716,7 +711,7 @@ function buildShopTableHTML(merchantKey) {
           emoji: '🍺',
           angle: 150,
           title: 'Drink & Food Menu',
-          get popupHtml() { return buildShopTableHTML(loc.id); } // DYNAMIC LOCATION ID
+          get popupHtml() { return buildShopTableHTML(loc.id); }
         },
         {
           emoji: '👤',
@@ -762,7 +757,7 @@ function buildShopTableHTML(merchantKey) {
           
           const subMarker = L.marker(subPos, { icon: createSubIcon(item.emoji) })
             .bindTooltip(item.title, { direction: 'top', offset: [0, -10] })
-            .bindPopup(() => item.popupHtml, { maxWidth: 320, minWidth: 240 });
+            .bindPopup(() => item.popupHtml, { maxWidth: 600, minWidth: 480 });
 
           subMenuLayer.addLayer(subMarker);
         });
@@ -771,7 +766,7 @@ function buildShopTableHTML(merchantKey) {
       });
     }
 
-function initMapMarkers() {
+    function initMapMarkers() {
       tavernsLayer.clearLayers();
       merchantsLayer.clearLayers();
       questsLayer.clearLayers();
@@ -791,7 +786,6 @@ function initMapMarkers() {
         if (loc.hasRadialMenu) {
           attachRadialMenu(marker, loc);
         } else if (merchantData[loc.id]) {
-          // Pass the options object here so Leaflet lets the popup widen!
           marker.bindPopup(() => buildShopTableHTML(loc.id), { maxWidth: 600, minWidth: 480 });
         } else if (loc.popupHtml) {
           marker.bindPopup(loc.popupHtml, { maxWidth: 600, minWidth: 480 });
@@ -804,9 +798,6 @@ function initMapMarkers() {
           maxZoom: loc.maxZoom !== undefined ? loc.maxZoom : Infinity
         });
       });
-
-      updateMarkerVisibility();
-    }
 
       updateMarkerVisibility();
     }
