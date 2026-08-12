@@ -344,8 +344,8 @@
     <!-- Container to display the roll result inside the modal -->
     <div id="encounter-roll-result" style="display: none; margin-bottom: 12px; padding: 10px; background: #2a2e37; border: 1px solid #3b4252; border-radius: 6px; text-align: center; font-weight: bold; color: #f6c177;"></div>
 
-    <div class="encounter-actions">
-      <button class="encounter-btn btn-dismiss" onclick="dismissEncounter()">Dismiss</button>
+<div class="encounter-actions">
+      <button id="encounter-dismiss-btn" class="encounter-btn btn-dismiss" onclick="dismissEncounter()" style="display: none;">Dismiss</button>
       <button id="encounter-roll-btn" class="encounter-btn btn-action" onclick="rollEncounterDie()">Roll the Die</button>
     </div>
   </div>
@@ -492,14 +492,14 @@
         }
       }
     }
-
-    function showEncounterModal(encounter, rollValue) {
+function showEncounterModal(encounter, rollValue) {
       const modal = document.getElementById('encounter-modal');
       const titleEl = document.getElementById('encounter-title');
       const tagEl = document.getElementById('encounter-tag');
       const bodyEl = document.getElementById('encounter-body');
       const resultBox = document.getElementById('encounter-roll-result');
       const rollBtn = document.getElementById('encounter-roll-btn');
+      const dismissBtn = document.getElementById('encounter-dismiss-btn');
 
       titleEl.innerText = `⚔️ ${encounter.title}`;
       bodyEl.innerHTML = `<p>${encounter.text}</p><p style="margin-top: 8px; font-size: 0.75rem; color: #9ccfd8;"><em>(Encounter triggered: Rolled a natural ${rollValue} on d20)</em></p>`;
@@ -507,9 +507,10 @@
       tagEl.innerText = encounter.tag;
       tagEl.className = `encounter-tag tag-${encounter.type}`;
 
-      // Reset modal interactive state
+      // Reset modal state: Hide result box, show ONLY "Roll the Die", hide "Dismiss"
       if (resultBox) resultBox.style.display = 'none';
-      if (rollBtn) rollBtn.innerText = 'Roll the Die';
+      if (rollBtn) rollBtn.style.display = 'inline-block';
+      if (dismissBtn) dismissBtn.style.display = 'none';
 
       modal.classList.add('active');
     }
@@ -518,13 +519,16 @@
       const roll = Math.floor(Math.random() * 20) + 1;
       const resultBox = document.getElementById('encounter-roll-result');
       const rollBtn = document.getElementById('encounter-roll-btn');
+      const dismissBtn = document.getElementById('encounter-dismiss-btn');
       const hudResult = document.getElementById('dice-result');
 
+      // Sync HUD dice display
       if (hudResult) {
         hudResult.innerText = roll;
         hudResult.style.color = roll === 20 ? '#31b565' : (roll === 1 ? '#eb6f92' : '#f6c177');
       }
 
+      // Determine text & highlight color
       let color = '#f6c177';
       let extraText = '';
       if (roll === 20) { 
@@ -535,18 +539,15 @@
         extraText = ' — Critical Failure!'; 
       }
 
+      // Show result box
       if (resultBox) {
         resultBox.style.display = 'block';
         resultBox.innerHTML = `🎲 Roll: <span style="font-size: 1.3rem; color: ${color};">${roll}</span>${extraText}`;
       }
 
-      if (rollBtn) {
-        rollBtn.innerText = 'Re-roll Die';
-      }
-    }
-
-    function dismissEncounter() {
-      document.getElementById('encounter-modal').classList.remove('active');
+      // Swap buttons: Hide "Roll the Die", reveal "Dismiss"
+      if (rollBtn) rollBtn.style.display = 'none';
+      if (dismissBtn) dismissBtn.style.display = 'inline-block';
     }
 
     // Dev Helper: Type forceEncounter() in browser console to test instantly
