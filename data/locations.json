@@ -4,7 +4,7 @@
     "name": "The Sunken Hearth",
     "layer": "taverns",
     "icon": "tavern",
-    "coords": [419, 1182],
+    "coords": [1030, 1095],
     "hasRadialMenu": true,
     "minZoom": -1,
     "maxZoom": 2
@@ -14,7 +14,7 @@
     "name": "The Ashen Crucible",
     "layer": "merchants",
     "icon": "armor",
-    "coords": [450, 850],
+    "coords": [660, 404],
     "minZoom": -1,
     "maxZoom": 2
   },
@@ -22,8 +22,8 @@
     "id": "the_copper_alembic",
     "name": "The Copper Alembic",
     "layer": "merchants",
-    "icon": "armor",
-    "coords": [720, 930],
+    "icon": "potion",
+    "coords": [644, 1676],
     "minZoom": -0.5,
     "maxZoom": 2
   },
@@ -40,8 +40,8 @@
     "id": "the_clockwork_alcove",
     "name": "The Clockwork Alcove",
     "layer": "merchants",
-    "icon": "armor",
-    "coords": [980, 1050],
+    "icon": "gear",
+    "coords": [298, 1028],
     "minZoom": 0,
     "maxZoom": 2
   }
