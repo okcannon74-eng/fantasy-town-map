@@ -668,8 +668,18 @@
       }, 150);
     }
 
-    map.on('popupopen', function() {
-      advanceTime(15);
+    map.on('popupopen', function(e) {
+      let content = e.popup.getContent();
+      if (typeof content === 'function') {
+        content = content();
+      }
+
+      // Check if the opened popup is a merchant shop table
+      if (typeof content === 'string' && content.includes('shop-table')) {
+        advanceTime(60); // 1 hour for visiting a shop
+      } else {
+        advanceTime(15); // 15 minutes default for standard locations
+      }
     });
 
     // ===================================================================
@@ -784,6 +794,9 @@
         const freshRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
         cardContainer.querySelector('.subtitle').innerText = freshRumor.source;
         cardContainer.querySelector('p').innerText = `"${freshRumor.text}"`;
+
+        // Advance time by 15 minutes when rerolling a rumor
+        advanceTime(15);
       }
     };
 
