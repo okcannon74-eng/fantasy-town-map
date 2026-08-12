@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rhimefrost</title>
+  <title>The Celistial Scriptorium</title>
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -51,7 +51,7 @@
       flex-direction: column;
       gap: 3px;
       min-width: 160px;
-      text-align: center;
+      text-align: center;    
       white-space: nowrap;
     }
 
@@ -295,8 +295,6 @@
 
   <div id="map"></div>
   
-  <!-- DYNAMIC TINT OVERLAY LAYER -->
-  <div id="lighting-overlay"></div>
 
   <!-- Random Encounter Banner Overlay -->
   <div id="encounter-modal" class="encounter-overlay">
@@ -316,7 +314,7 @@
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // ===================================================================
+// ===================================================================
     // 1. MAP CONFIGURATION (Pixel-based grid)
     // ===================================================================
     const imgWidth = 2000;
@@ -332,19 +330,20 @@
       maxBoundsViscosity: 0.8
     });
 
-    // Custom Lighting Pane (keeps popups untinted)
+    // Custom Lighting Pane (sits between Markers [600] and Popups [700])
     map.createPane('lightingPane');
     map.getPane('lightingPane').style.zIndex = 650;
     map.getPane('lightingPane').style.pointerEvents = 'none';
 
-    const lightingOverlay = document.getElementById('lighting-overlay');
-    if (lightingOverlay) {
-      map.getPane('lightingPane').appendChild(lightingOverlay);
-    }
-
+    // Base Map Image
     const mapImageUrl = 'Scriptorium.jpg'; 
     L.imageOverlay(mapImageUrl, bounds).addTo(map);
     map.fitBounds(bounds);
+
+    // Map-bound Tint Overlay (covers map bounds + padding so it scales perfectly)
+    const extendedBounds = [[-1000, -1000], [imgHeight + 1000, imgWidth + 1000]];
+    const blankDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSU2EUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+    const lightingLayer = L.imageOverlay(blankDataUrl, extendedBounds, { pane: 'lightingPane' }).addTo(map);
 
     // Layer Groups
     const tavernsLayer = L.layerGroup().addTo(map);
@@ -400,10 +399,12 @@
       return `rgba(${r}, ${g}, ${b}, ${a})`;
     }
 
-    function updateLightingOverlay() {
-      const overlay = document.getElementById('lighting-overlay');
-      if (overlay) {
-        overlay.style.backgroundColor = getLightingTint(currentMinutes);
+function updateLightingOverlay() {
+      const tintEl = lightingLayer.getElement();
+      if (tintEl) {
+        tintEl.style.backgroundColor = getLightingTint(currentMinutes);
+        tintEl.style.mixBlendMode = 'multiply';
+        tintEl.style.transition = 'background-color 0.8s ease-in-out';
       }
     }
 
