@@ -32,7 +32,7 @@
     "name": "The Single Stanza",
     "layer": "merchants",
     "icon": "quest",
-    "coords": [1150, 620],
+    "coords": [320, 217],
     "minZoom": 0,
     "maxZoom": 2
   },
