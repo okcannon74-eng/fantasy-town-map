@@ -363,15 +363,15 @@
     // 2. DAY/NIGHT LIGHTING OVERLAY SYSTEM
     // ===================================================================
     const lightingKeyframes = [
-      { h: 0,   r: 15,  g: 20,  b: 50,  a: 0.85 }, // Midnight
-      { h: 4.5, r: 25,  g: 30,  b: 65,  a: 0.75 }, // Pre-Dawn
-      { h: 6,   r: 255, g: 150, b: 85,  a: 0.45 }, // Dawn
+      { h: 0,   r: 15,  g: 20,  b: 50,  a: 0.50 }, // Midnight
+      { h: 4.5, r: 25,  g: 30,  b: 65,  a: 0.35 }, // Pre-Dawn
+      { h: 6,   r: 255, g: 150, b: 85,  a: 0.25 }, // Dawn
       { h: 8,   r: 255, g: 235, b: 200, a: 0.15 }, // Morning
       { h: 12,  r: 255, g: 255, b: 255, a: 0.00 }, // Midday
       { h: 17,  r: 255, g: 185, b: 120, a: 0.25 }, // Golden Hour
-      { h: 19,  r: 215, g: 75,  b: 110, a: 0.50 }, // Sunset
-      { h: 21,  r: 30,  g: 35,  b: 80,  a: 0.75 }, // Twilight
-      { h: 24,  r: 15,  g: 20,  b: 50,  a: 0.85 }  // Midnight Loop
+      { h: 19,  r: 215, g: 75,  b: 110, a: 0.35 }, // Sunset
+      { h: 21,  r: 30,  g: 35,  b: 80,  a: 0.50 }, // Twilight
+      { h: 24,  r: 15,  g: 20,  b: 50,  a: 0.75 }  // Midnight Loop
     ];
 
     function getLightingTint(totalMinutes) {
