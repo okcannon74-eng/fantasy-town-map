@@ -1,18 +1,122 @@
 [
   {
-    "source": "Lady Thrum (The Sunken Hearth)",
-    "text": "The second stage of the Orrery is humming in harmonic tune with the stars once more. Those who listen closely near the glass dome can hear the voice of Annam whispering planar truths."
+    "source": "A nervous copper-trader whispering to his bodyguard under a canvas awning...",
+    "text": "I'mtelling you, King Snurre is building a massive gate of black iron down in his volcanic rifts! He thinks he\u2019s going to march his army right up here, slot the Tempering Tier key himself, and rule the sky!"
   },
   {
-    "source": "Murn Ember-Spite (The Ashen Crucible)",
-    "text": "A pack of rogue gnomes tried sneaking into the low furnace to harvest slag-glass. The Peace of Annam kept me from burning 'em, but I chased 'em out with a bellow full of sulfur gas!"
+    "source": "A half-drunk dwarven mercenary slamming his clay mug on a tavern table...",
+    "text": "The gray dwarves? They aren\u2019t building any gate down there. My cousin works the iron barges, and he says they are forging a colossal clockwork titan! A hundred feet tall, powered by a captured storm god, designed to step on the Scriptorium and grind the Meridian to dust!"
   },
   {
-    "source": "Gideon Vane (The Copper Alembic)",
-    "text": "A house-sized owl-cat has been nesting in the abandoned pet store on the east gallery. It won't bite thanks to the Peace, but it's knocked over three of my apothecary barrels!"
+    "source": "An excited southern scholar showing off a singed parchment scrap in a quiet library alcove...",
+    "text": "And then the Southern scholar swore he saw a Blood Ruby the size of a giant's head! He said it didn't just glow, it was pulsing with violet lightning\u2014you could hear actual thunder crackling inside the jewelry box! He claims they stuffed a Storm Lord\u2019s soul in there to make it hum!"
   },
   {
-    "source": "Keeva Copperpin (The Clockwork Alcove)",
-    "text": "If you hear loud clicking behind the Scriptorium walls, don't panic—it's just the ancient ventilation gears trying to un-rust themselves after a thousand years."
+    "source": "An old herbalist peeling roots behind her market stall...",
+    "text": "Queen Frupy\u2019s gone mad with jealousy, I hear. She\u2019s brewing a love potion to slip Snurre because he\u2019s spending all his nights looking at his shiny new war maps instead of her. Either that, or she\u2019s fixing to poison his mutton and take the throne herself!"
+  },
+  {
+    "source": "A superstitious treasure hunter polishing a scarred shield...",
+    "text": "There\u2019s no red dragon in the deep caverns, you cod! Brazzemal died a century ago. The Fire Giants just keep a permanent illusion of him sleeping on a mountain of gold to keep low-tier thieves from finding their secret wine cellar!"
+  },
+  {
+    "source": "A nervous halfling cook discussing supplies at a kitchen back door...",
+    "text": "They aren't just killing captives down there. They've got a machine that shrinks giants! My buddy saw a Frost Giant no taller than a halfling running through the mountain passes, crying because his trousers were ten sizes too big!"
+  },
+  {
+    "source": "A somber merchant packing up his wool rolls before dusk...",
+    "text": "Keep away from Krag-Marrow. Lord Harrow is locking up any of the locals who have even a bit of frost giant blood. He claims they're channeling giant witchcraft to call down the blizzards. Meanwhile, his own star ranger, Jarek, is the coward who led a whole patrol into a dead-end pass and left them to freeze!"
+  },
+  {
+    "source": "An apprentice archivist carrying a heavy stack of starmaps...",
+    "text": "I swear to you, the moment those adventurers slotted the Hill and Stone pieces into the Meridian, the mountains groaned. The northern peaks are three miles closer to the Scriptorium than they were last week! If they put another piece in, the whole sky is going to slide off the world!"
+  },
+  {
+    "source": "A paranoid caravan guard looking over his shoulder in a busy street...",
+    "text": "King Snurre has a phantom advising him. The royal guards say they can hear the King arguing in Dwarvish when he's completely alone in his bedchamber, but there's never a body to match the voice!"
+  },
+  {
+    "source": "A veteran sellsword cleaning grease off his chainmail...",
+    "text": "Don't even think about drawing a butter knife in the Scriptorium. The Cloud Giant has a spell on the whole place. If you so much as throw a punch at a merchant, your muscles freeze solid, your jaw locks up, and you stay stiff as a statue until the archivists decide to thaw you out."
+  },
+  {
+    "source": "A young, starry-eyed squire admiring a silver-hilted longsword...",
+    "text": "Did you hear about Captain Jarek of Caer Dathryn? He\u2019s a legend! They say he single-handedly fought off a dozen frost giant scouts in the pass and dragged himself back to Krag-Marrow, even while his skin was freezing black!"
+  },
+  {
+    "source": "A grim mule-packer tightening a leather cinch strap...",
+    "text": "Don\u2019t take the secondary mountain route Trevor mapped. Anya\u2019s patrol took it, and now travelers swear they saw them sitting in a circle in the snow. If you look them in the eye, your heart turns to ice and you just lie down and go to sleep right next to them."
+  },
+  {
+    "source": "A zealous southern crusader shouting to a small crowd outside the chapel...",
+    "text": "Lord Harrow is right to lock up the Rime-Blooded. Those half-giant freaks on the north bank are seven feet tall and have pale blue skin! The moment Jarl Grugnur\u2019s army arrives, their blood will call to them, and they'll slit our throats from the inside!"
+  },
+  {
+    "source": "A nervous young scribe talking behind his hand in the scriptorium script room...",
+    "text": "The blind astronomer Trevor has a brass telescope that doesn't look at stars\u2014it looks at souls! He pointed it north and saw the sky bleed when the Storm Giant Lord was dragged into the Glacial Rift."
+  },
+  {
+    "source": "A bleary-eyed halfling over a pint of raspberry beer...",
+    "text": "If Queen Frupy is brewing a mind-control draft, she isn\u2019t using it on some human lord. A runaway slave swore she saw the Queen sneaking ingredients into the royal kitchen to slip to King Snurre! She wants to force him to chop off the head of his own advisor!"
+  },
+  {
+    "source": "A shady rogue looking for a buyer for a cracked gemstone...",
+    "text": "The Fire Giant guards aren't allowed to carry gold, so they hollow out their massive wooden clubs. If you kill one, don't just leave his weapon\u2014crack it open like a nut!"
+  },
+  {
+    "source": "A scarred scout drinking warm cider near the hearth...",
+    "text": "Whatever you do, don't open the Queen\u2019s bronze jewelry boxes. She keeps fire-breathing drakes in them that will cook your flesh to the bone the moment you pop the latch!"
+  },
+  {
+    "source": "A dwarf blacksmith hammering out a dented shield...",
+    "text": "The giants have a beast in their arsenal with the head of a lion, a goat, and a dragon, and they've clad the whole thing in plate armor! They feed it the bodies of dwarf miners."
+  },
+  {
+    "source": "An old Stone Giant scholar examining a mechanical drawing with a magnifying glass...",
+    "text": "Those gray dwarves didn't come to help Snurre forge swords. They brought their own giant-scale gears. They're hollowing out the temple beneath his throne to build a shadow version of the Great Meridian!"
+  },
+  {
+    "source": "A frightened mine laborer rubbing his bandaged forehead...",
+    "text": "They're shrinking the captives! A dwarf escaped the lower cells and said they put heavy psionic clamps on his head. When the machine hummed, his bones literally clicked and shortened, and his 'tallness' was funneled into a jar!"
+  },
+  {
+    "source": "A hooded wizard muttering while organizing components...",
+    "text": "They don't have the Storm Giant's shard. But they took a massive blood ruby and bathed it in the lightning of a tortured Storm Lord until the gem started screaming!"
+  },
+  {
+    "source": "A worried apothecary measuring out drops of lavender oil...",
+    "text": "If you go down to the dungeons, wear a lead helmet. The gray dwarves have a gas that makes you so depressed you just lie down in the straw and let them chop your head off."
+  },
+  {
+    "source": "An old, grizzled veteran whispering around his pipe...",
+    "text": "The high priestess's chambers are guarded by a wall of living, grinding iron teeth. It has eight iron chains that whip out and pull you into the gears to be ground into paste!"
+  },
+  {
+    "source": "An eccentric cult-hunter consulting a leather-bound notebook...",
+    "text": "The temple altar down there is alive. If you hit it with a sword, it turns into a giant purple eye that looks at you and drives you instantly mad."
+  },
+  {
+    "source": "A veteran dragon-stalker tracing lines on a dirty map...",
+    "text": "Brazzemal the Red Dragon isn't Snurre\u2019s ally. He\u2019s absolutely furious! The gray dwarves have been siphoning the volcano\u2019s heat, and his gold pile is getting cold! He\u2019d probably pay a fortune to anyone who breaks their steam-pipes!"
+  },
+  {
+    "source": "A plate-clad paladin inspecting his heavily dented gauntlets...",
+    "text": "If you wear plate armor in the lower caverns, you\u2019ll get stuck to the walls! The Duergar have a pass where the stones are so magnetic they\u2019ll rip the sword right out of your hands!"
+  },
+  {
+    "source": "A traumatized drow-hunting ranger shivering by the fire...",
+    "text": "The deep caves are full of trolls that have grown to the size of houses. They don't even have faces anymore\u2014just weeping violet tentacles where their eyes should be!"
+  },
+  {
+    "source": "A merchant discussing underdark caravan routes over a plate of dried mushrooms...",
+    "text": "The gray dwarves are fighting among themselves. There\u2019s a high priestess in the lower caves who thinks this whole 'make ourselves giants' plan is a sin. She\u2019s execution-happy, but she hates her bosses more than she hates us."
+  },
+  {
+    "source": "A cynical old rogue chuckling over a game of dice...",
+    "text": "Watch out in the crystal caves. There are two mind flayers down there, but they aren't eating brains. They\u2019re sitting on velvet cushions, eating grapes, and writing notes in a big black book like they\u2019re at a theater play!"
+  },
+  {
+    "source": "A weary supply-caravan guard sipping on thin broth...",
+    "text": "You can't cross the burning river down there. The bridge is rigged to drop you in. The only way across is to steal the giants\u2019 giant cargo hoists\u2014and those take hours to set up!"
   }
 ]
