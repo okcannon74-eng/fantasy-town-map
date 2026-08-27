@@ -455,6 +455,34 @@
         L.control.layers(null, overlays, { collapsed: false }).addTo(map);
 
         // ===================================================================
+        // PRIVATE CLIENT-SIDE LIMITER (localStorage)
+        // ===================================================================
+        const MAX_DAILY_RUMORS = 7;       // Maximum rumors a user can hear per day
+        const MAX_DAILY_ENCOUNTERS = 3;   // Maximum random encounters per day
+
+        function getDailyTracker() {
+            const today = new Date().toISOString().split('T')[0]; // Format: "2026-08-26"
+            let tracker = JSON.parse(localStorage.getItem('scriptorium_tracker'));
+
+            // If no tracker exists, or if the stored date is from a previous day, reset it
+            if (!tracker || tracker.date !== today) {
+                tracker = {
+                    date: today,
+                    rumorsHeard: 0,
+                    encountersTriggered: 0
+                };
+                localStorage.setItem('scriptorium_tracker', JSON.stringify(tracker));
+            }
+            return tracker;
+        }
+
+        function incrementTracker(key) {
+            const tracker = getDailyTracker();
+            tracker[key]++;
+            localStorage.setItem('scriptorium_tracker', JSON.stringify(tracker));
+        }
+
+        // ===================================================================
         // 2. DAY/NIGHT LIGHTING OVERLAY SYSTEM
         // ===================================================================
         const lightingKeyframes = [
@@ -520,9 +548,32 @@
         }
 
         function triggerRandomEncounter(hourCount = 1) {
+            // CHECK DAILY CAP FIRST
+            const tracker = getDailyTracker();
+            if (tracker.encountersTriggered >= MAX_DAILY_ENCOUNTERS) {
+                console.log(`🚫 Random encounter skipped: Daily cap of ${MAX_DAILY_ENCOUNTERS} reached.`);
+                return;
+            }
+
             for (let i = 0; i < hourCount; i++) {
                 const d20Roll = rollD20();
                 console.log(`🎲 Hourly Encounter Check (Hour ${i + 1}/${hourCount}): Rolled ${d20Roll} vs DC ${ENCOUNTER_THRESHOLD}`);
+                if (d20Roll >= ENCOUNTER_THRESHOLD) {
+                    const currentHour24 = Math.floor(currentMinutes / 60);
+                    const isNight = (currentHour24 >= 20 || currentHour24 < 6);
+                    const pool = (isNight && nightEncounters.length) ? nightEncounters : dayEncounters;
+                    if (pool.length) {
+                        const encounter = pool[Math.floor(Math.random() * pool.length)];
+                        
+                        // INCREMENT THE ENCOUNTER TRACKER
+                        incrementTracker('encountersTriggered');
+                        
+                        showEncounterModal(encounter, d20Roll);
+                        break;
+                    }
+                }
+            }
+        }/${hourCount}): Rolled ${d20Roll} vs DC ${ENCOUNTER_THRESHOLD}`);
                 if (d20Roll >= ENCOUNTER_THRESHOLD) {
                     const currentHour24 = Math.floor(currentMinutes / 60);
                     const isNight = (currentHour24 >= 20 || currentHour24 < 6);
@@ -797,12 +848,46 @@
         }
 
         function getRandomRumorHTML() {
+            const tracker = getDailyTracker();
+            
+            // IF CAP EXCEEDED: Show immersion-friendly message
+            if (tracker.rumorsHeard >= MAX_DAILY_RUMORS) {
+                return `
+                    <div class="popup-card">
+                        <h3>Tavern Gossip</h3>
+                        <div class="subtitle">The Weary Barkeep</div>
+                        <p style="font-style: italic; color: #a6adc8;">
+                            "I've shared all the whispers I know for today, traveler. Rest your boots, buy another ale, and check back with me tomorrow."
+                        </p>
+                    </div>
+                `;
+            }
+
             if (!rumorPool.length) return '<div class="popup-card"><p>No rumors heard.</p></div>';
             const randomRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
             return `
                 <div class="popup-card" id="rumor-card">
                     <h3>Tavern Gossip</h3>
                     <div class="subtitle">${randomRumor.source}</div>
+                    <p style="min-height: 48px;">\"${randomRumor.text}\"</p>
+                    <button onclick="rerollRumor()" style="
+                        width: 100%;
+                        margin-top: 6px;
+                        padding: 6px 10px;
+                        background: #2a2e37;
+                        border: 1px solid #f6c177;
+                        color: #f6c177;
+                        border-radius: 4px;
+                        font-family: 'Inter', sans-serif;
+                        font-size: 0.75rem;
+                        cursor: pointer;
+                        transition: background 0.2s;
+                    " onmouseover="this.style.background='#3b4252'" onmouseout="this.style.background='#2a2e37'">
+                        🎲 Hear Another Rumor
+                    </button>
+                </div>
+            `;
+        }</div>
                     <p style="min-height: 48px;">"${randomRumor.text}"</p>
                     <button onclick="rerollRumor()" style="
                         width: 100%;
@@ -826,6 +911,24 @@
         window.rerollRumor = function() {
             const cardContainer = document.getElementById('rumor-card');
             if (cardContainer && rumorPool.length) {
+                const tracker = getDailyTracker();
+                
+                // Check if they've hit the cap during a reroll
+                if (tracker.rumorsHeard >= MAX_DAILY_RUMORS) {
+                    cardContainer.querySelector('.subtitle').innerText = "The Weary Barkeep";
+                    cardContainer.querySelector('p').style.fontStyle = "italic";
+                    cardContainer.querySelector('p').style.color = "#a6adc8";
+                    cardContainer.querySelector('p').innerText = `"My tongue is tied and my ears are tired. No more gossip until tomorrow."`;
+                    
+                    // Hide the reroll button
+                    const btn = cardContainer.querySelector('button');
+                    if (btn) btn.style.display = 'none';
+                    return;
+                }
+
+                // Increment tracker for the new rumor they are about to hear
+                incrementTracker('rumorsHeard');
+                
                 const freshRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
                 cardContainer.querySelector('.subtitle').innerText = freshRumor.source;
                 cardContainer.querySelector('p').innerText = `"${freshRumor.text}"`;
@@ -904,7 +1007,14 @@
                     emoji: '📜', 
                     angle: 30, 
                     title: 'Rumors & Gossip', 
-                    get popupHtml() { return getRandomRumorHTML(); } 
+                    get popupHtml() { 
+                        const tracker = getDailyTracker();
+                        // Increment on initial load, only if they haven't hit the cap yet
+                        if (tracker.rumorsHeard < MAX_DAILY_RUMORS) {
+                            incrementTracker('rumorsHeard');
+                        }
+                        return getRandomRumorHTML(); 
+                    } 
                 }
             ];
 
