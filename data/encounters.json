@@ -73,6 +73,66 @@
       "type": "hazard",
       "tag": "Archives",
       "text": "A giant automated book-binding press clacks to life! DC 16 History or DC 16 Acrobatics.<br><strong>Success (Boon):</strong> Adv. on Investigation checks & weapon attacks crit on 19-20 next day.<br><strong>Failure (Bane):</strong> 2d6 bludgeoning damage & disadv. on Strength checks next day."
-    }
+    },
+    {
+      "title": "The Overpressurized Siphon Valve",
+      "type": "hazard",
+      "tag": "Sabotage",
+      "text": "A massive geothermal brass conduit beneath the marketplace street hums violently. On closer inspection, this was clearly overpressured intentionally. DC 21 Dexterity (Sleight of Hand) to vent it safely, or DC 21 Intelligence (Arcana) to redirect the pressure.<br><strong>Success (Boon):</strong> You spot the saboteur's custom wrench left behind; +1 bonus to AC and Dexterity saves next adventuring day.<br><strong>Failure (Bane):</strong> 22 (4d10) fire damage, and you are blinded by sulfuric steam (disadv. on Wisdom checks and attack rolls) next adventuring day."
+    },
+    {
+      "title": "The Stampeding Jotun Beetles",
+      "type": "combat",
+      "tag": "Wild Beasts",
+      "text": "A cluster of elephant-sized Jotun Fire Beetles, driven wild by high-frequency psionic siphoning feedback leaking from the deep rifts, stampede through the merchant tents. DC 20 Wisdom (Animal Handling) to guide them away, or DC 20 Strength (Athletics) to physically redirect them.<br><strong>Success (Boon):</strong> The beetles' bioluminescent fluid coats your gear; you emit 10ft of bright light and have advantage on saves against illusions next adventuring day.<br><strong>Failure (Bane):</strong> 18 (4d8) bludgeoning damage, and you are trampled (movement speed is halved) next adventuring day."
+    },
+    {
+      "title": "The Rigged Archival Hoist",
+      "type": "hazard",
+      "tag": "Sabotage",
+      "text": "A heavy stone-carrying platform high above the street has its cotter pins replaced with brittle dark-iron replicas, designed to shear and drop tons of masonry as you pass beneath. DC 22 Wisdom (Perception) to spot the fracturing iron, or DC 22 Dexterity (Acrobatics) to dive clear.<br><strong>Success (Boon):</strong> Your rapid reaction heightens your senses; +3 bonus to initiative rolls next adventuring day.<br><strong>Failure (Bane):</strong> 27 (6d8) bludgeoning damage, and a random non-magical shield or piece of armor you wear is permanently damaged (-1 AC penalty)."
+    },
+    {
+      "title": "The Magnetized Scrap Pile",
+      "type": "hazard",
+      "tag": "Duergar Trap",
+      "text": "Someone has hidden a high-powered, psionically charged lodestone trap beneath a pile of discarded giant masonry to snare armored intruders. DC 22 Intelligence (Investigation) to recognize the subtle magnetic ripple in the air, or DC 22 Strength (Athletics) to tear yourself free.<br><strong>Success (Boon):</strong> You reverse the polarity of the lodestone, creating a kinetic ward; you gain resistance to lightning damage next adventuring day.<br><strong>Failure (Bane):</strong> Any metal-armored characters are pinned to the pile; you suffer a -2 penalty to AC and have disadvantage on Dexterity saves next adventuring day. At your age, you can't sit in one position too long."
+    },
+    {
+      "title": "The Parasitic Rust-Horror",
+      "type": "combat",
+      "tag": "Wild Beasts",
+      "text": "The intense scent of burning soot has drawn a ravenous, multi-legged Rust Horror up from the dark fissures into the market square. DC 20 Intelligence (Nature) to distract it with scrap metal, or DC 20 Dexterity (Sleight of Hand) to physically pin its antenna.<br><strong>Success (Boon):</strong> You harvest its corrosive fluids; your weapon attacks deal an extra 1d6 acid damage next adventuring day.<br><strong>Failure (Bane):</strong> The beast ruins your gear; one non-magical metal weapon or piece of armor you carry is instantly corroded and destroyed."
+    },
+    {
+      "title": "The Disguised Gas-Crate",
+      "type": "hazard",
+      "tag": "Duergar Trap",
+      "text": "A crate marked as 'Imported Dwarven Ale-For Belmar only' is rigged with a pressurized internal bladder. When approached, it shatters, venting a cloud of concentrated, aerosolized Oil of Tabbit. DC 22 Intelligence (Medicine) to hold your breath, or DC 22 Dexterity (Sleight of Hand) to jam the release mechanism.<br><strong>Success (Boon):</strong> You build a temporary immunity; you are resistant to the poisoned and unconscious conditions next adventuring day.<br><strong>Failure (Bane):</strong> You suffer 11 (2d10) psychic damage and are gripped by a listless, severe depression (-3 penalty to all Charisma and Wisdom checks) next adventuring day."
+    },
+    {
+      "title": "The Chasm-Lurking Roper",
+      "type": "combat",
+      "tag": "Wild Beasts",
+      "text": "A wild Magma-Crusted Roper, completely immune to the Peace of Annam due to its low intelligence, hangs from the rafters of an abandoned library annex, dragging researchers into the dark. DC 20 Strength (Athletics) to break its stony grip, or DC 20 Wisdom (Survival) to locate its blind spots.<br><strong>Success (Boon):</strong> You slip its grasp effortlessly; you have advantage on checks to escape grapples and restraints next adventuring day.<br><strong>Failure (Bane):</strong> 14 (4d6) fire damage from its superheated skin, and you suffer a lingering shoulder injury (disadv. on Strength-based attacks) next adventuring day."
+    },
+    {
+      "title": "The Loosened Balcony",
+      "type": "hazard",
+      "tag": "Duergar Sabotage",
+      "text": "While inspecting the partially restored Great Meridian, the stone floor beneath you suddenly shifts; the structural supports have been dissolved with acid by Duergar sappers. DC 21 Dexterity (Acrobatics) to leap to a stable beam, or DC 21 Wisdom (Perception) to notice the chemical scent of the acid.<br><strong>Success (Boon):</strong> You master the uneven terrain; you gain a climbing speed equal to your walking speed next adventuring day.<br><strong>Failure (Bane):</strong> 22 (4d10) bludgeoning damage from the fall, and your joints are severely bruised (-10 ft movement speed next adventuring day)."
+    },
+    {
+      "title": "The Hungry Cinder-Stalker",
+      "type": "combat",
+      "tag": "Wild Beasts",
+      "text": "A predatory, non-sentient elemental feline—a Cinder Stalker—slithers out of a newly cracked geothermal fissure in the bathhouse, drawn by the warmth of the visitors. DC 21 Intelligence (Arcana/Nature) to predict its thermal movement, or DC 21 Wisdom (Insight) to read its hunting stance.<br><strong>Success (Boon):</strong> You absorb a portion of its residual heat; you gain 15 temporary hit points at the start of next adventuring day.<br><strong>Failure (Bane):</strong> 16 (3d10) slashing damage, and you set on fire (taking 5 (1d10) fire damage at the start of each of your turns) next adventuring day."
+    },
+    {
+      "title": "The Psionic Dream-Trap",
+      "type": "hazard",
+      "tag": "It's a Trap!",
+      "text": "A merchant's stall is abandoned, but on the counter sits a beautiful, pulsing amethyst geode—secretly an Underdark Psionic Resonator designed to overload the minds of those who look at it. DC 22 Intelligence (Investigation) to identify the unnatural runic carving, or DC 22 Wisdom (Saving Throw) to resist the mental pull.<br><strong>Success (Boon):</strong> You master the psychic resonance; you gain advantage on Intelligence and Wisdom saving throws next adventuring day.<br><strong>Failure (Bane):</strong> 22 (4d10) psychic damage, and your mind is clouded with agonizing static (you cannot cast spells of 4th level or higher) next adventuring day."
+    },
   ]
 }
