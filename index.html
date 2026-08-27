@@ -573,18 +573,6 @@
                     }
                 }
             }
-        }/${hourCount}): Rolled ${d20Roll} vs DC ${ENCOUNTER_THRESHOLD}`);
-                if (d20Roll >= ENCOUNTER_THRESHOLD) {
-                    const currentHour24 = Math.floor(currentMinutes / 60);
-                    const isNight = (currentHour24 >= 20 || currentHour24 < 6);
-                    const pool = (isNight && nightEncounters.length) ? nightEncounters : dayEncounters;
-                    if (pool.length) {
-                        const encounter = pool[Math.floor(Math.random() * pool.length)];
-                        showEncounterModal(encounter, d20Roll);
-                        break;
-                    }
-                }
-            }
         }
 
         function showEncounterModal(encounter, rollValue) {
@@ -869,25 +857,6 @@
                 <div class="popup-card" id="rumor-card">
                     <h3>Tavern Gossip</h3>
                     <div class="subtitle">${randomRumor.source}</div>
-                    <p style="min-height: 48px;">\"${randomRumor.text}\"</p>
-                    <button onclick="rerollRumor()" style="
-                        width: 100%;
-                        margin-top: 6px;
-                        padding: 6px 10px;
-                        background: #2a2e37;
-                        border: 1px solid #f6c177;
-                        color: #f6c177;
-                        border-radius: 4px;
-                        font-family: 'Inter', sans-serif;
-                        font-size: 0.75rem;
-                        cursor: pointer;
-                        transition: background 0.2s;
-                    " onmouseover="this.style.background='#3b4252'" onmouseout="this.style.background='#2a2e37'">
-                        🎲 Hear Another Rumor
-                    </button>
-                </div>
-            `;
-        }</div>
                     <p style="min-height: 48px;">"${randomRumor.text}"</p>
                     <button onclick="rerollRumor()" style="
                         width: 100%;
@@ -928,7 +897,7 @@
 
                 // Increment tracker for the new rumor they are about to hear
                 incrementTracker('rumorsHeard');
-                
+
                 const freshRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
                 cardContainer.querySelector('.subtitle').innerText = freshRumor.source;
                 cardContainer.querySelector('p').innerText = `"${freshRumor.text}"`;
