@@ -281,7 +281,9 @@
             transform: translateX(-50%) translateY(-150%);
             z-index: 2000;
             width: 90%;
-            max-width: 480px;
+            max-width: 520px;
+            max-height: 85vh;
+            overflow-y: auto;
             background: #181b20;
             border: 2px solid #eb6f92;
             border-radius: 8px;
@@ -289,6 +291,21 @@
             padding: 16px 20px;
             color: #e2e8f0;
             transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Style the scrollbar inside the encounter modal */
+        .encounter-overlay::-webkit-scrollbar {
+            width: 6px;
+        }
+        .encounter-overlay::-webkit-scrollbar-track {
+            background: #181b20;
+        }
+        .encounter-overlay::-webkit-scrollbar-thumb {
+            background: #3b4252;
+            border-radius: 3px;
+        }
+        .encounter-overlay::-webkit-scrollbar-thumb:hover {
+            background: #eb6f92;
         }
         .encounter-overlay.active {
             transform: translateX(-50%) translateY(0);
@@ -537,10 +554,44 @@
 
         // Fallback encounters in case JSON fetch fails or is empty
         let dayEncounters = [
-            { title: "Artificer's Steam Vent", type: "hazard", tag: "Environmental", text: "A pressure pipe vents scalding steam! DC 18 Arcana or Sleight of Hand to fix." }
+            {
+                title: "The Giant-Scale Treadmill",
+                type: "hazard",
+                tag: "Environmental",
+                text: "While trying to bypass a collapsed corridor, you find a massive, 15-foot-diameter iron gear mechanism embedded in the floor that used to power the library's ventilation shafts. It’s rusted shut, but manually forcing it past its lock-pin will open a fast shortcut to the upper levels.",
+                check: "DC 18 Athletics (to haul the gear) or DC 18 History/Investigation (to unlock it with minimal force).",
+                boon: "Wind at Your Back: You trigger the ventilation system! Pure, air-elemental mountain draft flows through the halls. Your movement speed increases by 10 feet during your next adventuring day.",
+                bane: "Rattled Bones: The gear snaps back violently, sending bone-rattling vibrations through your muscles. You take 2d6 bludgeoning damage and have disadvantage on Dexterity saving throws during your next adventuring day."
+            },
+            {
+                title: "The Artificer's Pressure Valve",
+                type: "hazard",
+                tag: "Artifice Shop",
+                text: "Inside a bustling artificer's shop built into an oversized giant desk drawer, a runaway clockwork invention vents high-pressure steam and compressed elemental force. The gnome artificer is frantically calling for help before the valve blows.",
+                check: "DC 18 Arcana (to purge the elemental pressure valve safely) or DC 18 Sleight of Hand (to manually jam the pressure release with precision tools).",
+                boon: "Tinker's Precision: You safely bleed off the pressure and fine-tune your own gear with the stray elemental energy. You gain a +1 bonus to weapon attack rolls during your next adventuring day.",
+                bane: "Soot & Static: The valve vents a wave of hot soot and static sparks in your face. You take 2d6 fire damage and suffer disadvantage on initiative rolls during your next adventuring day."
+            }
         ];
         let nightEncounters = [
-            { title: "Astral Static Shockwave", type: "danger", tag: "Wild Magic", text: "Gravity flickers momentarily. DC 17 Arcana or Wisdom Save to resist." }
+            {
+                title: "Echoes of the Sundering",
+                type: "danger",
+                tag: "Wild Magic",
+                text: "In a quiet reading nave, you step into a localized pocket of lingering spatial distortion—a leftover shockwave from when Annam smashed the Orrery. Gravity flickers, and sound distorts into deafening giant-tongue whispers.",
+                check: "DC 17 Arcana (to stabilize the weave) or DC 17 Wisdom Saving Throw (to steel your mind against the cosmic echo).",
+                boon: "Insight of the Father: You attune your mind to the ancient planar resonance. You gain advantage on Arcana and History checks during your next adventuring day.",
+                bane: "Cosmic Vertigo: The spatial warping overwhelms your sense of balance. You gain the poisoned condition (representing severe motion sickness) during your next adventuring day."
+            },
+            {
+                title: "The Titan's Playpen",
+                type: "danger",
+                tag: "Wandering Pet",
+                text: "While walking past an abandoned giant 'pet store,' a loose descendant of an ancient giant pet—a playful, house-sized dire owl-cat—wanders out. Bound by the Peace of Annam, it cannot attack aggressively, but it treats you like a squeaky toy and wants to play rough tag.",
+                check: "DC 16 Animal Handling (to soothe and command the massive creature) or DC 16 Athletics (to dodge and wrestle its playful pounces).",
+                boon: "Beastkin Aura: You earn the giant creature's affection, and it rubs against you, leaving a protective apex-predator scent. Beast-type creatures have disadvantage on attack rolls against you during your next adventuring day.",
+                bane: "Roughhousing Blues: The massive pet playfully tackles you into a stone wall. You take 2d6 bludgeoning damage and have your walking speed reduced by 10 feet during your next adventuring day due to deep bruising."
+            }
         ];
 
         function rollD20() {
@@ -585,13 +636,57 @@
             const dismissBtn = document.getElementById('encounter-dismiss-btn');
 
             titleEl.innerText = `⚔️ ${encounter.title}`;
-            bodyEl.innerHTML = `<p>${encounter.text}</p><p style="margin-top: 8px; font-size: 0.75rem; color: #9ccfd8;"><em>(Encounter triggered: Rolled a natural ${rollValue} on d20)</em></p>`;
             tagEl.innerText = encounter.tag;
             tagEl.className = `encounter-tag tag-${encounter.type}`;
 
+            // Build immersive HTML content dynamically
+            let html = `<p style="margin-bottom: 12px; line-height: 1.45; font-size: 0.92rem; color: #e0def4;">${encounter.text || encounter.description}</p>`;
+
+            // Get fields with dynamic support for alternative property names
+            const skillCheck = encounter.check || encounter.skill_check || encounter.skillCheck;
+            const successBoon = encounter.boon || encounter.success_boon || encounter.successBoon || encounter.success;
+            const failureBane = encounter.bane || encounter.failure_bane || encounter.failureBane || encounter.failure;
+
+            // Add Skill Check Block
+            if (skillCheck) {
+                html += `
+                    <div style="margin-top: 10px; margin-bottom: 10px; padding: 10px 14px; background: rgba(246, 193, 119, 0.08); border-left: 3px solid #f6c177; border-radius: 0 4px 4px 0;">
+                        <strong style="color: #f6c177; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Cinzel', serif;">Skill Check Required</strong>
+                        <p style="font-size: 0.85rem; color: #e2e8f0; margin-top: 4px; line-height: 1.4;">${skillCheck}</p>
+                    </div>
+                `;
+            }
+
+            // Add Boon Block
+            if (successBoon) {
+                html += `
+                    <div style="margin-bottom: 10px; padding: 10px 14px; background: rgba(49, 181, 101, 0.08); border-left: 3px solid #31b565; border-radius: 0 4px 4px 0;">
+                        <strong style="color: #31b565; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Cinzel', serif;">Success (Boon)</strong>
+                        <p style="font-size: 0.85rem; color: #e2e8f0; margin-top: 4px; line-height: 1.4;">${successBoon}</p>
+                    </div>
+                `;
+            }
+
+            // Add Bane Block
+            if (failureBane) {
+                html += `
+                    <div style="margin-bottom: 12px; padding: 10px 14px; background: rgba(235, 111, 146, 0.08); border-left: 3px solid #eb6f92; border-radius: 0 4px 4px 0;">
+                        <strong style="color: #eb6f92; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Cinzel', serif;">Failure (Bane)</strong>
+                        <p style="font-size: 0.85rem; color: #e2e8f0; margin-top: 4px; line-height: 1.4;">${failureBane}</p>
+                    </div>
+                `;
+            }
+
+            html += `<p style="margin-top: 12px; font-size: 0.75rem; color: #9ccfd8; font-style: italic; border-top: 1px solid #2e3440; padding-top: 8px;">(Encounter triggered: Rolled a natural ${rollValue} on d20)</p>`;
+
+            bodyEl.innerHTML = html;
+
             // Reset modal state
             if (resultBox) resultBox.style.display = 'none';
-            if (rollBtn) rollBtn.style.display = 'inline-block';
+            if (rollBtn) {
+                rollBtn.style.display = 'inline-block';
+                rollBtn.innerText = 'Roll the Die';
+            }
             if (dismissBtn) dismissBtn.style.display = 'none';
 
             modal.classList.add('active');
@@ -1101,3 +1196,4 @@
     </script>
 </body>
 </html>
+Gemini Notebook can be inaccurate; please double check its responses.
