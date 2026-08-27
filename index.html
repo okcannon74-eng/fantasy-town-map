@@ -478,7 +478,8 @@
         const MAX_DAILY_ENCOUNTERS = 3;   // Maximum random encounters per day
 
         function getDailyTracker() {
-            const today = new Date().toISOString().split('T')[0]; // Format: "2026-08-26"
+            const d = new Date();
+            const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             let tracker = JSON.parse(localStorage.getItem('scriptorium_tracker'));
 
             // If no tracker exists, or if the stored date is from a previous day, reset it
@@ -1196,4 +1197,3 @@
     </script>
 </body>
 </html>
-Gemini Notebook can be inaccurate; please double check its responses.
