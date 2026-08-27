@@ -1,992 +1,1024 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Celestial Scriptorium</title>
-  
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  
-  <!-- Fantasy Typography -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-
-  <style>
-    /* Reset & Fullscreen Setup */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background-color: #0d0e12; font-family: 'Inter', sans-serif; }
-
-    #map {
-      width: 100vw;
-      height: 100vh;
-      background-color: #0d0e12;
-    }
-
-    /* DAY/NIGHT LIGHTING OVERLAY */
-    #lighting-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      pointer-events: none;
-      mix-blend-mode: multiply;
-      transition: background-color 0.8s ease-in-out;
-    }
-
-    /* Time Clock & Dice HUDs */
-    .time-hud {
-      background: rgba(24, 27, 32, 0.95) !important;
-      color: #f6c177 !important;
-      padding: 10px 16px !important;
-      border-radius: 6px !important;
-      border: 1px solid #3b4252 !important;
-      font-family: 'Inter', sans-serif !important;
-      font-size: 0.85rem !important;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-      pointer-events: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      min-width: 160px;
-      text-align: center;    
-      white-space: nowrap;
-      margin-bottom: 8px !important;
-    }
-
-    .time-hud .day-text {
-      font-family: 'Cinzel', serif;
-      font-size: 0.78rem;
-      color: #9ccfd8;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .time-hud .clock-text {
-      font-family: monospace;
-      font-size: 1.15rem;
-      font-weight: bold;
-      color: #f6c177;
-    }
-
-    .dice-hud {
-      pointer-events: auto;
-    }
-
-    .dice-btn {
-      background: rgba(24, 27, 32, 0.95) !important;
-      color: #e2e8f0 !important;
-      border: 1px solid #3b4252 !important;
-      border-radius: 6px !important;
-      padding: 8px 14px !important;
-      font-family: 'Cinzel', serif !important;
-      font-size: 0.85rem !important;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-    }
-
-    .dice-btn:hover {
-      border-color: #f6c177 !important;
-      background: #2a2e37 !important;
-    }
-
-    #dice-result {
-      font-family: monospace;
-      font-weight: bold;
-      font-size: 1.1rem;
-      color: #f6c177;
-      min-width: 24px;
-      text-align: center;
-      transition: transform 0.15s ease;
-    }
-
-    /* Coord HUD */ 
-    .coord-hud {
-      background: rgba(24, 27, 32, 0.9) !important;
-      color: #f6c177 !important;
-      padding: 6px 12px !important;
-      border-radius: 6px !important;
-      border: 1px solid #3b4252 !important;
-      font-family: monospace !important;
-      font-size: 0.85rem !important;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-      pointer-events: none;
-    }
-
-    /* Sub-Icon Radial Menu Styling */
-    .radial-sub-pin {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: #181b20;
-      border: 2px solid #f6c177;
-      color: #ffffff;
-      font-size: 14px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.8);
-      cursor: pointer;
-      transition: transform 0.2s ease, border-color 0.2s ease;
-      animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    }
-
-    .radial-sub-pin:hover {
-      transform: scale(1.3);
-      border-color: #eb6f92;
-      background: #2a2e37;
-    }
-
-    @keyframes popIn {
-      0% { opacity: 0; transform: scale(0.2); }
-      100% { opacity: 1; transform: scale(1); }
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Celestial Scriptorium</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Fantasy Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     
-    /* Dark Fantasy Popup Card Styling */
-    .leaflet-popup-content-wrapper {
-      background: #181b20;
-      color: #e2e8f0;
-      border: 1px solid #3b4252;
-      border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
-      padding: 4px;
-    }
+    <style>
+        /* Reset & Fullscreen Setup */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0d0e12;
+            font-family: 'Inter', sans-serif;
+        }
+        #map {
+            width: 100vw;
+            height: 100vh;
+            background-color: #0d0e12;
+        }
 
-    .leaflet-popup-tip { background: #181b20; }
+        /* DAY/NIGHT LIGHTING OVERLAY */
+        #lighting-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            mix-blend-mode: multiply;
+            transition: background-color 0.8s ease-in-out;
+        }
 
-    .popup-card {
-      min-width: 220px;
-    }
+        /* Time Clock & Dice HUDs */
+        .time-hud {
+            background: rgba(24, 27, 32, 0.95) !important;
+            color: #f6c177 !important;
+            padding: 10px 16px !important;
+            border-radius: 6px !important;
+            border: 1px solid #3b4252 !important;
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0.85rem !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 160px;
+            text-align: center;
+            white-space: nowrap;
+            margin-bottom: 8px !important;
+        }
+        .time-hud .day-text {
+            font-family: 'Cinzel', serif;
+            font-size: 0.78rem;
+            color: #9ccfd8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .time-hud .clock-text {
+            font-family: monospace;
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: #f6c177;
+        }
 
-    .popup-card h3 {
-      font-family: 'Cinzel', serif;
-      color: #f6c177;
-      border-bottom: 1px solid #2e3440;
-      padding-bottom: 6px;
-      margin-bottom: 8px;
-      font-size: 1.1rem;
-    }
+        .dice-hud {
+            pointer-events: auto;
+        }
+        .dice-btn {
+            background: rgba(24, 27, 32, 0.95) !important;
+            color: #e2e8f0 !important;
+            border: 1px solid #3b4252 !important;
+            border-radius: 6px !important;
+            padding: 8px 14px !important;
+            font-family: 'Cinzel', serif !important;
+            font-size: 0.85rem !important;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+        .dice-btn:hover {
+            border-color: #f6c177 !important;
+            background: #2a2e37 !important;
+        }
 
-    .popup-card .subtitle {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #9ccfd8;
-      margin-bottom: 8px;
-      font-weight: 600;
-    }
+        #dice-result {
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #f6c177;
+            min-width: 24px;
+            text-align: center;
+            transition: transform 0.15s ease;
+        }
 
-    .popup-card p {
-      font-size: 0.85rem;
-      line-height: 1.4;
-      color: #c4a7e7;
-      margin-bottom: 8px;
-    }
+        /* Coord HUD */
+        .coord-hud {
+            background: rgba(24, 27, 32, 0.9) !important;
+            color: #f6c177 !important;
+            padding: 6px 12px !important;
+            border-radius: 6px !important;
+            border: 1px solid #3b4252 !important;
+            font-family: monospace !important;
+            font-size: 0.85rem !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
 
-    /* Merchant Inventory Table */
-    .shop-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 8px;
-      font-size: 0.8rem;
-    }
+        /* Sub-Icon Radial Menu Styling */
+        .radial-sub-pin {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #181b20;
+            border: 2px solid #f6c177;
+            color: #ffffff;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+            animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .radial-sub-pin:hover {
+            transform: scale(1.3);
+            border-color: #eb6f92;
+            background: #2a2e37;
+        }
 
-    .shop-table th, .shop-table td {
-      padding: 6px 8px;
-      text-align: left;
-      border-bottom: 1px solid #2e3440;
-    }
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.2);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
 
-    .shop-table th { color: #e0def4; font-weight: 600; }
-    .shop-table td.cost { text-align: right; color: #f6c177; font-weight: 600; }
+        /* Dark Fantasy Popup Card Styling */
+        .leaflet-popup-content-wrapper {
+            background: #181b20;
+            color: #e2e8f0;
+            border: 1px solid #3b4252;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+            padding: 0; /* Changed to 0 so custom popup-card takes 100% space */
+        }
+        .leaflet-popup-content {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .leaflet-popup-tip {
+            background: #181b20;
+        }
+        .popup-card {
+            min-width: 220px;
+            padding: 14px 18px; /* Safe padding for content spacing */
+        }
+        .popup-card h3 {
+            font-family: 'Cinzel', serif;
+            color: #f6c177;
+            border-bottom: 1px solid #2e3440;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        .popup-card .subtitle {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #9ccfd8;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .popup-card p {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: #c4a7e7;
+            margin-bottom: 8px;
+        }
 
-    /* Custom Map Pin Styling */
-    .custom-pin {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 2px solid #ffffff;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.6);
-      font-size: 16px;
-      transition: transform 0.2s ease;
-      background: #0a0a09;
-    }
+        /* Merchant Inventory Table */
+        .shop-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 0.8rem;
+        }
+        .shop-table th, .shop-table td {
+            padding: 5px 8px; /* Tighter vertical padding for responsiveness */
+            text-align: left;
+            border-bottom: 1px solid #2e3440;
+        }
+        .shop-table th {
+            color: #e0def4;
+            font-weight: 600;
+        }
+        .shop-table td.cost {
+            text-align: right;
+            color: #f6c177;
+            font-weight: 600;
+        }
 
-    .custom-pin:hover { transform: scale(1.25); cursor: pointer; }
+        /* Dark Fantasy Scrollbar for overflow boxes */
+        .leaflet-popup-scrolled {
+            border-bottom: 1px solid #2e3440;
+            border-top: 1px solid #2e3440;
+            padding-right: 4px;
+        }
+        .leaflet-popup-scrolled::-webkit-scrollbar {
+            width: 6px;
+        }
+        .leaflet-popup-scrolled::-webkit-scrollbar-track {
+            background: #181b20;
+        }
+        .leaflet-popup-scrolled::-webkit-scrollbar-thumb {
+            background: #3b4252;
+            border-radius: 3px;
+        }
+        .leaflet-popup-scrolled::-webkit-scrollbar-thumb:hover {
+            background: #f6c177;
+        }
 
-    /* Layer Controls */
-    .leaflet-control-layers {
-      background: #181b20 !important;
-      color: #e2e8f0 !important;
-      border: 1px solid #3b4252 !important;
-      border-radius: 8px !important;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.85rem;
-    }
+        /* Custom Map Pin Styling */
+        .custom-pin {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            font-size: 16px;
+            transition: transform 0.2s ease;
+            background: #0a0a09;
+        }
+        .custom-pin:hover {
+            transform: scale(1.25);
+            cursor: pointer;
+        }
 
-    /* ENCOUNTER BANNER MODAL STYLING */
-    .encounter-overlay {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-150%);
-      z-index: 2000;
-      width: 90%;
-      max-width: 480px;
-      background: #181b20;
-      border: 2px solid #eb6f92;
-      border-radius: 8px;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.85);
-      padding: 16px 20px;
-      color: #e2e8f0;
-      transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
+        /* Layer Controls */
+        .leaflet-control-layers {
+            background: #181b20 !important;
+            color: #e2e8f0 !important;
+            border: 1px solid #3b4252 !important;
+            border-radius: 8px !important;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+        }
 
-    .encounter-overlay.active {
-      transform: translateX(-50%) translateY(0);
-    }
-
-    .encounter-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #3b4252;
-      padding-bottom: 8px;
-      margin-bottom: 10px;
-    }
-
-    .encounter-header h2 {
-      font-family: 'Cinzel', serif;
-      font-size: 1.15rem;
-      color: #eb6f92;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .encounter-tag {
-      font-size: 0.7rem;
-      font-weight: bold;
-      padding: 2px 8px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .tag-danger { background: rgba(235, 111, 146, 0.2); color: #eb6f92; border: 1px solid #eb6f92; }
-    .tag-hazard { background: rgba(246, 193, 119, 0.2); color: #f6c177; border: 1px solid #f6c177; }
-    .tag-flavor { background: rgba(156, 207, 216, 0.2); color: #9ccfd8; border: 1px solid #9ccfd8; }
-
-    .encounter-body {
-      font-size: 0.88rem;
-      line-height: 1.45;
-      color: #e0def4;
-      margin-bottom: 14px;
-    }
-
-    .encounter-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-
-    .encounter-btn {
-      padding: 6px 14px;
-      border-radius: 4px;
-      font-family: 'Inter', sans-serif;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.2s ease;
-    }
-
-    .btn-dismiss {
-      background: #2a2e37;
-      color: #e2e8f0;
-      border-color: #3b4252;
-    }
-    .btn-dismiss:hover { background: #3b4252; }
-
-    .btn-action {
-      background: #eb6f92;
-      color: #181b20;
-    }
-    .btn-action:hover { background: #f6c177; }
-  </style>
+        /* ENCOUNTER BANNER MODAL STYLING */
+        .encounter-overlay {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-150%);
+            z-index: 2000;
+            width: 90%;
+            max-width: 480px;
+            background: #181b20;
+            border: 2px solid #eb6f92;
+            border-radius: 8px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.85);
+            padding: 16px 20px;
+            color: #e2e8f0;
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .encounter-overlay.active {
+            transform: translateX(-50%) translateY(0);
+        }
+        .encounter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #3b4252;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+        .encounter-header h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.15rem;
+            color: #eb6f92;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .encounter-tag {
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .tag-danger {
+            background: rgba(235, 111, 146, 0.2);
+            color: #eb6f92;
+            border: 1px solid #eb6f92;
+        }
+        .tag-hazard {
+            background: rgba(246, 193, 119, 0.2);
+            color: #f6c177;
+            border: 1px solid #f6c177;
+        }
+        .tag-flavor {
+            background: rgba(156, 207, 216, 0.2);
+            color: #9ccfd8;
+            border: 1px solid #9ccfd8;
+        }
+        .encounter-body {
+            font-size: 0.88rem;
+            line-height: 1.45;
+            color: #e0def4;
+            margin-bottom: 14px;
+        }
+        .encounter-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .encounter-btn {
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .btn-dismiss {
+            background: #2a2e37;
+            color: #e2e8f0;
+            border-color: #3b4252;
+        }
+        .btn-dismiss:hover {
+            background: #3b4252;
+        }
+        .btn-action {
+            background: #eb6f92;
+            color: #181b20;
+        }
+        .btn-action:hover {
+            background: #f6c177;
+        }
+    </style>
 </head>
 <body>
 
-  <div id="map"></div>
+    <div id="map"></div>
 
-  <!-- Random Encounter Banner Overlay -->
-  <div id="encounter-modal" class="encounter-overlay">
-    <div class="encounter-header">
-      <h2 id="encounter-title">⚠️ Encounter!</h2>
-      <span id="encounter-tag" class="encounter-tag tag-danger">Danger</span>
+    <!-- Random Encounter Banner Overlay -->
+    <div id="encounter-modal" class="encounter-overlay">
+        <div class="encounter-header">
+            <h2 id="encounter-title">⚠️ Encounter!</h2>
+            <span id="encounter-tag" class="encounter-tag tag-danger">Danger</span>
+        </div>
+        <div id="encounter-body" class="encounter-body">
+            An unexpected threat approaches...
+        </div>
+        <!-- Container to display the roll result inside the modal -->
+        <div id="encounter-roll-result" style="display: none; margin-bottom: 12px; padding: 10px; background: #2a2e37; border: 1px solid #3b4252; border-radius: 6px; text-align: center; font-weight: bold; color: #f6c177;"></div>
+        <div class="encounter-actions">
+            <button id="encounter-dismiss-btn" class="encounter-btn btn-dismiss" onclick="dismissEncounter()" style="display: none;">Dismiss</button>
+            <button id="encounter-roll-btn" class="encounter-btn btn-action" onclick="rollEncounterDie()">Roll the Die</button>
+        </div>
     </div>
-    <div id="encounter-body" class="encounter-body">
-      An unexpected threat approaches...
-    </div>
 
-    <!-- Container to display the roll result inside the modal -->
-    <div id="encounter-roll-result" style="display: none; margin-bottom: 12px; padding: 10px; background: #2a2e37; border: 1px solid #3b4252; border-radius: 6px; text-align: center; font-weight: bold; color: #f6c177;"></div>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // ===================================================================
+        // 1. MAP CONFIGURATION (Pixel-based grid with camera bounds cushion)
+        // ===================================================================
+        const imgWidth = 2000;
+        const imgHeight = 1500;
+        const bounds = [[0, 0], [imgHeight, imgWidth]];
 
-    <div class="encounter-actions">
-      <button id="encounter-dismiss-btn" class="encounter-btn btn-dismiss" onclick="dismissEncounter()" style="display: none;">Dismiss</button>
-      <button id="encounter-roll-btn" class="encounter-btn btn-action" onclick="rollEncounterDie()">Roll the Die</button>
-    </div>
-  </div>
+        // Buffer padding to allow smooth panning around margins for popup clarity
+        const boundsPadding = 350; 
+        const paddedBounds = [
+            [-boundsPadding, -boundsPadding],
+            [imgHeight + boundsPadding, imgWidth + boundsPadding]
+        ];
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    // ===================================================================
-    // 1. MAP CONFIGURATION (Pixel-based grid)
-    // ===================================================================
-    const imgWidth = 2000;
-    const imgHeight = 1500;
-    const bounds = [[0, 0], [imgHeight, imgWidth]];
+        const map = L.map('map', {
+            crs: L.CRS.Simple,
+            minZoom: -1,
+            maxZoom: 2,
+            zoomSnap: 0.25,
+            maxBounds: paddedBounds, // Replaced rigid bounds with padded bounds
+            maxBoundsViscosity: 0.8
+        });
 
-    const map = L.map('map', {
-      crs: L.CRS.Simple,
-      minZoom: -1,
-      maxZoom: 2,
-      zoomSnap: 0.25,
-      maxBounds: bounds,
-      maxBoundsViscosity: 0.8
-    });
+        // Config options for highly responsive, scrolled popups
+        const dynamicPopupOptions = {
+            maxWidth: 600,
+            minWidth: 480,
+            maxHeight: 380,            // Caps height to prevent page overflows
+            autoPanPadding: [50, 80]    // Generous buffer [horiz, vert] to clear HUDs & tabs
+        };
 
-    // Custom Lighting Pane (sits between Markers [600] and Popups [700])
-    map.createPane('lightingPane');
-    map.getPane('lightingPane').style.zIndex = 650;
-    map.getPane('lightingPane').style.pointerEvents = 'none';
+        // Custom Lighting Pane (sits between Markers [600] and Popups [700])
+        map.createPane('lightingPane');
+        map.getPane('lightingPane').style.zIndex = 650;
+        map.getPane('lightingPane').style.pointerEvents = 'none';
 
-    // Base Map Image
-    const mapImageUrl = 'Scriptorium.jpg'; 
-    L.imageOverlay(mapImageUrl, bounds).addTo(map);
-    map.fitBounds(bounds);
+        // Base Map Image
+        const mapImageUrl = 'Scriptorium.jpg';
+        L.imageOverlay(mapImageUrl, bounds).addTo(map);
+        map.fitBounds(bounds);
 
-    // Map-bound Tint Overlay
-    const extendedBounds = [[-1000, -1000], [imgHeight + 1000, imgWidth + 1000]];
-    const blankDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSU2EUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVOR5CYII=';
-    const lightingLayer = L.imageOverlay(blankDataUrl, extendedBounds, { pane: 'lightingPane' }).addTo(map);
+        // Map-bound Tint Overlay
+        const extendedBounds = [[-1000, -1000], [imgHeight + 1000, imgWidth + 1000]];
+        const blankDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSU2EUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVOR5CYII=';
+        const lightingLayer = L.imageOverlay(blankDataUrl, extendedBounds, { pane: 'lightingPane' }).addTo(map);
 
-    // Layer Groups
-    const tavernsLayer = L.layerGroup().addTo(map);
-    const merchantsLayer = L.layerGroup().addTo(map);
-    const questsLayer = L.layerGroup().addTo(map);
-    const subMenuLayer = L.layerGroup().addTo(map);
+        // Layer Groups
+        const tavernsLayer = L.layerGroup().addTo(map);
+        const merchantsLayer = L.layerGroup().addTo(map);
+        const questsLayer = L.layerGroup().addTo(map);
+        const subMenuLayer = L.layerGroup().addTo(map);
 
-    // Layer Filter Control
-    const overlays = {
-      "🍺 Taverns & Inns": tavernsLayer,
-      "🛡️ Merchants": merchantsLayer,
-      "📜 Quests & Notices": questsLayer
-    };
-    L.control.layers(null, overlays, { collapsed: false }).addTo(map);
+        // Layer Filter Control
+        const overlays = {
+            "🍺 Taverns & Inns": tavernsLayer,
+            "🛡️ Merchants": merchantsLayer,
+            "📜 Quests & Notices": questsLayer
+        };
+        L.control.layers(null, overlays, { collapsed: false }).addTo(map);
 
-    // ===================================================================
-    // 2. DAY/NIGHT LIGHTING OVERLAY SYSTEM
-    // ===================================================================
-    const lightingKeyframes = [
-      { h: 0,   r: 15,  g: 20,  b: 50,  a: 0.50 }, // Midnight
-      { h: 4.5, r: 25,  g: 30,  b: 65,  a: 0.35 }, // Pre-Dawn
-      { h: 6,   r: 255, g: 150, b: 85,  a: 0.25 }, // Dawn
-      { h: 8,   r: 255, g: 235, b: 200, a: 0.15 }, // Morning
-      { h: 12,  r: 255, g: 255, b: 255, a: 0.00 }, // Midday
-      { h: 17,  r: 255, g: 185, b: 120, a: 0.25 }, // Golden Hour
-      { h: 19,  r: 215, g: 75,  b: 110, a: 0.35 }, // Sunset
-      { h: 21,  r: 30,  g: 35,  b: 80,  a: 0.50 }, // Twilight
-      { h: 24,  r: 15,  g: 20,  b: 50,  a: 0.75 }  // Midnight Loop
-    ];
+        // ===================================================================
+        // 2. DAY/NIGHT LIGHTING OVERLAY SYSTEM
+        // ===================================================================
+        const lightingKeyframes = [
+            { h: 0,   r: 15,  g: 20,  b: 50,  a: 0.50 }, // Midnight
+            { h: 4.5, r: 25,  g: 30,  b: 65,  a: 0.35 }, // Pre-Dawn
+            { h: 6,   r: 255, g: 150, b: 85,  a: 0.25 }, // Dawn
+            { h: 8,   r: 255, g: 235, b: 200, a: 0.15 }, // Morning
+            { h: 12,  r: 255, g: 255, b: 255, a: 0.00 }, // Midday
+            { h: 17,  r: 255, g: 185, b: 120, a: 0.25 }, // Golden Hour
+            { h: 19,  r: 215, g: 75,  b: 110, a: 0.35 }, // Sunset
+            { h: 21,  r: 30,  g: 35,  b: 80,  a: 0.50 }, // Twilight
+            { h: 24,  r: 15,  g: 20,  b: 50,  a: 0.75 }  // Midnight Loop
+        ];
 
-    function getLightingTint(totalMinutes) {
-      const hour = (totalMinutes % 1440) / 60;
-      
-      let k1 = lightingKeyframes[0];
-      let k2 = lightingKeyframes[lightingKeyframes.length - 1];
+        function getLightingTint(totalMinutes) {
+            const hour = (totalMinutes % 1440) / 60;
+            let k1 = lightingKeyframes[0];
+            let k2 = lightingKeyframes[lightingKeyframes.length - 1];
 
-      for (let i = 0; i < lightingKeyframes.length - 1; i++) {
-        if (hour >= lightingKeyframes[i].h && hour <= lightingKeyframes[i+1].h) {
-          k1 = lightingKeyframes[i];
-          k2 = lightingKeyframes[i+1];
-          break;
+            for (let i = 0; i < lightingKeyframes.length - 1; i++) {
+                if (hour >= lightingKeyframes[i].h && hour <= lightingKeyframes[i+1].h) {
+                    k1 = lightingKeyframes[i];
+                    k2 = lightingKeyframes[i+1];
+                    break;
+                }
+            }
+
+            const range = k2.h - k1.h;
+            const progress = range === 0 ? 0 : (hour - k1.h) / range;
+
+            const r = Math.round(k1.r + (k2.r - k1.r) * progress);
+            const g = Math.round(k1.g + (k2.g - k1.g) * progress);
+            const b = Math.round(k1.b + (k2.b - k1.b) * progress);
+            const a = (k1.a + (k2.a - k1.a) * progress).toFixed(2);
+
+            return `rgba(${r}, ${g}, ${b}, ${a})`;
         }
-      }
 
-      const range = k2.h - k1.h;
-      const progress = range === 0 ? 0 : (hour - k1.h) / range;
+        function updateLightingOverlay() {
+            const tintEl = lightingLayer.getElement();
+            if (tintEl) {
+                tintEl.style.backgroundColor = getLightingTint(currentMinutes);
+                tintEl.style.mixBlendMode = 'multiply';
+                tintEl.style.transition = 'background-color 0.8s ease-in-out';
+            }
+        }
 
-      const r = Math.round(k1.r + (k2.r - k1.r) * progress);
-      const g = Math.round(k1.g + (k2.g - k1.g) * progress);
-      const b = Math.round(k1.b + (k2.b - k1.b) * progress);
-      const a = (k1.a + (k2.a - k1.a) * progress).toFixed(2);
+        // ===================================================================
+        // 3. RANDOM ENCOUNTER ENGINE & TABLES
+        // ===================================================================
+        const ENCOUNTER_THRESHOLD = 15; // DC 15 on d20 (30% chance per hour passed)
 
-      return `rgba(${r}, ${g}, ${b}, ${a})`;
-    }
+        // Fallback encounters in case JSON fetch fails or is empty
+        let dayEncounters = [
+            { title: "Artificer's Steam Vent", type: "hazard", tag: "Environmental", text: "A pressure pipe vents scalding steam! DC 18 Arcana or Sleight of Hand to fix." }
+        ];
+        let nightEncounters = [
+            { title: "Astral Static Shockwave", type: "danger", tag: "Wild Magic", text: "Gravity flickers momentarily. DC 17 Arcana or Wisdom Save to resist." }
+        ];
 
-    function updateLightingOverlay() {
-      const tintEl = lightingLayer.getElement();
-      if (tintEl) {
-        tintEl.style.backgroundColor = getLightingTint(currentMinutes);
-        tintEl.style.mixBlendMode = 'multiply';
-        tintEl.style.transition = 'background-color 0.8s ease-in-out';
-      }
-    }
+        function rollD20() {
+            return Math.floor(Math.random() * 20) + 1;
+        }
 
-    // ===================================================================
-    // 3. RANDOM ENCOUNTER ENGINE & TABLES
-    // ===================================================================
-    const ENCOUNTER_THRESHOLD = 15; // DC 15 on d20 (30% chance per hour passed)
+        function triggerRandomEncounter(hourCount = 1) {
+            for (let i = 0; i < hourCount; i++) {
+                const d20Roll = rollD20();
+                console.log(`🎲 Hourly Encounter Check (Hour ${i + 1}/${hourCount}): Rolled ${d20Roll} vs DC ${ENCOUNTER_THRESHOLD}`);
+                if (d20Roll >= ENCOUNTER_THRESHOLD) {
+                    const currentHour24 = Math.floor(currentMinutes / 60);
+                    const isNight = (currentHour24 >= 20 || currentHour24 < 6);
+                    const pool = (isNight && nightEncounters.length) ? nightEncounters : dayEncounters;
+                    if (pool.length) {
+                        const encounter = pool[Math.floor(Math.random() * pool.length)];
+                        showEncounterModal(encounter, d20Roll);
+                        break;
+                    }
+                }
+            }
+        }
 
-    // Fallback encounters in case JSON fetch fails or is empty
-    let dayEncounters = [
-      {
-        title: "Artificer's Steam Vent",
-        type: "hazard",
-        tag: "Environmental",
-        text: "A pressure pipe vents scalding steam! DC 18 Arcana or Sleight of Hand to fix."
-      }
-    ];
-    let nightEncounters = [
-      {
-        title: "Astral Static Shockwave",
-        type: "danger",
-        tag: "Wild Magic",
-        text: "Gravity flickers momentarily. DC 17 Arcana or Wisdom Save to resist."
-      }
-    ];
+        function showEncounterModal(encounter, rollValue) {
+            const modal = document.getElementById('encounter-modal');
+            const titleEl = document.getElementById('encounter-title');
+            const tagEl = document.getElementById('encounter-tag');
+            const bodyEl = document.getElementById('encounter-body');
+            const resultBox = document.getElementById('encounter-roll-result');
+            const rollBtn = document.getElementById('encounter-roll-btn');
+            const dismissBtn = document.getElementById('encounter-dismiss-btn');
 
-    function rollD20() {
-      return Math.floor(Math.random() * 20) + 1;
-    }
+            titleEl.innerText = `⚔️ ${encounter.title}`;
+            bodyEl.innerHTML = `<p>${encounter.text}</p><p style="margin-top: 8px; font-size: 0.75rem; color: #9ccfd8;"><em>(Encounter triggered: Rolled a natural ${rollValue} on d20)</em></p>`;
+            tagEl.innerText = encounter.tag;
+            tagEl.className = `encounter-tag tag-${encounter.type}`;
 
-    function triggerRandomEncounter(hourCount = 1) {
-      for (let i = 0; i < hourCount; i++) {
-        const d20Roll = rollD20();
-        console.log(`🎲 Hourly Encounter Check (Hour ${i + 1}/${hourCount}): Rolled ${d20Roll} vs DC ${ENCOUNTER_THRESHOLD}`);
+            // Reset modal state
+            if (resultBox) resultBox.style.display = 'none';
+            if (rollBtn) rollBtn.style.display = 'inline-block';
+            if (dismissBtn) dismissBtn.style.display = 'none';
 
-        if (d20Roll >= ENCOUNTER_THRESHOLD) {
-          const currentHour24 = Math.floor(currentMinutes / 60);
-          const isNight = (currentHour24 >= 20 || currentHour24 < 6);
-          const pool = (isNight && nightEncounters.length) ? nightEncounters : dayEncounters;
-          
-          if (pool.length) {
+            modal.classList.add('active');
+        }
+
+        function rollEncounterDie() {
+            const roll = Math.floor(Math.random() * 20) + 1;
+            const resultBox = document.getElementById('encounter-roll-result');
+            const rollBtn = document.getElementById('encounter-roll-btn');
+            const dismissBtn = document.getElementById('encounter-dismiss-btn');
+            const hudResult = document.getElementById('dice-result');
+
+            if (hudResult) {
+                hudResult.innerText = roll;
+                hudResult.style.color = roll === 20 ? '#31b565' : (roll === 1 ? '#eb6f92' : '#f6c177');
+            }
+
+            let color = '#f6c177';
+            let extraText = '';
+            if (roll === 20) {
+                color = '#31b565';
+                extraText = ' — Critical Success!';
+            } else if (roll === 1) {
+                color = '#eb6f92';
+                extraText = ' — Critical Failure!';
+            }
+
+            if (resultBox) {
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `🎲 Roll: <span style="font-size: 1.3rem; color: ${color};">${roll}</span>${extraText}`;
+            }
+
+            if (rollBtn) rollBtn.style.display = 'none';
+            if (dismissBtn) dismissBtn.style.display = 'inline-block';
+        }
+
+        function dismissEncounter() {
+            const modal = document.getElementById('encounter-modal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        window.forceEncounter = function() {
+            const pool = dayEncounters.concat(nightEncounters);
             const encounter = pool[Math.floor(Math.random() * pool.length)];
-            showEncounterModal(encounter, d20Roll);
-            break;
-          }
-        }
-      }
-    }
+            showEncounterModal(encounter, 20);
+        };
 
-    function showEncounterModal(encounter, rollValue) {
-      const modal = document.getElementById('encounter-modal');
-      const titleEl = document.getElementById('encounter-title');
-      const tagEl = document.getElementById('encounter-tag');
-      const bodyEl = document.getElementById('encounter-body');
-      const resultBox = document.getElementById('encounter-roll-result');
-      const rollBtn = document.getElementById('encounter-roll-btn');
-      const dismissBtn = document.getElementById('encounter-dismiss-btn');
+        // ===================================================================
+        // 4. TIME CLOCK & FANTASY CALENDAR SYSTEM
+        // ===================================================================
+        const FANTASY_MONTHS = [
+            "Deepfrost", "Frostfade", "Awakening", "Rainbloom", "Highbloom", "Sunpeak",
+            "Solstice", "Ember", "Harvestide", "Shadowfall", "Chillwind", "Rhimetime"
+        ];
 
-      titleEl.innerText = `⚔️ ${encounter.title}`;
-      bodyEl.innerHTML = `<p>${encounter.text}</p><p style="margin-top: 8px; font-size: 0.75rem; color: #9ccfd8;"><em>(Encounter triggered: Rolled a natural ${rollValue} on d20)</em></p>`;
-
-      tagEl.innerText = encounter.tag;
-      tagEl.className = `encounter-tag tag-${encounter.type}`;
-
-      // Reset modal state: Hide result box, show ONLY "Roll the Die", hide "Dismiss"
-      if (resultBox) resultBox.style.display = 'none';
-      if (rollBtn) rollBtn.style.display = 'inline-block';
-      if (dismissBtn) dismissBtn.style.display = 'none';
-
-      modal.classList.add('active');
-    }
-
-    function rollEncounterDie() {
-      const roll = Math.floor(Math.random() * 20) + 1;
-      const resultBox = document.getElementById('encounter-roll-result');
-      const rollBtn = document.getElementById('encounter-roll-btn');
-      const dismissBtn = document.getElementById('encounter-dismiss-btn');
-      const hudResult = document.getElementById('dice-result');
-
-      // Sync HUD dice display
-      if (hudResult) {
-        hudResult.innerText = roll;
-        hudResult.style.color = roll === 20 ? '#31b565' : (roll === 1 ? '#eb6f92' : '#f6c177');
-      }
-
-      // Determine text & highlight color
-      let color = '#f6c177';
-      let extraText = '';
-      if (roll === 20) { 
-        color = '#31b565'; 
-        extraText = ' — Critical Success!'; 
-      } else if (roll === 1) { 
-        color = '#eb6f92'; 
-        extraText = ' — Critical Failure!'; 
-      }
-
-      // Show result box
-      if (resultBox) {
-        resultBox.style.display = 'block';
-        resultBox.innerHTML = `🎲 Roll: <span style="font-size: 1.3rem; color: ${color};">${roll}</span>${extraText}`;
-      }
-
-      // Swap buttons: Hide "Roll the Die", reveal "Dismiss"
-      if (rollBtn) rollBtn.style.display = 'none';
-      if (dismissBtn) dismissBtn.style.display = 'inline-block';
-    }
-
-    function dismissEncounter() {
-      const modal = document.getElementById('encounter-modal');
-      if (modal) {
-        modal.classList.remove('active');
-      }
-    }
-
-    // Dev Helper: Type forceEncounter() in browser console to test instantly
-    window.forceEncounter = function() {
-      const pool = dayEncounters.concat(nightEncounters);
-      const encounter = pool[Math.floor(Math.random() * pool.length)];
-      showEncounterModal(encounter, 20);
-    };
-
-    // ===================================================================
-    // 4. TIME CLOCK & FANTASY CALENDAR SYSTEM
-    // ===================================================================
-    const FANTASY_MONTHS = [
-      "Deepfrost", "Frostfade", "Awakening", "Rainbloom",
-      "Highbloom", "Sunpeak", "Solstice", "Ember",
-      "Harvestide", "Shadowfall", "Chillwind", "Rhimetime"
-    ];
-
-    function getOrdinalSuffix(day) {
-      if (day > 3 && day < 21) return 'th';
-      switch (day % 10) {
-        case 1:  return 'st';
-        case 2:  return 'nd';
-        case 3:  return 'rd';
-        default: return 'th';
-      }
-    }
-
-    function formatFantasyDate(date) {
-      const day = date.getDate();
-      const monthName = FANTASY_MONTHS[date.getMonth()];
-      return `The ${day}${getOrdinalSuffix(day)} day of ${monthName}`;
-    }
-
-    const currentDate = new Date();
-    let currentMinutes = (currentDate.getHours() * 60) + currentDate.getMinutes();
-    let minutesSinceEncounterCheck = 0;
-
-    function formatClockTime(totalMins) {
-      const hours24 = Math.floor(totalMins / 60);
-      const mins = totalMins % 60;
-      
-      const period = hours24 >= 12 ? 'PM' : 'AM';
-      let hours12 = hours24 % 12;
-      if (hours12 === 0) hours12 = 12;
-
-      const paddedMins = mins < 10 ? `0${mins}` : mins;
-      const paddedHours = hours12 < 10 ? `0${hours12}` : hours12;
-
-      return `${paddedHours}:${paddedMins} ${period}`;
-    }
-
-    function advanceTime(minutesToAdd = 15) {
-      currentMinutes += minutesToAdd;
-      minutesSinceEncounterCheck += minutesToAdd;
-
-      if (currentMinutes >= 1440) {
-        currentMinutes -= 1440;
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-
-      const timeDisplay = document.getElementById('time-display');
-      const dayDisplay = document.getElementById('day-display');
-      
-      if (timeDisplay && dayDisplay) {
-        timeDisplay.innerText = formatClockTime(currentMinutes);
-        dayDisplay.innerText = formatFantasyDate(currentDate);
-      }
-
-      updateLightingOverlay();
-
-      if (minutesSinceEncounterCheck >= 60) {
-        const hoursPassed = Math.floor(minutesSinceEncounterCheck / 60);
-        minutesSinceEncounterCheck %= 60;
-
-        console.log(`⏰ ${hoursPassed} hour(s) passed! Checking random encounters...`);
-        triggerRandomEncounter(hoursPassed);
-      }
-    }
-
-    // Time & Dice Controls HUD
-    const timeControl = L.control({ position: 'topright' });
-    timeControl.onAdd = function() {
-      const div = L.DomUtil.create('div', 'time-hud-container');
-      div.innerHTML = `
-        <div class="time-hud">
-          <div class="day-text" id="day-display">${formatFantasyDate(currentDate)}</div>
-          <div class="clock-text" id="time-display">${formatClockTime(currentMinutes)}</div>
-        </div>
-        <div class="dice-hud">
-          <button class="dice-btn" onclick="manualD20Roll()">
-            🎲 Roll d20: <span id="dice-result">--</span>
-          </button>
-        </div>
-      `;
-      return div;
-    };
-    timeControl.addTo(map);
-
-    function manualD20Roll() {
-      const roll = Math.floor(Math.random() * 20) + 1;
-      const resultEl = document.getElementById('dice-result');
-      
-      resultEl.innerText = roll;
-      resultEl.style.color = roll === 20 ? '#31b565' : (roll === 1 ? '#eb6f92' : '#f6c177');
-
-      resultEl.style.transform = 'scale(1.4)';
-      setTimeout(() => {
-        resultEl.style.transform = 'scale(1)';
-      }, 150);
-    }
-
-    map.on('popupopen', function(e) {
-      let content = e.popup.getContent();
-      if (typeof content === 'function') {
-        content = content();
-      }
-
-      // Check if the opened popup is a merchant shop table
-      if (typeof content === 'string' && content.includes('shop-table')) {
-        advanceTime(60); // 1 hour for visiting a shop
-      } else {
-        advanceTime(15); // 15 minutes default for standard locations
-      }
-    });
-
-    // ===================================================================
-    // 5. DYNAMIC DATA STORAGE & FETCHING
-    // ===================================================================
-    let locationData = [];
-    let rumorPool = [];
-    let merchantData = {};
-    let npcData = {};
-
-    async function loadCampaignData() {
-      try {
-        const [locationsRes, rumorsRes, merchantsRes, encountersRes, npcsRes] = await Promise.all([
-          fetch('data/locations.json'),
-          fetch('data/rumors.json'),
-          fetch('data/merchants.json'),
-          fetch('data/encounters.json'),
-          fetch('data/npcs.json').catch(() => ({ ok: false }))
-        ]);
-
-        if (locationsRes.ok) locationData = await locationsRes.json();
-        if (rumorsRes.ok) rumorPool = await rumorsRes.json();
-        if (merchantsRes.ok) merchantData = await merchantsRes.json();
-        if (npcsRes.ok) npcData = await npcsRes.json();
-        
-        if (encountersRes.ok) {
-          const encounterData = await encountersRes.json();
-          if (encounterData.day && encounterData.day.length) dayEncounters = encounterData.day;
-          if (encounterData.night && encounterData.night.length) nightEncounters = encounterData.night;
+        function getOrdinalSuffix(day) {
+            if (day > 3 && day < 21) return 'th';
+            switch (day % 10) {
+                case 1:  return 'st';
+                case 2:  return 'nd';
+                case 3:  return 'rd';
+                default: return 'th';
+            }
         }
 
-        console.log('✅ Campaign data loaded successfully!');
-      } catch (error) {
-        console.error('⚠️ Error loading external JSON files.', error);
-      } finally {
-        initMapMarkers();
-        updateLightingOverlay();
-      }
-    }
-
-    // ===================================================================
-    // 6. HTML GENERATOR HELPERS
-    // ===================================================================
-    function buildShopTableHTML(merchantKey) {
-      const merchant = merchantData[merchantKey];
-      if (!merchant) return '<div class="popup-card"><p>No inventory available.</p></div>';
-
-      const rows = merchant.inventory.map(row => `
-        <tr>
-          <td style="font-weight: 600; vertical-align: top; white-space: nowrap;">${row.item}</td>
-          <td style="font-size: 0.73rem; color: #9ccfd8; line-height: 1.3; vertical-align: top;">${row.description || ''}</td>
-          <td style="text-align: center; vertical-align: top;">${row.stock}</td>
-          <td class="cost" style="vertical-align: top; white-space: nowrap;">${row.price}</td>
-        </tr>
-      `).join('');
-
-      return `
-        <div class="popup-card" style="width: 500px; max-width: 90vw;">
-          <h3>${merchant.title}</h3>
-          <div class="subtitle">${merchant.subtitle}</div>
-          ${merchant.description ? `<p>${merchant.description}</p>` : ''}
-          <table class="shop-table">
-            <thead>
-              <tr>
-                <th style="width: 25%;">Item</th>
-                <th style="width: 50%;">Effect</th>
-                <th style="width: 12%; text-align: center;">Stock</th>
-                <th style="width: 13%; text-align: right;">Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows}
-            </tbody>
-          </table>
-        </div>
-      `;
-    }
-
-    function getRandomRumorHTML() {
-      if (!rumorPool.length) return '<div class="popup-card"><p>No rumors heard.</p></div>';
-
-      const randomRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
-      
-      return `
-        <div class="popup-card" id="rumor-card">
-          <h3>Tavern Gossip</h3>
-          <div class="subtitle">${randomRumor.source}</div>
-          <p style="min-height: 48px;">"${randomRumor.text}"</p>
-          
-          <button onclick="rerollRumor()" style="
-            width: 100%;
-            margin-top: 6px;
-            padding: 6px 10px;
-            background: #2a2e37;
-            border: 1px solid #f6c177;
-            color: #f6c177;
-            border-radius: 4px;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: background 0.2s;
-          " onmouseover="this.style.background='#3b4252'" onmouseout="this.style.background='#2a2e37'">
-            🎲 Hear Another Rumor
-          </button>
-        </div>
-      `;
-    }
-
-    window.rerollRumor = function() {
-      const cardContainer = document.getElementById('rumor-card');
-      if (cardContainer && rumorPool.length) {
-        const freshRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
-        cardContainer.querySelector('.subtitle').innerText = freshRumor.source;
-        cardContainer.querySelector('p').innerText = `"${freshRumor.text}"`;
-
-        // Advance time by 15 minutes when rerolling a rumor
-        advanceTime(15);
-      }
-    };
-
-    // ===================================================================
-    // 7. CUSTOM PIN ICON GENERATORS & MATH HELPERS
-    // ===================================================================
-    function createPinIcon(className, iconEmoji) {
-      return L.divIcon({
-        className: 'custom-icon-wrapper',
-        html: `<div class="custom-pin ${className}">${iconEmoji}</div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
-        popupAnchor: [0, -16]
-      });
-    }
-
-    function createSubIcon(emoji) {
-      return L.divIcon({
-        className: 'custom-sub-wrapper',
-        html: `<div class="radial-sub-pin">${emoji}</div>`,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
-        popupAnchor: [0, -14]
-      });
-    }
-
-    const icons = {
-      tavern:    createPinIcon('pin-tavern', '🍺'),
-      armor:     createPinIcon('pin-armor',  '🛡️'),
-      anvil:     createPinIcon('pin-anvil',  '⚒️'),
-      potion:    createPinIcon('pin-potion',  '🧪'),
-      clockwork: createPinIcon('pin-clockwork',  '⚙️'),
-      quest:     createPinIcon('pin-quest',  '📜')
-    };
-
-    function getRadialPosition(centerLatLng, radiusInPixels, angleInDegrees) {
-      const angleRad = (angleInDegrees * Math.PI) / 180;
-      const newY = centerLatLng[0] + radiusInPixels * Math.sin(angleRad);
-      const newX = centerLatLng[1] + radiusInPixels * Math.cos(angleRad);
-      return [newY, newX];
-    }
-
-    // ===================================================================
-    // 8. MARKER INITIALIZATION & VISIBILITY MANAGER
-    // ===================================================================
-    let trackedMarkers = [];
-    let closeSubMenu = function() {};
-
-    function attachRadialMenu(marker, loc) {
-      const innSubItems = [
-        {
-          emoji: '🍺',
-          angle: 150,
-          title: 'Drink & Food Menu',
-          get popupHtml() { return buildShopTableHTML(loc.id); }
-        },
-        {
-          emoji: '👤',
-          angle: 90,
-          title: 'Notable NPCs',
-          popupHtml: `
-            <div class="popup-card">
-              <h3>Tavern Patrons</h3>
-              <div class="subtitle">Key Characters</div>
-              <ul style="font-size: 0.8rem; padding-left: 14px; color: #c4a7e7; line-height: 1.5;">
-                <li><strong>Barney Chubb:</strong> Busy halfling innkeeper.</li>
-                <li><strong>Lady Thrum:</strong> Cloud Giant matriarch sitting by the hearth.</li>
-              </ul>
-            </div>`
-        },
-        {
-          emoji: '📜',
-          angle: 30,
-          title: 'Rumors & Gossip',
-          get popupHtml() { return getRandomRumorHTML(); }
-        }
-      ];
-
-      let isSubMenuOpen = false;
-
-      closeSubMenu = function() {
-        subMenuLayer.clearLayers();
-        isSubMenuOpen = false;
-      };
-
-      marker.on('click', function (e) {
-        L.DomEvent.stopPropagation(e);
-
-        if (isSubMenuOpen) {
-          closeSubMenu();
-          return;
+        function formatFantasyDate(date) {
+            const day = date.getDate();
+            const monthName = FANTASY_MONTHS[date.getMonth()];
+            return `The ${day}${getOrdinalSuffix(day)} day of ${monthName}`;
         }
 
-        const radius = 80;
+        const currentDate = new Date();
+        let currentMinutes = (currentDate.getHours() * 60) + currentDate.getMinutes();
+        let minutesSinceEncounterCheck = 0;
 
-        innSubItems.forEach(item => {
-          const subPos = getRadialPosition(loc.coords, radius, item.angle);
-          
-          const subMarker = L.marker(subPos, { icon: createSubIcon(item.emoji) })
-            .bindTooltip(item.title, { direction: 'top', offset: [0, -10] })
-            .bindPopup(() => item.popupHtml, { maxWidth: 600, minWidth: 480 });
+        function formatClockTime(totalMins) {
+            const hours24 = Math.floor(totalMins / 60);
+            const mins = totalMins % 60;
+            const period = hours24 >= 12 ? 'PM' : 'AM';
+            let hours12 = hours24 % 12;
+            if (hours12 === 0) hours12 = 12;
+            const paddedMins = mins < 10 ? `0${mins}` : mins;
+            const paddedHours = hours12 < 10 ? `0${hours12}` : hours12;
+            return `${paddedHours}:${paddedMins} ${period}`;
+        }
 
-          subMenuLayer.addLayer(subMarker);
+        function advanceTime(minutesToAdd = 15) {
+            currentMinutes += minutesToAdd;
+            minutesSinceEncounterCheck += minutesToAdd;
+
+            if (currentMinutes >= 1440) {
+                currentMinutes -= 1440;
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            const timeDisplay = document.getElementById('time-display');
+            const dayDisplay = document.getElementById('day-display');
+            if (timeDisplay && dayDisplay) {
+                timeDisplay.innerText = formatClockTime(currentMinutes);
+                dayDisplay.innerText = formatFantasyDate(currentDate);
+            }
+
+            updateLightingOverlay();
+
+            if (minutesSinceEncounterCheck >= 60) {
+                const hoursPassed = Math.floor(minutesSinceEncounterCheck / 60);
+                minutesSinceEncounterCheck %= 60;
+                console.log(`⏰ ${hoursPassed} hour(s) passed! Checking random encounters...`);
+                triggerRandomEncounter(hoursPassed);
+            }
+        }
+
+        // Time & Dice Controls HUD
+        const timeControl = L.control({ position: 'topright' });
+        timeControl.onAdd = function() {
+            const div = L.DomUtil.create('div', 'time-hud-container');
+            div.innerHTML = `
+                <div class="time-hud">
+                    <div class="day-text" id="day-display">${formatFantasyDate(currentDate)}</div>
+                    <div class="clock-text" id="time-display">${formatClockTime(currentMinutes)}</div>
+                </div>
+                <div class="dice-hud">
+                    <button class="dice-btn" onclick="manualD20Roll()">
+                        🎲 Roll d20: <span id="dice-result">--</span>
+                    </button>
+                </div>
+            `;
+            return div;
+        };
+        timeControl.addTo(map);
+
+        function manualD20Roll() {
+            const roll = Math.floor(Math.random() * 20) + 1;
+            const resultEl = document.getElementById('dice-result');
+            resultEl.innerText = roll;
+            resultEl.style.color = roll === 20 ? '#31b565' : (roll === 1 ? '#eb6f92' : '#f6c177');
+            resultEl.style.transform = 'scale(1.4)';
+            setTimeout(() => {
+                resultEl.style.transform = 'scale(1)';
+            }, 150);
+        }
+
+        // Setup unified listener for when popups open (including auto-centering)
+        map.on('popupopen', function(e) {
+            const popup = e.popup;
+            if (popup && popup.getLatLng) {
+                const latLng = popup.getLatLng();
+                if (latLng) {
+                    // Smoothly center the map on the opened popup marker
+                    map.panTo(latLng, { animate: true, duration: 0.5 });
+                }
+            }
+
+            let content = popup.getContent();
+            if (typeof content === 'function') {
+                content = content();
+            }
+
+            // Check if the opened popup is a merchant shop table
+            if (typeof content === 'string' && content.includes('shop-table')) {
+                advanceTime(60); // 1 hour for visiting a shop
+            } else {
+                advanceTime(15); // 15 minutes default for standard locations
+            }
         });
 
-        isSubMenuOpen = true;
-      });
-    }
+        // ===================================================================
+        // 5. DYNAMIC DATA STORAGE & FETCHING
+        // ===================================================================
+        let locationData = [];
+        let rumorPool = [];
+        let merchantData = {};
+        let npcData = {};
 
-    function initMapMarkers() {
-      tavernsLayer.clearLayers();
-      merchantsLayer.clearLayers();
-      questsLayer.clearLayers();
-      trackedMarkers = [];
+        async function loadCampaignData() {
+            try {
+                const [locationsRes, rumorsRes, merchantsRes, encountersRes, npcsRes] = await Promise.all([
+                    fetch('data/locations.json'),
+                    fetch('data/rumors.json'),
+                    fetch('data/merchants.json'),
+                    fetch('data/encounters.json'),
+                    fetch('data/npcs.json').catch(() => ({ ok: false }))
+                ]);
 
-      const layerMap = {
-        taverns: tavernsLayer,
-        merchants: merchantsLayer,
-        quests: questsLayer
-      };
-
-      locationData.forEach(loc => {
-        const markerIcon = icons[loc.icon] || icons.quest;
-        const targetLayer = layerMap[loc.layer] || questsLayer;
-        const marker = L.marker(loc.coords, { icon: markerIcon });
-
-        if (loc.hasRadialMenu) {
-          attachRadialMenu(marker, loc);
-        } else if (merchantData[loc.id]) {
-          marker.bindPopup(() => buildShopTableHTML(loc.id), { maxWidth: 600, minWidth: 480 });
-        } else if (loc.popupHtml) {
-          marker.bindPopup(loc.popupHtml, { maxWidth: 600, minWidth: 480 });
+                if (locationsRes.ok) locationData = await locationsRes.json();
+                if (rumorsRes.ok) rumorPool = await rumorsRes.json();
+                if (merchantsRes.ok) merchantData = await merchantsRes.json();
+                if (npcsRes.ok) npcData = await npcsRes.json();
+                if (encountersRes.ok) {
+                    const encounterData = await encountersRes.json();
+                    if (encounterData.day && encounterData.day.length) dayEncounters = encounterData.day;
+                    if (encounterData.night && encounterData.night.length) nightEncounters = encounterData.night;
+                }
+                console.log('✅ Campaign data loaded successfully!');
+            } catch (error) {
+                console.error('⚠️ Error loading external JSON files.', error);
+            } finally {
+                initMapMarkers();
+                // Safely trigger when map view has finished preparing
+                map.whenReady(updateLightingOverlay);
+            }
         }
 
-        trackedMarkers.push({
-          marker: marker,
-          layer: targetLayer,
-          minZoom: loc.minZoom !== undefined ? loc.minZoom : -Infinity,
-          maxZoom: loc.maxZoom !== undefined ? loc.maxZoom : Infinity
+        // ===================================================================
+        // 6. HTML GENERATOR HELPERS
+        // ===================================================================
+        function buildShopTableHTML(merchantKey) {
+            const merchant = merchantData[merchantKey];
+            if (!merchant) return '<div class="popup-card"><p>No inventory available.</p></div>';
+
+            const rows = merchant.inventory.map(row => `
+                <tr>
+                    <td style="font-weight: 600; vertical-align: top; white-space: nowrap;">${row.item}</td>
+                    <td style="font-size: 0.73rem; color: #9ccfd8; line-height: 1.3; vertical-align: top;">${row.description || ''}</td>
+                    <td style="text-align: center; vertical-align: top;">${row.stock}</td>
+                    <td class="cost" style="vertical-align: top; white-space: nowrap;">${row.price}</td>
+                </tr>
+            `).join('');
+
+            return `
+                <div class="popup-card" style="width: 500px; max-width: 90vw;">
+                    <h3>${merchant.title}</h3>
+                    <div class="subtitle">${merchant.subtitle}</div>
+                    ${merchant.description ? `<p>${merchant.description}</p>` : ''}
+                    <table class="shop-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">Item</th>
+                                <th style="width: 50%;">Effect</th>
+                                <th style="width: 12%; text-align: center;">Stock</th>
+                                <th style="width: 13%; text-align: right;">Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function getRandomRumorHTML() {
+            if (!rumorPool.length) return '<div class="popup-card"><p>No rumors heard.</p></div>';
+            const randomRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
+            return `
+                <div class="popup-card" id="rumor-card">
+                    <h3>Tavern Gossip</h3>
+                    <div class="subtitle">${randomRumor.source}</div>
+                    <p style="min-height: 48px;">"${randomRumor.text}"</p>
+                    <button onclick="rerollRumor()" style="
+                        width: 100%;
+                        margin-top: 6px;
+                        padding: 6px 10px;
+                        background: #2a2e37;
+                        border: 1px solid #f6c177;
+                        color: #f6c177;
+                        border-radius: 4px;
+                        font-family: 'Inter', sans-serif;
+                        font-size: 0.75rem;
+                        cursor: pointer;
+                        transition: background 0.2s;
+                    " onmouseover="this.style.background='#3b4252'" onmouseout="this.style.background='#2a2e37'">
+                        🎲 Hear Another Rumor
+                    </button>
+                </div>
+            `;
+        }
+
+        window.rerollRumor = function() {
+            const cardContainer = document.getElementById('rumor-card');
+            if (cardContainer && rumorPool.length) {
+                const freshRumor = rumorPool[Math.floor(Math.random() * rumorPool.length)];
+                cardContainer.querySelector('.subtitle').innerText = freshRumor.source;
+                cardContainer.querySelector('p').innerText = `"${freshRumor.text}"`;
+                advanceTime(15);
+            }
+        };
+
+        // ===================================================================
+        // 7. CUSTOM PIN ICON GENERATORS & MATH HELPERS
+        // ===================================================================
+        function createPinIcon(className, iconEmoji) {
+            return L.divIcon({
+                className: 'custom-icon-wrapper',
+                html: `<div class="custom-pin ${className}">${iconEmoji}</div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 16],
+                popupAnchor: [0, -16]
+            });
+        }
+
+        function createSubIcon(emoji) {
+            return L.divIcon({
+                className: 'custom-sub-wrapper',
+                html: `<div class="radial-sub-pin">${emoji}</div>`,
+                iconSize: [28, 28],
+                iconAnchor: [14, 14],
+                popupAnchor: [0, -14]
+            });
+        }
+
+        const icons = {
+            tavern: createPinIcon('pin-tavern', '🍺'),
+            armor: createPinIcon('pin-armor', '🛡️'),
+            anvil: createPinIcon('pin-anvil', '⚒️'),
+            potion: createPinIcon('pin-potion', '🧪'),
+            clockwork: createPinIcon('pin-clockwork', '⚙️'),
+            quest: createPinIcon('pin-quest', '📜')
+        };
+
+        function getRadialPosition(centerLatLng, radiusInPixels, angleInDegrees) {
+            const angleRad = (angleInDegrees * Math.PI) / 180;
+            const newY = centerLatLng[0] + radiusInPixels * Math.sin(angleRad);
+            const newX = centerLatLng[1] + radiusInPixels * Math.cos(angleRad);
+            return [newY, newX];
+        }
+
+        // ===================================================================
+        // 8. MARKER INITIALIZATION & VISIBILITY MANAGER
+        // ===================================================================
+        let trackedMarkers = [];
+        let closeSubMenu = function() {};
+
+        function attachRadialMenu(marker, loc) {
+            const innSubItems = [
+                { 
+                    emoji: '🍺', 
+                    angle: 150, 
+                    title: 'Drink & Food Menu', 
+                    get popupHtml() { return buildShopTableHTML(loc.id); } 
+                },
+                { 
+                    emoji: '👤', 
+                    angle: 90, 
+                    title: 'Notable NPCs', 
+                    popupHtml: `
+                        <div class="popup-card">
+                            <h3>Tavern Patrons</h3>
+                            <div class="subtitle">Key Characters</div>
+                            <ul style="font-size: 0.8rem; padding-left: 14px; color: #c4a7e7; line-height: 1.5;">
+                                <li><strong>Barney Chubb:</strong> Busy halfling innkeeper.</li>
+                                <li><strong>Lady Thrum:</strong> Cloud Giant matriarch sitting by the hearth.</li>
+                            </ul>
+                        </div>` 
+                },
+                { 
+                    emoji: '📜', 
+                    angle: 30, 
+                    title: 'Rumors & Gossip', 
+                    get popupHtml() { return getRandomRumorHTML(); } 
+                }
+            ];
+
+            let isSubMenuOpen = false;
+            closeSubMenu = function() {
+                subMenuLayer.clearLayers();
+                isSubMenuOpen = false;
+            };
+
+            marker.on('click', function (e) {
+                L.DomEvent.stopPropagation(e);
+                if (isSubMenuOpen) {
+                    closeSubMenu();
+                    return;
+                }
+                const radius = 80;
+                innSubItems.forEach(item => {
+                    const subPos = getRadialPosition(loc.coords, radius, item.angle);
+                    const subMarker = L.marker(subPos, { icon: createSubIcon(item.emoji) })
+                        .bindTooltip(item.title, { direction: 'top', offset: [0, -10] })
+                        .bindPopup(() => item.popupHtml, dynamicPopupOptions); // Added options here
+                    subMenuLayer.addLayer(subMarker);
+                });
+                isSubMenuOpen = true;
+            });
+        }
+
+        function initMapMarkers() {
+            tavernsLayer.clearLayers();
+            merchantsLayer.clearLayers();
+            questsLayer.clearLayers();
+            trackedMarkers = [];
+
+            const layerMap = {
+                taverns: tavernsLayer,
+                merchants: merchantsLayer,
+                quests: questsLayer
+            };
+
+            locationData.forEach(loc => {
+                const markerIcon = icons[loc.icon] || icons.quest;
+                const targetLayer = layerMap[loc.layer] || questsLayer;
+                const marker = L.marker(loc.coords, { icon: markerIcon });
+
+                if (loc.hasRadialMenu) {
+                    attachRadialMenu(marker, loc);
+                } else if (merchantData[loc.id]) {
+                    marker.bindPopup(() => buildShopTableHTML(loc.id), dynamicPopupOptions); // Added options here
+                } else if (loc.popupHtml) {
+                    marker.bindPopup(loc.popupHtml, dynamicPopupOptions); // Added options here
+                }
+
+                trackedMarkers.push({
+                    marker: marker,
+                    layer: targetLayer,
+                    minZoom: loc.minZoom !== undefined ? loc.minZoom : -Infinity,
+                    maxZoom: loc.maxZoom !== undefined ? loc.maxZoom : Infinity
+                });
+            });
+
+            updateMarkerVisibility();
+        }
+
+        function updateMarkerVisibility() {
+            const currentZoom = map.getZoom();
+            trackedMarkers.forEach(item => {
+                const shouldBeVisible = currentZoom >= item.minZoom && currentZoom <= item.maxZoom;
+                const isCurrentlyOnLayer = item.layer.hasLayer(item.marker);
+
+                if (shouldBeVisible && !isCurrentlyOnLayer) {
+                    item.layer.addLayer(item.marker);
+                } else if (!shouldBeVisible && isCurrentlyOnLayer) {
+                    item.layer.removeLayer(item.marker);
+                }
+            });
+        }
+
+        map.on('zoomend', updateMarkerVisibility);
+
+        // ===================================================================
+        // 9. GLOBAL CLICK & HUD HANDLERS
+        // ===================================================================
+        map.on('click', function(e) {
+            closeSubMenu();
+            const y = Math.round(e.latlng.lat);
+            const x = Math.round(e.latlng.lng);
+            console.log(`Clicked Location -> [${y}, ${x}]`);
         });
-      });
 
-      updateMarkerVisibility();
-    }
+        const coordControl = L.control({ position: 'bottomleft' });
+        coordControl.onAdd = function() {
+            const div = L.DomUtil.create('div', 'coord-hud');
+            div.innerHTML = 'Coords: [0, 0]';
+            return div;
+        };
+        coordControl.addTo(map);
 
-    function updateMarkerVisibility() {
-      const currentZoom = map.getZoom();
+        map.on('mousemove', function(e) {
+            const y = Math.round(e.latlng.lat);
+            const x = Math.round(e.latlng.lng);
+            document.querySelector('.coord-hud').innerHTML = `Coords: [${y}, ${x}]`;
+        });
 
-      trackedMarkers.forEach(item => {
-        const shouldBeVisible = currentZoom >= item.minZoom && currentZoom <= item.maxZoom;
-        const isCurrentlyOnLayer = item.layer.hasLayer(item.marker);
+        // Force Leaflet to recalculate container dimensions once fully loaded
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 100);
+        });
 
-        if (shouldBeVisible && !isCurrentlyOnLayer) {
-          item.layer.addLayer(item.marker);
-        } else if (!shouldBeVisible && isCurrentlyOnLayer) {
-          item.layer.removeLayer(item.marker);
-        }
-      });
-    }
-
-    map.on('zoomend', updateMarkerVisibility);
-
-    // ===================================================================
-    // 9. GLOBAL CLICK & HUD HANDLERS
-    // ===================================================================
-    map.on('click', function(e) {
-      closeSubMenu();
-      const y = Math.round(e.latlng.lat);
-      const x = Math.round(e.latlng.lng);
-      console.log(`Clicked Location -> [${y}, ${x}]`);
-    });
-
-    const coordControl = L.control({ position: 'bottomleft' });
-    coordControl.onAdd = function() {
-      const div = L.DomUtil.create('div', 'coord-hud');
-      div.innerHTML = 'Coords: [0, 0]';
-      return div;
-    };
-    coordControl.addTo(map);
-
-    map.on('mousemove', function(e) {
-      const y = Math.round(e.latlng.lat);
-      const x = Math.round(e.latlng.lng);
-      document.querySelector('.coord-hud').innerHTML = `Coords: [${y}, ${x}]`;
-    });
-
-    // ===================================================================
-    // 10. START CAMPAIGN LOADING
-    // ===================================================================
-    loadCampaignData();
-  </script>
+        // ===================================================================
+        // 10. START CAMPAIGN LOADING
+        // ===================================================================
+        loadCampaignData();
+    </script>
 </body>
 </html>
