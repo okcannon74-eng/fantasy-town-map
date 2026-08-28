@@ -385,6 +385,152 @@
         .btn-action:hover {
             background: #f6c177;
         }
+
+        /* ===================================================================
+         * MOBILE RESPONSIVE MEDIA QUERIES (Optimize layout on screens <= 768px)
+         * =================================================================== */
+        @media (max-width: 768px) {
+            /* Flex layout for time/dice HUD - side-by-side on mobile */
+            .time-hud-container {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 6px !important;
+                align-items: center;
+                margin-top: 5px !important;
+                margin-right: 5px !important;
+            }
+            .time-hud {
+                padding: 6px 10px !important;
+                min-width: 110px !important;
+                margin-bottom: 0 !important;
+                font-size: 0.72rem !important;
+                border-radius: 4px !important;
+            }
+            .time-hud .day-text {
+                font-size: 0.60rem !important;
+                letter-spacing: 0.02em;
+            }
+            .time-hud .clock-text {
+                font-size: 0.88rem !important;
+            }
+            .dice-hud {
+                margin-bottom: 0 !important;
+            }
+            .dice-btn {
+                padding: 6px 10px !important;
+                font-size: 0.72rem !important;
+                border-radius: 4px !important;
+            }
+            #dice-result {
+                font-size: 0.95rem !important;
+                min-width: 18px !important;
+            }
+
+            /* Hide hover coordinate tracker on touch interfaces to prevent screen clutter */
+            .coord-hud {
+                display: none !important;
+            }
+
+            /* Fluid Leaflet popup containers */
+            .leaflet-popup {
+                max-width: 92vw !important;
+            }
+            .leaflet-popup-content-wrapper {
+                max-width: 92vw !important;
+            }
+            .popup-card {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 10px 12px !important;
+                min-width: unset !important;
+            }
+            .popup-card h3 {
+                font-size: 0.95rem !important;
+                margin-bottom: 6px !important;
+                padding-bottom: 4px !important;
+            }
+            .popup-card .subtitle {
+                font-size: 0.68rem !important;
+                margin-bottom: 6px !important;
+            }
+            .popup-card p {
+                font-size: 0.78rem !important;
+                line-height: 1.35 !important;
+                margin-bottom: 6px !important;
+            }
+            
+            /* Tighter table layout for mobile screens */
+            .shop-table {
+                font-size: 0.72rem !important;
+                margin-top: 6px !important;
+            }
+            .shop-table th, .shop-table td {
+                padding: 4px 6px !important;
+            }
+            .shop-table td.cost {
+                font-size: 0.72rem !important;
+            }
+
+            /* Zoom control and layers positions */
+            .leaflet-control-zoom {
+                margin-left: 8px !important;
+                margin-top: 8px !important;
+            }
+            .leaflet-control-layers {
+                font-size: 0.75rem !important;
+                border-radius: 6px !important;
+            }
+
+            /* Mobile-optimized Random Encounter overlay card */
+            .encounter-overlay {
+                top: 10px !important;
+                width: 94% !important;
+                max-width: 94% !important;
+                padding: 12px 16px !important;
+                max-height: 90vh !important;
+            }
+            .encounter-header {
+                padding-bottom: 6px !important;
+                margin-bottom: 8px !important;
+            }
+            .encounter-header h2 {
+                font-size: 0.98rem !important;
+            }
+            .encounter-tag {
+                font-size: 0.65rem !important;
+                padding: 1px 6px !important;
+            }
+            .encounter-body {
+                font-size: 0.8rem !important;
+                line-height: 1.35 !important;
+                margin-bottom: 10px !important;
+            }
+            .encounter-body div {
+                padding: 8px 10px !important;
+                margin-top: 6px !important;
+                margin-bottom: 6px !important;
+            }
+            .encounter-body div strong {
+                font-size: 0.7rem !important;
+            }
+            .encounter-body div p {
+                font-size: 0.78rem !important;
+                line-height: 1.3 !important;
+            }
+            .encounter-actions {
+                gap: 6px !important;
+            }
+            .encounter-btn {
+                padding: 5px 12px !important;
+                font-size: 0.75rem !important;
+                border-radius: 4px !important;
+            }
+            #encounter-roll-result {
+                padding: 8px !important;
+                font-size: 0.82rem !important;
+                margin-bottom: 8px !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -437,9 +583,9 @@
         // Config options for highly responsive, scrolled popups
         const dynamicPopupOptions = {
             maxWidth: 600,
-            minWidth: 480,
-            maxHeight: 380,            // Caps height to prevent page overflows
-            autoPanPadding: [50, 80]    // Generous buffer [horiz, vert] to clear HUDs & tabs
+            minWidth: 280,              // Safe fallback for small phone screens
+            maxHeight: window.innerHeight < 600 ? 240 : 380, // Dynamic height limit based on screen height
+            autoPanPadding: window.innerWidth < 768 ? [12, 24] : [50, 80] // Mobile-optimized viewport margins
         };
 
         // Custom Lighting Pane (sits between Markers [600] and Popups [700])
@@ -469,7 +615,9 @@
             "🛡️ Merchants": merchantsLayer,
             "📜 Quests & Notices": questsLayer
         };
-        L.control.layers(null, overlays, { collapsed: false }).addTo(map);
+        // Automatically collapse layer group controls on mobile to save screen space
+        const collapseLayers = window.innerWidth < 768;
+        L.control.layers(null, overlays, { collapsed: collapseLayers }).addTo(map);
 
         // ===================================================================
         // PRIVATE CLIENT-SIDE LIMITER (localStorage)
