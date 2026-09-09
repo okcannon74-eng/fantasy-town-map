@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Second Breaking</title>
+    <title>The Scriptorium Tapestry Room</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Fantasy Typography -->
@@ -131,7 +131,7 @@
             color: #eb6f92 !important;
         }
 
-        /* Interactive Study Card Overlay (Modal / Top center popup) */
+        /* Interactive Action Modal */
         .study-overlay {
             position: fixed;
             top: 20px;
@@ -206,7 +206,7 @@
             margin-top: 10px;
         }
         .form-label {
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             color: #e2e8f0;
             font-weight: 600;
         }
@@ -214,6 +214,7 @@
             display: flex;
             gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
         }
         .study-input {
             background: #0d0e12;
@@ -224,7 +225,7 @@
             font-family: monospace;
             font-size: 1.1rem;
             font-weight: bold;
-            width: 90px;
+            width: 100px;
             text-align: center;
         }
         .study-input:focus {
@@ -233,8 +234,10 @@
             box-shadow: 0 0 6px rgba(246, 193, 119, 0.2);
         }
         .roll-modifier-info {
-            font-size: 0.75rem;
+            font-size: 0.78rem;
             color: #9ccfd8;
+            flex: 1;
+            min-width: 180px;
         }
 
         .study-actions {
@@ -292,56 +295,15 @@
         /* Style the box-out overlays inside study content */
         .check-box { margin-top: 10px; margin-bottom: 10px; padding: 10px 14px; background: rgba(246, 193, 119, 0.08); border-left: 3px solid #f6c177; border-radius: 0 4px 4px 0; }
         .boon-box { margin-bottom: 10px; padding: 10px 14px; background: rgba(49, 181, 101, 0.08); border-left: 3px solid #31b565; border-radius: 0 4px 4px 0; }
+        .partial-box { margin-bottom: 10px; padding: 10px 14px; background: rgba(156, 207, 216, 0.08); border-left: 3px solid #9ccfd8; border-radius: 0 4px 4px 0; }
         .bane-box { margin-bottom: 12px; padding: 10px 14px; background: rgba(235, 111, 146, 0.08); border-left: 3px solid #eb6f92; border-radius: 0 4px 4px 0; }
 
         .check-box strong { color: #f6c177; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Cinzel', serif; }
         .boon-box strong { color: #31b565; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Cinzel', serif; }
+        .partial-box strong { color: #9ccfd8; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Cinzel', serif; }
         .bane-box strong { color: #eb6f92; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Cinzel', serif; }
 
-        .check-box p, .boon-box p, .bane-box p { font-size: 0.85rem; color: #e2e8f0; margin-top: 4px; line-height: 1.4; }
-
-        /* Dark Fantasy Popup Card Styling */
-        .leaflet-popup-content-wrapper {
-            background: #181b20;
-            color: #e2e8f0;
-            border: 1px solid #3b4252;
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
-            padding: 0;
-        }
-        .leaflet-popup-content {
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        .leaflet-popup-tip {
-            background: #181b20;
-        }
-        .popup-card {
-            min-width: 220px;
-            padding: 14px 18px;
-        }
-        .popup-card h3 {
-            font-family: 'Cinzel', serif;
-            color: #f6c177;
-            border-bottom: 1px solid #2e3440;
-            padding-bottom: 6px;
-            margin-bottom: 8px;
-            font-size: 1.1rem;
-        }
-        .popup-card .subtitle {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #9ccfd8;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-        .popup-card p {
-            font-size: 0.85rem;
-            line-height: 1.4;
-            color: #c4a7e7;
-            margin-bottom: 8px;
-        }
+        .check-box p, .boon-box p, .partial-box p, .bane-box p { font-size: 0.85rem; color: #e2e8f0; margin-top: 4px; line-height: 1.4; }
 
         /* Mobile specific style overrides */
         @media (max-width: 768px) {
@@ -379,8 +341,8 @@
 
     <!-- HUD Header -->
     <div class="tapestry-hud-header">
-        <h1>The Second Breaking</h1>
-        <p>Snurre's Great Hall</p>
+        <h1>The Celestial Tapestry</h1>
+        <p>Monastery Study Chamber</p>
     </div>
 
     <!-- Dynamic Status Panel -->
@@ -400,7 +362,11 @@
     </div>
 
     <!-- Navigation Overlay -->
-
+    <div class="nav-hud">
+        <a href="index.html" class="nav-btn">
+            🏰 Exit to Map
+        </a>
+    </div>
 
     <!-- Unified Tapestry Action Modal -->
     <div id="study-modal" class="study-overlay">
@@ -412,21 +378,20 @@
             You approach a detailed, hand-woven segment of the massive canvas...
         </div>
         
-        <!-- Input section for study rolls (revealed only in check branch) -->
+        <!-- Input section for total modifiers (Shared for both Interruption & Study) -->
         <div id="study-form-container" class="study-form" style="display: none;">
-            <div class="form-label">Enter your tabletop roll total (d20 + Ability Modifier):</div>
+            <div class="form-label" id="form-prompt-label">Enter your tabletop Skill Modifier:</div>
             <div class="form-input-row">
-                <input type="number" id="roll-input" class="study-input" min="1" max="40" placeholder="10">
+                <input type="number" id="roll-input" class="study-input" value="0" placeholder="0">
                 <div class="roll-modifier-info" id="modifier-info">
-                    No active modifiers.
+                    No active stored modifiers.
                 </div>
             </div>
         </div>
 
         <div class="study-actions">
             <button id="study-dismiss-btn" class="study-btn btn-dismiss" onclick="dismissStudyModal()">Close</button>
-            <button id="study-roll-btn" class="study-btn btn-action" onclick="rollEncounterDie()" style="display: none;">Roll d20</button>
-            <button id="study-submit-btn" class="study-btn btn-action" onclick="submitStudyRoll()" style="display: none;">Submit Roll</button>
+            <button id="study-roll-btn" class="study-btn btn-action" onclick="executeRollAction()">🎲 Roll d20</button>
         </div>
     </div>
 
@@ -464,7 +429,7 @@
         };
 
         // Load Tapestry Base Layer
-        const tapestryImageUrl = 'The Second Breaking.webp';
+        const tapestryImageUrl = 'tapestry.jpg';
         L.imageOverlay(tapestryImageUrl, bounds).addTo(map);
         map.fitBounds(bounds);
 
@@ -481,7 +446,6 @@
             const lastReset = localStorage.getItem(CAP_DATE_KEY);
 
             if (lastReset !== todayStr) {
-                // Wipe active modifiers and studied memory on new day if desired, or keep studied achievements permanent
                 localStorage.removeItem(ACTIVE_MODIFIER_KEY);
                 localStorage.setItem(CAP_DATE_KEY, todayStr);
                 updateStatusHUD();
@@ -490,7 +454,7 @@
 
         function getActiveModifier() {
             const stored = localStorage.getItem(ACTIVE_MODIFIER_KEY);
-            return stored ? JSON.parse(stored) : null; // Format: { val: 2, label: "Boon of Annam" } or { val: -2, label: "Rattled" }
+            return stored ? JSON.parse(stored) : null;
         }
 
         function setActiveModifier(mod) {
@@ -504,7 +468,7 @@
 
         function getStudiedHotspots() {
             const stored = localStorage.getItem(STUDIED_LIST_KEY);
-            return stored ? JSON.parse(stored) : []; // List of hotspot IDs successfully deciphered
+            return stored ? JSON.parse(stored) : [];
         }
 
         function markHotspotStudied(id) {
@@ -553,23 +517,24 @@
         let hotspotsData = [];
         let encountersData = [];
 
-        // Fallback structures in case data/ files are missing on local testing servers
         const fallbackHotspots = [
             {
                 id: "wyrm_crown",
                 name: "The Sundered Wyrm & Giant King",
-                coords: [[650, 400], [800, 750]], // Rectangle corners
+                coords: [[650, 400], [800, 750]],
                 dc: 15,
-                success_lore: "You decipher the faded gold stitching around the giant king's crown: <em>'When the sky-repaired Orrery completes three alignments, the dragon's tomb beneath the vault will crack open.'</em> You have unlocked the coordinate clue: <strong>[342, 1185]</strong> on the primary library ruins map.",
-                failure_text: "The silver threads are extremely dense and tangled. The alignment coordinates slip from your mind before you can transcribe them correctly."
+                success_lore: "<strong>Full Success:</strong> You decipher the faded gold stitching around the giant king's crown: <em>'When the sky-repaired Orrery completes three alignments, the dragon's tomb beneath the vault will crack open.'</em> You have unlocked the coordinate clue: <strong>[342, 1185]</strong> on the primary library ruins map.",
+                partial_lore: "<strong>Partial Success:</strong> You decipher the general inscription on the crown: it speaks of an alignment of the Celestial Orrery and a hidden tomb beneath the vault, but the exact coordinate numbers are frayed and obscured.",
+                failure_text: "<strong>Failure:</strong> The silver threads are extremely dense and tangled. The alignment coordinates slip from your mind before you can transcribe them correctly."
             },
             {
                 id: "celestial_scroll",
                 name: "The Cosmic Constellation Stitches",
                 coords: [[300, 1100], [450, 1350]],
                 dc: 18,
-                success_lore: "By tracing the indigo fibers representing the northern starmap, you reveal a celestial riddle: <em>'He who enters the Calefactory under deepfrost must speak the name of the Second Titan Matriarch.'</em> The passphrase to bypass the library gate trap is <strong>'Karontor-Soth'</strong>.",
-                failure_text: "You cross-reference the starmap but find yourself lost in the sheer scale of the design. You can't make sense of the chronological stitching."
+                success_lore: "<strong>Full Success:</strong> By tracing the indigo fibers representing the northern starmap, you reveal a celestial riddle: <em>'He who enters the Calefactory under deepfrost must speak the name of the Second Titan Matriarch.'</em> The passphrase to bypass the library gate trap is <strong>'Karontor-Soth'</strong>.",
+                partial_lore: "<strong>Partial Success:</strong> You trace the constellation path and learn that a passphrase is needed to enter the Calefactory gate safely, but you can only make out the prefix <strong>'Karontor-...'</strong> before the pattern becomes unreadable.",
+                failure_text: "<strong>Failure:</strong> You cross-reference the starmap but find yourself lost in the sheer scale of the design. You can't make sense of the chronological stitching."
             }
         ];
 
@@ -578,7 +543,8 @@
                 title: "Spores of the Calefactory",
                 type: "hazard",
                 tag: "Spores",
-                text: "As you lean close to study the ancient thread, your breath disturbs a pocket of centuries-old mold settled in the wool fibers. A cloud of black dust vents into the air! You must make a DC 14 Constitution Saving Throw.",
+                dc: 14,
+                text: "As you lean close to study the ancient thread, your breath disturbs a pocket of centuries-old mold settled in the wool fibers. A cloud of black dust vents into the air! You must make a <strong>DC 14 Constitution Saving Throw</strong>.",
                 bane: {
                     val: -2,
                     label: "Choking Spores",
@@ -594,7 +560,8 @@
                 title: "Planar Static Spark",
                 type: "danger",
                 tag: "Wild Magic",
-                text: "Your fingertips touch a silver thread connected to the Celestial Orrery overlay. Instantly, a current of static wild magic surges from the canvas! Make a DC 15 Dexterity or Arcana Save to absorb or dodge the feedback.",
+                dc: 15,
+                text: "Your fingertips touch a silver thread connected to the Celestial Orrery overlay. Instantly, a current of static wild magic surges from the canvas! Make a <strong>DC 15 Dexterity or Arcana Save</strong> to absorb or dodge the feedback.",
                 bane: {
                     val: -3,
                     label: "Planar Static Shocks",
@@ -637,58 +604,48 @@
         // ===================================================================
         let activeHotspot = null;
         let activeEncounter = null;
-        let revealedTouchHotspotId = null; // Tracks double-tap reveal state on touch screens
+        let currentModalMode = null; // 'interruption' or 'study'
+        let revealedTouchHotspotId = null;
 
         function initTapestryOverlays() {
             hotspotsData.forEach(node => {
-                // Render faint vector outlines over coordinates (hollow fill, weight 1)
                 const outline = L.rectangle(node.coords, {
                     color: '#c4a7e7',
                     weight: 1.5,
                     fillColor: 'transparent',
                     fillOpacity: 0.0,
-                    opacity: 0.15, // Almost invisible base state
+                    opacity: 0.15,
                     className: 'tapestry-hotspot-rect'
                 }).addTo(map);
 
-                // Desktop Hover Events
                 outline.on('mouseover', function() {
-                    // Smoothly glow the outline to show discovery
                     this.setStyle({ opacity: 0.65, color: '#f6c177', weight: 2 });
                 });
 
                 outline.on('mouseout', function() {
-                    // Revert to faint state when mouse leaves
                     this.setStyle({ opacity: 0.15, color: '#c4a7e7', weight: 1.5 });
                 });
 
-                // Core click handler (incorporates touch adaptations)
                 outline.on('click', function(e) {
                     L.DomEvent.stopPropagation(e);
                     
-                    // Tap-to-reveal mobile adaptation
                     const isTouch = L.Browser.touch;
                     if (isTouch && revealedTouchHotspotId !== node.id) {
-                        // Reset all other hotspots
                         map.eachLayer(layer => {
                             if (layer instanceof L.Rectangle && layer !== outline) {
                                 layer.setStyle({ opacity: 0.15, color: '#c4a7e7', weight: 1.5 });
                             }
                         });
-                        // Highlight this one on first touch
                         outline.setStyle({ opacity: 0.65, color: '#f6c177', weight: 2 });
                         revealedTouchHotspotId = node.id;
-                        return; // Stop here, require a second tap to trigger study
+                        return;
                     }
 
-                    // Reset touch state
                     revealedTouchHotspotId = null;
                     outline.setStyle({ opacity: 0.15, color: '#c4a7e7', weight: 1.5 });
 
-                    // Center camera on clicked outline area
                     map.fitBounds(outline.getBounds(), { animate: true, duration: 0.4 });
 
-                    // Execute study roll loop
                     activeHotspot = node;
                     startStudyAttempt(node);
                 });
@@ -698,113 +655,82 @@
         }
 
         // ===================================================================
-        // 5. THE TAPESTRY DECISION TREE (Branches 1 & 2)
+        // 5. UNIFIED ACTION LOOP (INTERRUPTIONS & STUDY)
         // ===================================================================
         function startStudyAttempt(node) {
-            // Check if already studied successfully
             const deciphered = getStudiedHotspots();
             if (deciphered.includes(node.id)) {
                 showSuccessArchive(node);
                 return;
             }
 
-            // TRIGGER RANDOM INTERRUPTION ROLL (DC 13, ~40% chance of threat)
+            // TRIGGER RANDOM INTERRUPTION ROLL (DC 13, ~40% chance of hazard)
             const d20 = Math.floor(Math.random() * 20) + 1;
             console.log(`🎲 Interruption Check on ${node.name}: Rolled ${d20} vs DC 13`);
 
             if (d20 >= 13) {
-                // BRANCH 1: Interruption Encounter Triggered
                 triggerInterruption(node);
             } else {
-                // BRANCH 2: Direct Study Form Revealed
                 revealStudyCheckForm(node);
             }
         }
 
-        // --- BRANCH 1: INTERRUPTION LOOP ---
+        // --- INTERRUPTIONS (2-State Pass/Fail) ---
         function triggerInterruption(node) {
             activeEncounter = encountersData[Math.floor(Math.random() * encountersData.length)];
+            currentModalMode = 'interruption';
             
             const modal = document.getElementById('study-modal');
             const titleEl = document.getElementById('study-title');
             const tagEl = document.getElementById('study-tag');
             const bodyEl = document.getElementById('study-body');
+            const formPromptLabel = document.getElementById('form-prompt-label');
             const rollBtn = document.getElementById('study-roll-btn');
-            const submitBtn = document.getElementById('study-submit-btn');
             const dismissBtn = document.getElementById('study-dismiss-btn');
             const formContainer = document.getElementById('study-form-container');
+            const modInfoEl = document.getElementById('modifier-info');
 
             modal.className = "study-overlay active encounter-" + activeEncounter.type;
             titleEl.innerText = `⚠️ Interruption: ${activeEncounter.title}`;
             tagEl.innerText = activeEncounter.tag;
             tagEl.className = `study-tag tag-${activeEncounter.type}`;
 
-            // Build interruption body
             bodyEl.innerHTML = `
                 <p style="margin-bottom: 12px; color: #e0def4; line-height: 1.5;">${activeEncounter.text}</p>
                 <div class="check-box">
-                    <strong>Tapestry Danger Event</strong>
-                    <p>Roll a d20 to resolve this hazard. A success grants a helpful Boon; a failure applies a painful study Bane!</p>
+                    <strong>Hazard Resolution Check: Target DC ${activeEncounter.dc || 14}</strong>
+                    <p>Enter your tabletop ability modifier, then click <strong>Roll d20</strong> to resolve this threat!</p>
                 </div>
             `;
 
-            // Adjust Buttons: Show ONLY "Roll d20", hide Submit and Close
-            formContainer.style.display = "none";
-            rollBtn.style.display = "inline-block";
-            submitBtn.style.display = "none";
-            dismissBtn.style.display = "none";
-        }
+            formPromptLabel.innerText = "Enter your Ability / Save Modifier:";
+            document.getElementById('roll-input').value = "0";
 
-        function rollEncounterDie() {
-            const roll = Math.floor(Math.random() * 20) + 1;
-            const bodyEl = document.getElementById('study-body');
-            const rollBtn = document.getElementById('study-roll-btn');
-            const dismissBtn = document.getElementById('study-dismiss-btn');
-
-            let success = roll >= 11; // 50/50 resolve check
-            let resultHtml = `<p style="margin-bottom: 12px;">${activeEncounter.text}</p>`;
-            resultHtml += `
-                <div style="margin-bottom: 12px; padding: 10px; background: #2a2e37; border-radius: 6px; text-align: center; font-weight: bold; color: #f6c177; font-size: 1.15rem;">
-                    🎲 Resolve Check Roll: <span style="font-size: 1.35rem; color: ${success ? '#31b565' : '#eb6f92'}">${roll}</span>
-                </div>
-            `;
-
-            if (success) {
-                // Set active modifier to local storage
-                setActiveModifier(activeEncounter.boon);
-                resultHtml += `
-                    <div class="boon-box">
-                        <strong>Boon Earned: ${activeEncounter.boon.label}</strong>
-                        <p>${activeEncounter.boon.text || activeEncounter.boon.description || 'You gain a helpful modifier.'}</p>
-                    </div>
-                `;
+            const modifier = getActiveModifier();
+            if (modifier) {
+                const sign = modifier.val > 0 ? '+' : '';
+                modInfoEl.innerHTML = `Stored Modifier: <strong class="${modifier.val > 0 ? 'status-active-boon' : 'status-active-bane'}">${modifier.label} (${sign}${modifier.val})</strong>`;
             } else {
-                // Set negative modifier
-                setActiveModifier(activeEncounter.bane);
-                resultHtml += `
-                    <div class="bane-box">
-                        <strong>Bane Suffered: ${activeEncounter.bane.label}</strong>
-                        <p>${activeEncounter.bane.text || activeEncounter.bane.description || 'You suffer a lingering penalty.'}</p>
-                    </div>
-                `;
+                modInfoEl.innerHTML = "No active stored modifiers.";
             }
 
-            bodyEl.innerHTML = resultHtml;
-
-            // Swap buttons: Reveal manual close button to allow proceeding
-            rollBtn.style.display = "none";
+            formContainer.style.display = "block";
+            rollBtn.style.display = "inline-block";
+            rollBtn.innerText = "🎲 Roll d20";
             dismissBtn.style.display = "inline-block";
-            dismissBtn.innerText = "Continue Exploration";
+            dismissBtn.innerText = "Cancel";
         }
 
-        // --- BRANCH 2: DIRECT STUDY LOOP ---
+        // --- STUDY CHECK FORM (3-State: Success / Partial / Fail) ---
         function revealStudyCheckForm(node) {
+            currentModalMode = 'study';
+
             const modal = document.getElementById('study-modal');
             const titleEl = document.getElementById('study-title');
             const tagEl = document.getElementById('study-tag');
             const bodyEl = document.getElementById('study-body');
+            const formPromptLabel = document.getElementById('form-prompt-label');
             const rollBtn = document.getElementById('study-roll-btn');
-            const submitBtn = document.getElementById('study-submit-btn');
             const dismissBtn = document.getElementById('study-dismiss-btn');
             const formContainer = document.getElementById('study-form-container');
             const modInfoEl = document.getElementById('modifier-info');
@@ -815,82 +741,130 @@
             tagEl.className = "study-tag tag-lore";
 
             bodyEl.innerHTML = `
-                <p style="margin-bottom: 8px;">You lean in to analyze the threads and decipher the woven scripts. To succeed, you must check your result against the Complexity Difficulty Class.</p>
+                <p style="margin-bottom: 8px;">You analyze the intricate threadwork to decipher the hidden script. Enter your skill modifier and roll a d20 to test your understanding against the Complexity DC.</p>
                 <div class="check-box" style="margin-bottom: 0;">
-                    <strong>Hotspot Complexity DC: ${node.dc}</strong>
+                    <strong>Hotspot Complexity: Target DC ${node.dc}</strong>
+                    <p style="font-size: 0.78rem; color: #9ccfd8;">(Roll ≥ DC: Full Success | Roll ≥ DC-4: Partial Success | Roll < DC-4: Failure)</p>
                 </div>
             `;
 
-            // Look up active Boon/Bane modifiers to display in the study form
+            formPromptLabel.innerText = "Enter your Skill Modifier (e.g. History / Arcana):";
+            document.getElementById('roll-input').value = "0";
+
             const modifier = getActiveModifier();
             if (modifier) {
                 const sign = modifier.val > 0 ? '+' : '';
-                modInfoEl.innerHTML = `Active Modifier: <strong class="${modifier.val > 0 ? 'status-active-boon' : 'status-active-bane'}">${modifier.label} (${sign}${modifier.val})</strong>`;
+                modInfoEl.innerHTML = `Stored Modifier: <strong class="${modifier.val > 0 ? 'status-active-boon' : 'status-active-bane'}">${modifier.label} (${sign}${modifier.val})</strong>`;
             } else {
-                modInfoEl.innerHTML = "No active modifiers.";
+                modInfoEl.innerHTML = "No active stored modifiers.";
             }
 
-            // Reset inputs and adjust Buttons
-            document.getElementById('roll-input').value = "";
             formContainer.style.display = "block";
-            rollBtn.style.display = "none";
-            submitBtn.style.display = "inline-block";
+            rollBtn.style.display = "inline-block";
+            rollBtn.innerText = "🎲 Roll d20";
             dismissBtn.style.display = "inline-block";
             dismissBtn.innerText = "Cancel Study";
         }
 
-        function submitStudyRoll() {
+        // --- UNIFIED ROLL EXECUTION (HANDLES BOTH MODES) ---
+        function executeRollAction() {
             const inputVal = parseInt(document.getElementById('roll-input').value);
-            if (isNaN(inputVal) || inputVal < 1 || inputVal > 50) {
-                alert("Please enter a valid tabletop roll total (between 1 and 50).");
-                return;
-            }
+            const userMod = isNaN(inputVal) ? 0 : inputVal;
 
-            const modifier = getActiveModifier();
-            const modValue = modifier ? modifier.val : 0;
-            const finalRollTotal = inputVal + modValue;
+            const storedMod = getActiveModifier();
+            const storedVal = storedMod ? storedMod.val : 0;
+
+            const d20 = Math.floor(Math.random() * 20) + 1;
+            const finalTotal = d20 + userMod + storedVal;
 
             const bodyEl = document.getElementById('study-body');
             const formContainer = document.getElementById('study-form-container');
-            const submitBtn = document.getElementById('study-submit-btn');
+            const rollBtn = document.getElementById('study-roll-btn');
             const dismissBtn = document.getElementById('study-dismiss-btn');
 
-            let success = finalRollTotal >= activeHotspot.dc;
-            let feedbackHtml = `<h3>Deciphering: ${activeHotspot.name}</h3><br>`;
+            if (currentModalMode === 'interruption') {
+                // 2-STATE PASS/FAIL RESOLUTION FOR HAZARDS
+                const hazardDC = activeEncounter.dc || 14;
+                const pass = finalTotal >= hazardDC;
 
-            feedbackHtml += `
-                <div style="margin-bottom: 14px; padding: 10px; background: #2a2e37; border-radius: 6px; text-align: center; font-weight: bold; font-size: 1.1rem; border: 1px solid #3b4252;">
-                    Your Base Total: <span style="color: #f6c177;">${inputVal}</span><br>
-                    ${modifier ? `Modifier (${modifier.label}): <span style="color: ${modValue > 0 ? '#31b565' : '#eb6f92'}">${modValue > 0 ? '+' : ''}${modValue}</span><br>` : ''}
-                    <hr style="border: 0; border-top: 1px solid #3b4252; margin: 6px 0;">
-                    Decipher Power: <span style="font-size: 1.25rem; color: ${success ? '#31b565' : '#eb6f92'}">${finalRollTotal}</span> vs <span style="color: #9ccfd8;">DC ${activeHotspot.dc}</span>
-                </div>
-            `;
-
-            if (success) {
-                markHotspotStudied(activeHotspot.id);
-                feedbackHtml += `
-                    <div class="boon-box" style="border-left-color: #31b565; background: rgba(49, 181, 101, 0.08);">
-                        <strong style="color: #31b565;">Decipher Success! (Lore Unlocked)</strong>
-                        <p style="margin-top: 6px; font-size: 0.9rem; line-height: 1.45;">${activeHotspot.success_lore}</p>
+                let resultHtml = `<p style="margin-bottom: 12px; color: #e0def4;">${activeEncounter.text}</p>`;
+                resultHtml += `
+                    <div style="margin-bottom: 12px; padding: 12px; background: #2a2e37; border-radius: 6px; text-align: center; border: 1px solid #3b4252;">
+                        <span style="font-size: 0.85rem; color: #9ccfd8;">d20 Roll (${d20}) ${userMod >= 0 ? '+' : ''}${userMod} Mod ${storedVal !== 0 ? `(${storedVal > 0 ? '+' : ''}${storedVal} ${storedMod.label})` : ''}</span><br>
+                        Total Result: <span style="font-size: 1.35rem; font-weight: bold; color: ${pass ? '#31b565' : '#eb6f92'}">${finalTotal}</span> vs <span style="color: #f6c177;">DC ${hazardDC}</span>
                     </div>
                 `;
-            } else {
-                feedbackHtml += `
-                    <div class="bane-box" style="border-left-color: #eb6f92; background: rgba(235, 111, 146, 0.08);">
-                        <strong style="color: #eb6f92;">Decipher Failure</strong>
-                        <p style="margin-top: 6px;">${activeHotspot.failure_text}</p>
+
+                if (pass) {
+                    setActiveModifier(activeEncounter.boon);
+                    resultHtml += `
+                        <div class="boon-box">
+                            <strong>Success! Boon Earned: ${activeEncounter.boon.label}</strong>
+                            <p>${activeEncounter.boon.text || activeEncounter.boon.description || 'You gain a helpful modifier.'}</p>
+                        </div>
+                    `;
+                } else {
+                    setActiveModifier(activeEncounter.bane);
+                    resultHtml += `
+                        <div class="bane-box">
+                            <strong>Failure! Bane Suffered: ${activeEncounter.bane.label}</strong>
+                            <p>${activeEncounter.bane.text || activeEncounter.bane.description || 'You suffer a lingering penalty.'}</p>
+                        </div>
+                    `;
+                }
+
+                bodyEl.innerHTML = resultHtml;
+                formContainer.style.display = "none";
+                rollBtn.style.display = "none";
+                dismissBtn.innerText = "Continue Exploration";
+
+            } else if (currentModalMode === 'study') {
+                // 3-STATE RESOLUTION FOR STUDY (SUCCEED / PARTIAL / FAIL)
+                const targetDC = activeHotspot.dc;
+                const isFullSuccess = finalTotal >= targetDC;
+                const isPartialSuccess = !isFullSuccess && finalTotal >= (targetDC - 4);
+
+                let resultHtml = `<h3 style="font-family: 'Cinzel', serif; color: #f6c177; margin-bottom: 8px;">Deciphering: ${activeHotspot.name}</h3>`;
+                resultHtml += `
+                    <div style="margin-bottom: 12px; padding: 12px; background: #2a2e37; border-radius: 6px; text-align: center; border: 1px solid #3b4252;">
+                        <span style="font-size: 0.85rem; color: #9ccfd8;">d20 Roll (${d20}) ${userMod >= 0 ? '+' : ''}${userMod} Skill Mod ${storedVal !== 0 ? `(${storedVal > 0 ? '+' : ''}${storedVal} ${storedMod.label})` : ''}</span><br>
+                        Decipher Result: <span style="font-size: 1.35rem; font-weight: bold; color: ${isFullSuccess ? '#31b565' : (isPartialSuccess ? '#9ccfd8' : '#eb6f92')}">${finalTotal}</span> vs <span style="color: #f6c177;">DC ${targetDC}</span>
                     </div>
                 `;
+
+                if (isFullSuccess) {
+                    markHotspotStudied(activeHotspot.id);
+                    resultHtml += `
+                        <div class="boon-box">
+                            <strong style="color: #31b565;">Full Success! (Complete Lore Unlocked)</strong>
+                            <p style="margin-top: 6px; font-size: 0.9rem; line-height: 1.45;">${activeHotspot.success_lore}</p>
+                        </div>
+                    `;
+                } else if (isPartialSuccess) {
+                    markHotspotStudied(activeHotspot.id);
+                    resultHtml += `
+                        <div class="partial-box">
+                            <strong style="color: #9ccfd8;">Partial Success (Partial Insight Unlocked)</strong>
+                            <p style="margin-top: 6px; font-size: 0.9rem; line-height: 1.45;">${activeHotspot.partial_lore}</p>
+                        </div>
+                    `;
+                } else {
+                    resultHtml += `
+                        <div class="bane-box">
+                            <strong style="color: #eb6f92;">Failure</strong>
+                            <p style="margin-top: 6px;">${activeHotspot.failure_text}</p>
+                        </div>
+                    `;
+                }
+
+                // Clear stored modifier after a study roll
+                setActiveModifier(null);
+
+                bodyEl.innerHTML = resultHtml;
+                formContainer.style.display = "none";
+                rollBtn.style.display = "none";
+                dismissBtn.innerText = "Close Window";
             }
-
-            // Clear the active modifier once spent on a study attempt
-            setActiveModifier(null);
-
-            bodyEl.innerHTML = feedbackHtml;
-            formContainer.style.display = "none";
-            submitBtn.style.display = "none";
-            dismissBtn.innerText = "Close Study Window";
         }
 
         // --- PREVIOUSLY DECIPHERED DISPLAY ---
@@ -900,7 +874,6 @@
             const tagEl = document.getElementById('study-tag');
             const bodyEl = document.getElementById('study-body');
             const rollBtn = document.getElementById('study-roll-btn');
-            const submitBtn = document.getElementById('study-submit-btn');
             const dismissBtn = document.getElementById('study-dismiss-btn');
             const formContainer = document.getElementById('study-form-container');
 
@@ -918,7 +891,6 @@
 
             formContainer.style.display = "none";
             rollBtn.style.display = "none";
-            submitBtn.style.display = "none";
             dismissBtn.style.display = "inline-block";
             dismissBtn.innerText = "Close Archive";
         }
