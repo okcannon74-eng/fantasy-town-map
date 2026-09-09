@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Second Fall of the Dwarves</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Fantasy Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Reset & Fullscreen Setup */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0d0e12;
+            font-family: 'Inter', sans-serif;
+        }
+        #map {
+            width: 100vw;
+            height: 100vh;
+            background-color: #0d0e12;
+        }
+
+        /* HUD overlays */
+        .tapestry-hud-header {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(24, 27, 32, 0.95);
+            color: #f6c177;
+            padding: 12px 18px;
+            border-radius: 6px;
+            border: 1px solid #3b4252;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            pointer-events: auto;
+        }
+        .tapestry-hud-header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            letter-spacing: 0.05em;
+            color: #f6c177;
+        }
+        .tapestry-hud-header p {
+            font-size: 0.78rem;
+            color: #9ccfd8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 3px;
+        }
+
+        /* Navigation Control HUD */
+        .nav-hud {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            pointer-events: auto;
+        }
+        .nav-btn {
+            background: rgba(24, 27, 32, 0.95) !important;
+            color: #f6c177 !important;
+            border: 1px solid #3b4252 !important;
+            border-radius: 6px !important;
+            padding: 10px 18px !important;
+            font-family: 'Cinzel', serif !important;
+            font-size: 0.85rem !important;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-btn:hover {
+            border-color: #f6c177 !important;
+            background: #2a2e37 !important;
+            transform: translateY(-2px);
+        }
+
+        /* Dynamic Status HUD */
+        .status-hud {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(24, 27, 32, 0.95);
+            color: #e0def4;
+            padding: 10px 16px;
+            border-radius: 6px;
+            border: 1px solid #3b4252;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 180px;
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-label {
+            color: #9ccfd8;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .status-val {
+            font-family: monospace;
+            font-weight: bold;
+            color: #f6c177;
+        }
+        .status-active-boon {
+            color: #31b565 !important;
+        }
+        .status-active-bane {
+            color: #eb6f92 !important;
+        }
+
+        /* Interactive Study Card Overlay (Modal / Top center popup) */
+        .study-overlay {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-150%);
+            z-index: 2000;
+            width: 90%;
+            max-width: 520px;
+            max-height: 85vh;
+            overflow-y: auto;
+            background: #181b20;
+            border: 2px solid #f6c177;
+            border-radius: 8px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.85);
+            padding: 16px 20px;
+            color: #e2e8f0;
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .study-overlay.active {
+            transform: translateX(-50%) translateY(0);
+        }
+        .study-overlay.encounter-danger {
+            border-color: #eb6f92;
+        }
+        .study-overlay.encounter-hazard {
+            border-color: #f6c177;
+        }
+        .study-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #3b4252;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+        .study-header h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.15rem;
+            color: #f6c177;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .study-tag {
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .tag-danger { background: rgba(235, 111, 146, 0.2); color: #eb6f92; border: 1px solid #eb6f92; }
+        .tag-hazard { background: rgba(246, 193, 119, 0.2); color: #f6c177; border: 1px solid #f6c177; }
+        .tag-lore { background: rgba(156, 207, 216, 0.2); color: #9ccfd8; border: 1px solid #9ccfd8; }
+
+        .study-body {
+            font-size: 0.88rem;
+            line-height: 1.45;
+            color: #e0def4;
+            margin-bottom: 14px;
+        }
+
+        /* Form Controls inside the modal */
+        .study-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(24, 27, 32, 0.6);
+            padding: 12px 16px;
+            border-radius: 6px;
+            border: 1px solid #2e3440;
+            margin-top: 10px;
+        }
+        .form-label {
+            font-size: 0.8rem;
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+        .form-input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .study-input {
+            background: #0d0e12;
+            border: 1px solid #3b4252;
+            border-radius: 4px;
+            color: #f6c177;
+            padding: 8px 12px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            font-weight: bold;
+            width: 90px;
+            text-align: center;
+        }
+        .study-input:focus {
+            outline: none;
+            border-color: #f6c177;
+            box-shadow: 0 0 6px rgba(246, 193, 119, 0.2);
+        }
+        .roll-modifier-info {
+            font-size: 0.75rem;
+            color: #9ccfd8;
+        }
+
+        .study-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 12px;
+        }
+        .study-btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .btn-dismiss {
+            background: #2a2e37;
+            color: #e2e8f0;
+            border-color: #3b4252;
+        }
+        .btn-dismiss:hover {
+            background: #3b4252;
+        }
+        .btn-action {
+            background: #f6c177;
+            color: #181b20;
+        }
+        .btn-action:hover {
+            background: #eb6f92;
+            color: #181b20;
+        }
+
+        /* Custom Scrollbar for Modal content and Leaflet scrolled divs */
+        .study-overlay::-webkit-scrollbar,
+        .leaflet-popup-scrolled::-webkit-scrollbar {
+            width: 6px;
+        }
+        .study-overlay::-webkit-scrollbar-track,
+        .leaflet-popup-scrolled::-webkit-scrollbar-track {
+            background: #181b20;
+        }
+        .study-overlay::-webkit-scrollbar-thumb,
+        .leaflet-popup-scrolled::-webkit-scrollbar-thumb {
+            background: #3b4252;
+            border-radius: 3px;
+        }
+        .study-overlay::-webkit-scrollbar-thumb:hover,
+        .leaflet-popup-scrolled::-webkit-scrollbar-thumb:hover {
+            background: #f6c177;
+        }
+
+        /* Style the box-out overlays inside study content */
+        .check-box { margin-top: 10px; margin-bottom: 10px; padding: 10px 14px; background: rgba(246, 193, 119, 0.08); border-left: 3px solid #f6c177; border-radius: 0 4px 4px 0; }
+        .boon-box { margin-bottom: 10px; padding: 10px 14px; background: rgba(49, 181, 101, 0.08); border-left: 3px solid #31b565; border-radius: 0 4px 4px 0; }
+        .bane-box { margin-bottom: 12px; padding: 10px 14px; background: rgba(235, 111, 146, 0.08); border-left: 3px solid #eb6f92; border-radius: 0 4px 4px 0; }
+
+        .check-box strong { color: #f6c177; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Cinzel', serif; }
+        .boon-box strong { color: #31b565; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Cinzel', serif; }
+        .bane-box strong { color: #eb6f92; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Cinzel', serif; }
+
+        .check-box p, .boon-box p, .bane-box p { font-size: 0.85rem; color: #e2e8f0; margin-top: 4px; line-height: 1.4; }
+
+        /* Dark Fantasy Popup Card Styling */
+        .leaflet-popup-content-wrapper {
+            background: #181b20;
+            color: #e2e8f0;
+            border: 1px solid #3b4252;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+            padding: 0;
+        }
+        .leaflet-popup-content {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .leaflet-popup-tip {
+            background: #181b20;
+        }
+        .popup-card {
+            min-width: 220px;
+            padding: 14px 18px;
+        }
+        .popup-card h3 {
+            font-family: 'Cinzel', serif;
+            color: #f6c177;
+            border-bottom: 1px solid #2e3440;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        .popup-card .subtitle {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #9ccfd8;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .popup-card p {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: #c4a7e7;
+            margin-bottom: 8px;
+        }
+
+        /* Mobile specific style overrides */
+        @media (max-width: 768px) {
+            .tapestry-hud-header {
+                top: 10px;
+                left: 10px;
+                padding: 8px 12px;
+                max-width: calc(100% - 20px);
+            }
+            .tapestry-hud-header h1 {
+                font-size: 1rem;
+            }
+            .status-hud {
+                top: auto;
+                bottom: 80px;
+                left: 10px;
+                right: auto;
+                min-width: 160px;
+                padding: 8px 12px;
+            }
+            .nav-hud {
+                bottom: 10px;
+                right: 10px;
+            }
+            .nav-btn {
+                padding: 8px 14px !important;
+                font-size: 0.78rem !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <!-- HUD Header -->
+    <div class="tapestry-hud-header">
+        <h1>The Celestial Tapestry</h1>
+        <p>Monastery Study Chamber</p>
+    </div>
+
+    <!-- Dynamic Status Panel -->
+    <div class="status-hud">
+        <div class="status-item">
+            <span class="status-label">Studied Hotspots:</span>
+            <span class="status-val" id="hud-studied-count">0/0</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Active Boon:</span>
+            <span class="status-val" id="hud-active-boon">None</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Active Bane:</span>
+            <span class="status-val" id="hud-active-bane">None</span>
+        </div>
+    </div>
+
+    <!-- Navigation Overlay -->
+    <div class="nav-hud">
+        <a href="index.html" class="nav-btn">
+            🏰 Exit to Map
+        </a>
+    </div>
+
+    <!-- Unified Tapestry Action Modal -->
+    <div id="study-modal" class="study-overlay">
+        <div class="study-header">
+            <h2 id="study-title">Tapestry Detail</h2>
+            <span id="study-tag" class="study-tag tag-lore">Lore</span>
+        </div>
+        <div id="study-body" class="study-body">
+            You approach a detailed, hand-woven segment of the massive canvas...
+        </div>
+        
+        <!-- Input section for study rolls (revealed only in check branch) -->
+        <div id="study-form-container" class="study-form" style="display: none;">
+            <div class="form-label">Enter your tabletop roll total (d20 + Ability Modifier):</div>
+            <div class="form-input-row">
+                <input type="number" id="roll-input" class="study-input" min="1" max="40" placeholder="10">
+                <div class="roll-modifier-info" id="modifier-info">
+                    No active modifiers.
+                </div>
+            </div>
+        </div>
+
+        <div class="study-actions">
+            <button id="study-dismiss-btn" class="study-btn btn-dismiss" onclick="dismissStudyModal()">Close</button>
+            <button id="study-roll-btn" class="study-btn btn-action" onclick="rollEncounterDie()" style="display: none;">Roll d20</button>
+            <button id="study-submit-btn" class="study-btn btn-action" onclick="submitStudyRoll()" style="display: none;">Submit Roll</button>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // ===================================================================
+        // 1. REPO & FILE CONFIGURATION (Simple Pixel CRS)
+        // ===================================================================
+        const imgWidth = 2000;
+        const imgHeight = 1000; // Aspect ratio of our Tapestry image
+        const bounds = [[0, 0], [imgHeight, imgWidth]];
+
+        const boundsPadding = 250; 
+        const paddedBounds = [
+            [-boundsPadding, -boundsPadding],
+            [imgHeight + boundsPadding, imgWidth + boundsPadding]
+        ];
+
+        const map = L.map('map', {
+            crs: L.CRS.Simple,
+            minZoom: -1,
+            maxZoom: 2,
+            zoomSnap: 0.25,
+            maxBounds: paddedBounds,
+            maxBoundsViscosity: 0.8
+        });
+
+        // Config options for our popups
+        const dynamicPopupOptions = {
+            maxWidth: 550,
+            minWidth: 320,
+            maxHeight: 380,
+            autoPanPadding: [40, 80]
+        };
+
+        // Load Tapestry Base Layer
+        const tapestryImageUrl = 'tapestry.jpg';
+        L.imageOverlay(tapestryImageUrl, bounds).addTo(map);
+        map.fitBounds(bounds);
+
+        // ===================================================================
+        // 2. STATE MANAGEMENT & STORAGE (Strict Client-Side Privacy)
+        // ===================================================================
+        const CAP_DATE_KEY = 'tapestry_last_reset_date';
+        const ACTIVE_MODIFIER_KEY = 'tapestry_active_modifier';
+        const STUDIED_LIST_KEY = 'tapestry_studied_hotspots';
+
+        function checkDailyReset() {
+            const d = new Date();
+            const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const lastReset = localStorage.getItem(CAP_DATE_KEY);
+
+            if (lastReset !== todayStr) {
+                // Wipe active modifiers and studied memory on new day if desired, or keep studied achievements permanent
+                localStorage.removeItem(ACTIVE_MODIFIER_KEY);
+                localStorage.setItem(CAP_DATE_KEY, todayStr);
+                updateStatusHUD();
+            }
+        }
+
+        function getActiveModifier() {
+            const stored = localStorage.getItem(ACTIVE_MODIFIER_KEY);
+            return stored ? JSON.parse(stored) : null; // Format: { val: 2, label: "Boon of Annam" } or { val: -2, label: "Rattled" }
+        }
+
+        function setActiveModifier(mod) {
+            if (mod === null) {
+                localStorage.removeItem(ACTIVE_MODIFIER_KEY);
+            } else {
+                localStorage.setItem(ACTIVE_MODIFIER_KEY, JSON.stringify(mod));
+            }
+            updateStatusHUD();
+        }
+
+        function getStudiedHotspots() {
+            const stored = localStorage.getItem(STUDIED_LIST_KEY);
+            return stored ? JSON.parse(stored) : []; // List of hotspot IDs successfully deciphered
+        }
+
+        function markHotspotStudied(id) {
+            const current = getStudiedHotspots();
+            if (!current.includes(id)) {
+                current.push(id);
+                localStorage.setItem(STUDIED_LIST_KEY, JSON.stringify(current));
+            }
+            updateStatusHUD();
+        }
+
+        function updateStatusHUD() {
+            const studied = getStudiedHotspots();
+            const studiedCountEl = document.getElementById('hud-studied-count');
+            if (studiedCountEl) {
+                studiedCountEl.innerText = `${studied.length}/${hotspotsData.length}`;
+            }
+
+            const activeMod = getActiveModifier();
+            const boonEl = document.getElementById('hud-active-boon');
+            const baneEl = document.getElementById('hud-active-bane');
+
+            if (activeMod) {
+                if (activeMod.val > 0) {
+                    boonEl.innerText = `${activeMod.label} (+${activeMod.val})`;
+                    boonEl.className = "status-val status-active-boon";
+                    baneEl.innerText = "None";
+                    baneEl.className = "status-val";
+                } else if (activeMod.val < 0) {
+                    baneEl.innerText = `${activeMod.label} (${activeMod.val})`;
+                    baneEl.className = "status-val status-active-bane";
+                    boonEl.innerText = "None";
+                    boonEl.className = "status-val";
+                }
+            } else {
+                boonEl.innerText = "None";
+                boonEl.className = "status-val";
+                baneEl.innerText = "None";
+                baneEl.className = "status-val";
+            }
+        }
+
+        // ===================================================================
+        // 3. DYNAMIC DATABASE FETCHING
+        // ===================================================================
+        let hotspotsData = [];
+        let encountersData = [];
+
+        // Fallback structures in case data/ files are missing on local testing servers
+        const fallbackHotspots = [
+            {
+                id: "wyrm_crown",
+                name: "The Sundered Wyrm & Giant King",
+                coords: [[650, 400], [800, 750]], // Rectangle corners
+                dc: 15,
+                success_lore: "You decipher the faded gold stitching around the giant king's crown: <em>'When the sky-repaired Orrery completes three alignments, the dragon's tomb beneath the vault will crack open.'</em> You have unlocked the coordinate clue: <strong>[342, 1185]</strong> on the primary library ruins map.",
+                failure_text: "The silver threads are extremely dense and tangled. The alignment coordinates slip from your mind before you can transcribe them correctly."
+            },
+            {
+                id: "celestial_scroll",
+                name: "The Cosmic Constellation Stitches",
+                coords: [[300, 1100], [450, 1350]],
+                dc: 18,
+                success_lore: "By tracing the indigo fibers representing the northern starmap, you reveal a celestial riddle: <em>'He who enters the Calefactory under deepfrost must speak the name of the Second Titan Matriarch.'</em> The passphrase to bypass the library gate trap is <strong>'Karontor-Soth'</strong>.",
+                failure_text: "You cross-reference the starmap but find yourself lost in the sheer scale of the design. You can't make sense of the chronological stitching."
+            }
+        ];
+
+        const fallbackEncounters = [
+            {
+                title: "Spores of the Calefactory",
+                type: "hazard",
+                tag: "Spores",
+                text: "As you lean close to study the ancient thread, your breath disturbs a pocket of centuries-old mold settled in the wool fibers. A cloud of black dust vents into the air! You must make a DC 14 Constitution Saving Throw.",
+                bane: {
+                    val: -2,
+                    label: "Choking Spores",
+                    text: "<strong>Failure (Bane):</strong> Soot and dust choke your lungs. You take 1d6 poison damage, and suffer a <strong>-2 penalty</strong> on all Tapestry study rolls today due to blinding, watery eyes."
+                },
+                boon: {
+                    val: 1,
+                    label: "Resilient Breath",
+                    text: "<strong>Success (Boon):</strong> You steel your throat and quickly blow the dust away. The stray magic in the dust sharpens your senses, granting you a <strong>+1 bonus</strong> to your next Tapestry check."
+                }
+            },
+            {
+                title: "Planar Static Spark",
+                type: "danger",
+                tag: "Wild Magic",
+                text: "Your fingertips touch a silver thread connected to the Celestial Orrery overlay. Instantly, a current of static wild magic surges from the canvas! Make a DC 15 Dexterity or Arcana Save to absorb or dodge the feedback.",
+                bane: {
+                    val: -3,
+                    label: "Planar Static Shocks",
+                    text: "<strong>Failure (Bane):</strong> The lightning current leaves your fingers scorched and tingling. You take 2d4 lightning damage and suffer a severe <strong>-3 penalty</strong> on all Tapestry checks today."
+                },
+                boon: {
+                    val: 2,
+                    label: "Static Charge",
+                    text: "<strong>Success (Boon):</strong> You gracefully ground the magical static charge, channeling its energy into your mind. You gain a <strong>+2 bonus</strong> to your next Tapestry check."
+                }
+            }
+        ];
+
+        async function loadTapestryData() {
+            try {
+                const [hotspotsRes, encountersRes] = await Promise.all([
+                    fetch('data/tapestry_hotspots.json'),
+                    fetch('data/tapestry_encounters.json')
+                ]);
+
+                if (hotspotsRes.ok) hotspotsData = await hotspotsRes.json();
+                else hotspotsData = fallbackHotspots;
+
+                if (encountersRes.ok) encountersData = await encountersRes.json();
+                else encountersData = fallbackEncounters;
+
+                console.log("✅ Tapestry campaign files loaded successfully!");
+            } catch (err) {
+                console.warn("⚠️ Using fallback tapestry datasets (running on local filesystem without webserver).", err);
+                hotspotsData = fallbackHotspots;
+                encountersData = fallbackEncounters;
+            } finally {
+                checkDailyReset();
+                initTapestryOverlays();
+            }
+        }
+
+        // ===================================================================
+        // 4. MAP INTERACTION & OUTLINE HOVERS
+        // ===================================================================
+        let activeHotspot = null;
+        let activeEncounter = null;
+        let revealedTouchHotspotId = null; // Tracks double-tap reveal state on touch screens
+
+        function initTapestryOverlays() {
+            hotspotsData.forEach(node => {
+                // Render faint vector outlines over coordinates (hollow fill, weight 1)
+                const outline = L.rectangle(node.coords, {
+                    color: '#c4a7e7',
+                    weight: 1.5,
+                    fillColor: 'transparent',
+                    fillOpacity: 0.0,
+                    opacity: 0.15, // Almost invisible base state
+                    className: 'tapestry-hotspot-rect'
+                }).addTo(map);
+
+                // Desktop Hover Events
+                outline.on('mouseover', function() {
+                    // Smoothly glow the outline to show discovery
+                    this.setStyle({ opacity: 0.65, color: '#f6c177', weight: 2 });
+                });
+
+                outline.on('mouseout', function() {
+                    // Revert to faint state when mouse leaves
+                    this.setStyle({ opacity: 0.15, color: '#c4a7e7', weight: 1.5 });
+                });
+
+                // Core click handler (incorporates touch adaptations)
+                outline.on('click', function(e) {
+                    L.DomEvent.stopPropagation(e);
+                    
+                    // Tap-to-reveal mobile adaptation
+                    const isTouch = L.Browser.touch;
+                    if (isTouch && revealedTouchHotspotId !== node.id) {
+                        // Reset all other hotspots
+                        map.eachLayer(layer => {
+                            if (layer instanceof L.Rectangle && layer !== outline) {
+                                layer.setStyle({ opacity: 0.15, color: '#c4a7e7', weight: 1.5 });
+                            }
+                        });
+                        // Highlight this one on first touch
+                        outline.setStyle({ opacity: 0.65, color: '#f6c177', weight: 2 });
+                        revealedTouchHotspotId = node.id;
+                        return; // Stop here, require a second tap to trigger study
+                    }
+
+                    // Reset touch state
+                    revealedTouchHotspotId = null;
+                    outline.setStyle({ opacity: 0.15, color: '#c4a7e7', weight: 1.5 });
+
+                    // Center camera on clicked outline area
+                    map.fitBounds(outline.getBounds(), { animate: true, duration: 0.4 });
+
+                    // Execute study roll loop
+                    activeHotspot = node;
+                    startStudyAttempt(node);
+                });
+            });
+
+            updateStatusHUD();
+        }
+
+        // ===================================================================
+        // 5. THE TAPESTRY DECISION TREE (Branches 1 & 2)
+        // ===================================================================
+        function startStudyAttempt(node) {
+            // Check if already studied successfully
+            const deciphered = getStudiedHotspots();
+            if (deciphered.includes(node.id)) {
+                showSuccessArchive(node);
+                return;
+            }
+
+            // TRIGGER RANDOM INTERRUPTION ROLL (DC 13, ~40% chance of threat)
+            const d20 = Math.floor(Math.random() * 20) + 1;
+            console.log(`🎲 Interruption Check on ${node.name}: Rolled ${d20} vs DC 13`);
+
+            if (d20 >= 13) {
+                // BRANCH 1: Interruption Encounter Triggered
+                triggerInterruption(node);
+            } else {
+                // BRANCH 2: Direct Study Form Revealed
+                revealStudyCheckForm(node);
+            }
+        }
+
+        // --- BRANCH 1: INTERRUPTION LOOP ---
+        function triggerInterruption(node) {
+            activeEncounter = encountersData[Math.floor(Math.random() * encountersData.length)];
+            
+            const modal = document.getElementById('study-modal');
+            const titleEl = document.getElementById('study-title');
+            const tagEl = document.getElementById('study-tag');
+            const bodyEl = document.getElementById('study-body');
+            const rollBtn = document.getElementById('study-roll-btn');
+            const submitBtn = document.getElementById('study-submit-btn');
+            const dismissBtn = document.getElementById('study-dismiss-btn');
+            const formContainer = document.getElementById('study-form-container');
+
+            modal.className = "study-overlay active encounter-" + activeEncounter.type;
+            titleEl.innerText = `⚠️ Interruption: ${activeEncounter.title}`;
+            tagEl.innerText = activeEncounter.tag;
+            tagEl.className = `study-tag tag-${activeEncounter.type}`;
+
+            // Build interruption body
+            bodyEl.innerHTML = `
+                <p style="margin-bottom: 12px; color: #e0def4; line-height: 1.5;">${activeEncounter.text}</p>
+                <div class="check-box">
+                    <strong>Tapestry Danger Event</strong>
+                    <p>Roll a d20 to resolve this hazard. A success grants a helpful Boon; a failure applies a painful study Bane!</p>
+                </div>
+            `;
+
+            // Adjust Buttons: Show ONLY "Roll d20", hide Submit and Close
+            formContainer.style.display = "none";
+            rollBtn.style.display = "inline-block";
+            submitBtn.style.display = "none";
+            dismissBtn.style.display = "none";
+        }
+
+        function rollEncounterDie() {
+            const roll = Math.floor(Math.random() * 20) + 1;
+            const bodyEl = document.getElementById('study-body');
+            const rollBtn = document.getElementById('study-roll-btn');
+            const dismissBtn = document.getElementById('study-dismiss-btn');
+
+            let success = roll >= 11; // 50/50 resolve check
+            let resultHtml = `<p style="margin-bottom: 12px;">${activeEncounter.text}</p>`;
+            resultHtml += `
+                <div style="margin-bottom: 12px; padding: 10px; background: #2a2e37; border-radius: 6px; text-align: center; font-weight: bold; color: #f6c177; font-size: 1.15rem;">
+                    🎲 Resolve Check Roll: <span style="font-size: 1.35rem; color: ${success ? '#31b565' : '#eb6f92'}">${roll}</span>
+                </div>
+            `;
+
+            if (success) {
+                // Set active modifier to local storage
+                setActiveModifier(activeEncounter.boon);
+                resultHtml += `
+                    <div class="boon-box">
+                        <strong>Boon Earned: ${activeEncounter.boon.label}</strong>
+                        <p>${activeEncounter.boon.text || activeEncounter.boon.description || 'You gain a helpful modifier.'}</p>
+                    </div>
+                `;
+            } else {
+                // Set negative modifier
+                setActiveModifier(activeEncounter.bane);
+                resultHtml += `
+                    <div class="bane-box">
+                        <strong>Bane Suffered: ${activeEncounter.bane.label}</strong>
+                        <p>${activeEncounter.bane.text || activeEncounter.bane.description || 'You suffer a lingering penalty.'}</p>
+                    </div>
+                `;
+            }
+
+            bodyEl.innerHTML = resultHtml;
+
+            // Swap buttons: Reveal manual close button to allow proceeding
+            rollBtn.style.display = "none";
+            dismissBtn.style.display = "inline-block";
+            dismissBtn.innerText = "Continue Exploration";
+        }
+
+        // --- BRANCH 2: DIRECT STUDY LOOP ---
+        function revealStudyCheckForm(node) {
+            const modal = document.getElementById('study-modal');
+            const titleEl = document.getElementById('study-title');
+            const tagEl = document.getElementById('study-tag');
+            const bodyEl = document.getElementById('study-body');
+            const rollBtn = document.getElementById('study-roll-btn');
+            const submitBtn = document.getElementById('study-submit-btn');
+            const dismissBtn = document.getElementById('study-dismiss-btn');
+            const formContainer = document.getElementById('study-form-container');
+            const modInfoEl = document.getElementById('modifier-info');
+
+            modal.className = "study-overlay active";
+            titleEl.innerText = `🔍 Studying: ${node.name}`;
+            tagEl.innerText = "Lore Node";
+            tagEl.className = "study-tag tag-lore";
+
+            bodyEl.innerHTML = `
+                <p style="margin-bottom: 8px;">You lean in to analyze the threads and decipher the woven scripts. To succeed, you must check your result against the Complexity Difficulty Class.</p>
+                <div class="check-box" style="margin-bottom: 0;">
+                    <strong>Hotspot Complexity DC: ${node.dc}</strong>
+                </div>
+            `;
+
+            // Look up active Boon/Bane modifiers to display in the study form
+            const modifier = getActiveModifier();
+            if (modifier) {
+                const sign = modifier.val > 0 ? '+' : '';
+                modInfoEl.innerHTML = `Active Modifier: <strong class="${modifier.val > 0 ? 'status-active-boon' : 'status-active-bane'}">${modifier.label} (${sign}${modifier.val})</strong>`;
+            } else {
+                modInfoEl.innerHTML = "No active modifiers.";
+            }
+
+            // Reset inputs and adjust Buttons
+            document.getElementById('roll-input').value = "";
+            formContainer.style.display = "block";
+            rollBtn.style.display = "none";
+            submitBtn.style.display = "inline-block";
+            dismissBtn.style.display = "inline-block";
+            dismissBtn.innerText = "Cancel Study";
+        }
+
+        function submitStudyRoll() {
+            const inputVal = parseInt(document.getElementById('roll-input').value);
+            if (isNaN(inputVal) || inputVal < 1 || inputVal > 50) {
+                alert("Please enter a valid tabletop roll total (between 1 and 50).");
+                return;
+            }
+
+            const modifier = getActiveModifier();
+            const modValue = modifier ? modifier.val : 0;
+            const finalRollTotal = inputVal + modValue;
+
+            const bodyEl = document.getElementById('study-body');
+            const formContainer = document.getElementById('study-form-container');
+            const submitBtn = document.getElementById('study-submit-btn');
+            const dismissBtn = document.getElementById('study-dismiss-btn');
+
+            let success = finalRollTotal >= activeHotspot.dc;
+            let feedbackHtml = `<h3>Deciphering: ${activeHotspot.name}</h3><br>`;
+
+            feedbackHtml += `
+                <div style="margin-bottom: 14px; padding: 10px; background: #2a2e37; border-radius: 6px; text-align: center; font-weight: bold; font-size: 1.1rem; border: 1px solid #3b4252;">
+                    Your Base Total: <span style="color: #f6c177;">${inputVal}</span><br>
+                    ${modifier ? `Modifier (${modifier.label}): <span style="color: ${modValue > 0 ? '#31b565' : '#eb6f92'}">${modValue > 0 ? '+' : ''}${modValue}</span><br>` : ''}
+                    <hr style="border: 0; border-top: 1px solid #3b4252; margin: 6px 0;">
+                    Decipher Power: <span style="font-size: 1.25rem; color: ${success ? '#31b565' : '#eb6f92'}">${finalRollTotal}</span> vs <span style="color: #9ccfd8;">DC ${activeHotspot.dc}</span>
+                </div>
+            `;
+
+            if (success) {
+                markHotspotStudied(activeHotspot.id);
+                feedbackHtml += `
+                    <div class="boon-box" style="border-left-color: #31b565; background: rgba(49, 181, 101, 0.08);">
+                        <strong style="color: #31b565;">Decipher Success! (Lore Unlocked)</strong>
+                        <p style="margin-top: 6px; font-size: 0.9rem; line-height: 1.45;">${activeHotspot.success_lore}</p>
+                    </div>
+                `;
+            } else {
+                feedbackHtml += `
+                    <div class="bane-box" style="border-left-color: #eb6f92; background: rgba(235, 111, 146, 0.08);">
+                        <strong style="color: #eb6f92;">Decipher Failure</strong>
+                        <p style="margin-top: 6px;">${activeHotspot.failure_text}</p>
+                    </div>
+                `;
+            }
+
+            // Clear the active modifier once spent on a study attempt
+            setActiveModifier(null);
+
+            bodyEl.innerHTML = feedbackHtml;
+            formContainer.style.display = "none";
+            submitBtn.style.display = "none";
+            dismissBtn.innerText = "Close Study Window";
+        }
+
+        // --- PREVIOUSLY DECIPHERED DISPLAY ---
+        function showSuccessArchive(node) {
+            const modal = document.getElementById('study-modal');
+            const titleEl = document.getElementById('study-title');
+            const tagEl = document.getElementById('study-tag');
+            const bodyEl = document.getElementById('study-body');
+            const rollBtn = document.getElementById('study-roll-btn');
+            const submitBtn = document.getElementById('study-submit-btn');
+            const dismissBtn = document.getElementById('study-dismiss-btn');
+            const formContainer = document.getElementById('study-form-container');
+
+            modal.className = "study-overlay active";
+            titleEl.innerText = node.name;
+            tagEl.innerText = "Deciphered";
+            tagEl.className = "study-tag tag-lore";
+
+            bodyEl.innerHTML = `
+                <div class="boon-box" style="border-left-color: #31b565; background: rgba(49, 181, 101, 0.08); margin-bottom: 0;">
+                    <strong style="color: #31b565;">Archived Success Lore</strong>
+                    <p style="margin-top: 6px; font-size: 0.9rem; line-height: 1.45;">${node.success_lore}</p>
+                </div>
+            `;
+
+            formContainer.style.display = "none";
+            rollBtn.style.display = "none";
+            submitBtn.style.display = "none";
+            dismissBtn.style.display = "inline-block";
+            dismissBtn.innerText = "Close Archive";
+        }
+
+        // ===================================================================
+        // 6. GLOBAL WINDOW & CLOSE HANDLERS
+        // ===================================================================
+        function dismissStudyModal() {
+            const modal = document.getElementById('study-modal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        // Global debug hook: Type forceTapestryEncounter() in browser console to trigger instantly
+        window.forceTapestryEncounter = function() {
+            activeHotspot = hotspotsData[0];
+            triggerInterruption(activeHotspot);
+        };
+
+        // Initialize Page Data Loading
+        loadTapestryData();
+    </script>
+</body>
+</html>
