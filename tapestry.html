@@ -359,6 +359,9 @@
             <span class="status-label">Active Bane:</span>
             <span class="status-val" id="hud-active-bane">None</span>
         </div>
+        <button onclick="resetTapestryProgress()" style="margin-top: 6px; padding: 4px 8px; background: #2a2e37; border: 1px solid #3b4252; color: #f6c177; border-radius: 4px; font-size: 0.72rem; cursor: pointer; text-transform: uppercase; font-weight: 600;">
+            🔄 Reset Progress
+        </button>
     </div>
 
     <!-- Navigation Overlay -->
@@ -468,23 +471,42 @@
 
         function getStudiedHotspots() {
             const stored = localStorage.getItem(STUDIED_LIST_KEY);
-            return stored ? JSON.parse(stored) : [];
+            if (!stored) return {};
+            try {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed)) {
+                    const map = {};
+                    parsed.forEach(id => { map[id] = 'full'; });
+                    return map;
+                }
+                return parsed;
+            } catch(e) {
+                return {};
+            }
         }
 
-        function markHotspotStudied(id) {
-            const current = getStudiedHotspots();
-            if (!current.includes(id)) {
-                current.push(id);
-                localStorage.setItem(STUDIED_LIST_KEY, JSON.stringify(current));
+        function resetTapestryProgress() {
+            if (confirm("Reset all studied hotspots and active modifiers for the Tapestry?")) {
+                localStorage.removeItem(STUDIED_LIST_KEY);
+                localStorage.removeItem(ACTIVE_MODIFIER_KEY);
+                updateStatusHUD();
+                alert("Tapestry progress has been reset!");
             }
+        }
+
+        function markHotspotStudied(id, resultType) {
+            const current = getStudiedHotspots();
+            current[id] = resultType; // 'full', 'partial', or 'failure'
+            localStorage.setItem(STUDIED_LIST_KEY, JSON.stringify(current));
             updateStatusHUD();
         }
 
         function updateStatusHUD() {
-            const studied = getStudiedHotspots();
+            const studiedMap = getStudiedHotspots();
+            const studiedCount = Object.keys(studiedMap).length;
             const studiedCountEl = document.getElementById('hud-studied-count');
             if (studiedCountEl) {
-                studiedCountEl.innerText = `${studied.length}/${hotspotsData.length}`;
+                studiedCountEl.innerText = `${studiedCount}/${hotspotsData.length}`;
             }
 
             const activeMod = getActiveModifier();
@@ -521,7 +543,10 @@
             {
                 id: "wyrm_crown",
                 name: "The Sundered Wyrm & Giant King",
-                coords: [[650, 400], [800, 750]],
+                shape: "ellipse",
+                center: [725, 575],
+                radiusY: 75,
+                radiusX: 175,
                 dc: 15,
                 success_lore: "<strong>Full Success:</strong> You decipher the faded gold stitching around the giant king's crown: <em>'When the sky-repaired Orrery completes three alignments, the dragon's tomb beneath the vault will crack open.'</em> You have unlocked the coordinate clue: <strong>[342, 1185]</strong> on the primary library ruins map.",
                 partial_lore: "<strong>Partial Success:</strong> You decipher the general inscription on the crown: it speaks of an alignment of the Celestial Orrery and a hidden tomb beneath the vault, but the exact coordinate numbers are frayed and obscured.",
@@ -607,16 +632,37 @@
         let currentModalMode = null; // 'interruption' or 'study'
         let revealedTouchHotspotId = null;
 
+        function generateEllipseCoords(centerY, centerX, radiusY, radiusX, points = 32) {
+            const coords = [];
+            for (let i = 0; i < points; i++) {
+                const angle = (i / points) * 2 * Math.PI;
+                const y = Math.round(centerY + radiusY * Math.sin(angle));
+                const x = Math.round(centerX + radiusX * Math.cos(angle));
+                coords.push([y, x]);
+            }
+            return coords;
+        }
+
         function initTapestryOverlays() {
             hotspotsData.forEach(node => {
-                const outline = L.rectangle(node.coords, {
+                let outline;
+                const styleOpts = {
                     color: '#c4a7e7',
                     weight: 1.5,
                     fillColor: 'transparent',
                     fillOpacity: 0.0,
                     opacity: 0.15,
                     className: 'tapestry-hotspot-rect'
-                }).addTo(map);
+                };
+
+                if (node.shape === 'ellipse' || (node.center && node.radiusY && node.radiusX)) {
+                    const ellipsePoints = generateEllipseCoords(node.center[0], node.center[1], node.radiusY, node.radiusX);
+                    outline = L.polygon(ellipsePoints, styleOpts).addTo(map);
+                } else if (node.shape === 'polygon' || (Array.isArray(node.coords) && node.coords.length > 2)) {
+                    outline = L.polygon(node.coords, styleOpts).addTo(map);
+                } else {
+                    outline = L.rectangle(node.coords, styleOpts).addTo(map);
+                }
 
                 outline.on('mouseover', function() {
                     this.setStyle({ opacity: 0.65, color: '#f6c177', weight: 2 });
@@ -632,7 +678,7 @@
                     const isTouch = L.Browser.touch;
                     if (isTouch && revealedTouchHotspotId !== node.id) {
                         map.eachLayer(layer => {
-                            if (layer instanceof L.Rectangle && layer !== outline) {
+                            if ((layer instanceof L.Rectangle || layer instanceof L.Polygon) && layer !== outline) {
                                 layer.setStyle({ opacity: 0.15, color: '#c4a7e7', weight: 1.5 });
                             }
                         });
@@ -658,11 +704,7 @@
         // 5. UNIFIED ACTION LOOP (INTERRUPTIONS & STUDY)
         // ===================================================================
         function startStudyAttempt(node) {
-            const deciphered = getStudiedHotspots();
-            if (deciphered.includes(node.id)) {
-                showSuccessArchive(node);
-                return;
-            }
+            activeHotspot = node;
 
             // TRIGGER RANDOM INTERRUPTION ROLL (DC 13, ~40% chance of hazard)
             const d20 = Math.floor(Math.random() * 20) + 1;
@@ -717,6 +759,7 @@
             formContainer.style.display = "block";
             rollBtn.style.display = "inline-block";
             rollBtn.innerText = "🎲 Roll d20";
+            rollBtn.onclick = function() { executeRollAction(); };
             dismissBtn.style.display = "inline-block";
             dismissBtn.innerText = "Cancel";
         }
@@ -724,6 +767,7 @@
         // --- STUDY CHECK FORM (3-State: Success / Partial / Fail) ---
         function revealStudyCheckForm(node) {
             currentModalMode = 'study';
+            activeHotspot = node;
 
             const modal = document.getElementById('study-modal');
             const titleEl = document.getElementById('study-title');
@@ -734,6 +778,52 @@
             const dismissBtn = document.getElementById('study-dismiss-btn');
             const formContainer = document.getElementById('study-form-container');
             const modInfoEl = document.getElementById('modifier-info');
+
+            const studiedMap = getStudiedHotspots();
+            if (studiedMap[node.id]) {
+                const savedResult = studiedMap[node.id]; // 'full', 'partial', or 'failure'
+
+                modal.className = "study-overlay active";
+                titleEl.innerText = `🔒 ${node.name}`;
+                tagEl.innerText = "Locked";
+                tagEl.className = "study-tag tag-hazard";
+
+                let bodyHtml = `
+                    <p style="margin-bottom: 12px; color: #f6c177; font-style: italic; line-height: 1.5; font-size: 0.95rem; border-bottom: 1px solid #2e3440; padding-bottom: 10px;">
+                        "You don't think you can tease any more knowledge from this part of the tapestry..."
+                    </p>
+                `;
+
+                if (savedResult === 'full' && node.success_lore) {
+                    bodyHtml += `
+                        <div class="boon-box" style="border-left-color: #31b565; background: rgba(49, 181, 101, 0.08); margin-top: 10px; margin-bottom: 0;">
+                            <strong style="color: #31b565;">Archived Full Success Lore</strong>
+                            <p style="margin-top: 6px; font-size: 0.88rem; line-height: 1.45;">${node.success_lore}</p>
+                        </div>
+                    `;
+                } else if (savedResult === 'partial' && node.partial_lore) {
+                    bodyHtml += `
+                        <div class="partial-box" style="border-left-color: #9ccfd8; background: rgba(156, 207, 216, 0.08); margin-top: 10px; margin-bottom: 0;">
+                            <strong style="color: #9ccfd8;">Archived Partial Success Lore</strong>
+                            <p style="margin-top: 6px; font-size: 0.88rem; line-height: 1.45;">${node.partial_lore}</p>
+                        </div>
+                    `;
+                } else {
+                    bodyHtml += `
+                        <div class="bane-box" style="border-left-color: #eb6f92; background: rgba(235, 111, 146, 0.08); margin-top: 10px; margin-bottom: 0;">
+                            <strong style="color: #eb6f92;">Archived Failure Outcome</strong>
+                            <p style="margin-top: 6px; font-size: 0.88rem; line-height: 1.45;">${node.failure_text || "You failed to decipher this part of the tapestry."}</p>
+                        </div>
+                    `;
+                }
+
+                bodyEl.innerHTML = bodyHtml;
+                formContainer.style.display = "none";
+                rollBtn.style.display = "none";
+                dismissBtn.style.display = "inline-block";
+                dismissBtn.innerText = "Close Window";
+                return;
+            }
 
             modal.className = "study-overlay active";
             titleEl.innerText = `🔍 Studying: ${node.name}`;
@@ -762,6 +852,7 @@
             formContainer.style.display = "block";
             rollBtn.style.display = "inline-block";
             rollBtn.innerText = "🎲 Roll d20";
+            rollBtn.onclick = function() { executeRollAction(); };
             dismissBtn.style.display = "inline-block";
             dismissBtn.innerText = "Cancel Study";
         }
@@ -815,8 +906,13 @@
 
                 bodyEl.innerHTML = resultHtml;
                 formContainer.style.display = "none";
-                rollBtn.style.display = "none";
-                dismissBtn.innerText = "Continue Exploration";
+                rollBtn.style.display = "inline-block";
+                rollBtn.innerText = "🔍 Proceed to Study Check";
+                rollBtn.onclick = function() {
+                    revealStudyCheckForm(activeHotspot);
+                };
+                dismissBtn.style.display = "inline-block";
+                dismissBtn.innerText = "Close";
 
             } else if (currentModalMode === 'study') {
                 // 3-STATE RESOLUTION FOR STUDY (SUCCEED / PARTIAL / FAIL)
@@ -833,7 +929,7 @@
                 `;
 
                 if (isFullSuccess) {
-                    markHotspotStudied(activeHotspot.id);
+                    markHotspotStudied(activeHotspot.id, 'full');
                     resultHtml += `
                         <div class="boon-box">
                             <strong style="color: #31b565;">Full Success! (Complete Lore Unlocked)</strong>
@@ -841,7 +937,7 @@
                         </div>
                     `;
                 } else if (isPartialSuccess) {
-                    markHotspotStudied(activeHotspot.id);
+                    markHotspotStudied(activeHotspot.id, 'partial');
                     resultHtml += `
                         <div class="partial-box">
                             <strong style="color: #9ccfd8;">Partial Success (Partial Insight Unlocked)</strong>
@@ -849,6 +945,7 @@
                         </div>
                     `;
                 } else {
+                    markHotspotStudied(activeHotspot.id, 'failure');
                     resultHtml += `
                         <div class="bane-box">
                             <strong style="color: #eb6f92;">Failure</strong>
@@ -869,6 +966,7 @@
 
         // --- PREVIOUSLY DECIPHERED DISPLAY ---
         function showSuccessArchive(node) {
+            activeHotspot = node;
             const modal = document.getElementById('study-modal');
             const titleEl = document.getElementById('study-title');
             const tagEl = document.getElementById('study-tag');
@@ -883,18 +981,22 @@
             tagEl.className = "study-tag tag-lore";
 
             bodyEl.innerHTML = `
-                <div class="boon-box" style="border-left-color: #31b565; background: rgba(49, 181, 101, 0.08); margin-bottom: 0;">
+                <div class="boon-box" style="border-left-color: #31b565; background: rgba(49, 181, 101, 0.08); margin-bottom: 12px;">
                     <strong style="color: #31b565;">Archived Success Lore</strong>
                     <p style="margin-top: 6px; font-size: 0.9rem; line-height: 1.45;">${node.success_lore}</p>
                 </div>
+                <p style="font-size: 0.78rem; color: #9ccfd8; text-align: center;">You have already deciphered this segment. You can close this window or re-test the study check below.</p>
             `;
 
             formContainer.style.display = "none";
-            rollBtn.style.display = "none";
+            rollBtn.style.display = "inline-block";
+            rollBtn.innerText = "🎲 Re-test Study Check";
+            rollBtn.onclick = function() {
+                revealStudyCheckForm(node);
+            };
             dismissBtn.style.display = "inline-block";
             dismissBtn.innerText = "Close Archive";
         }
-
         // ===================================================================
         // 6. GLOBAL WINDOW & CLOSE HANDLERS
         // ===================================================================
