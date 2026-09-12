@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Tapestries of King Snurre</title>
+    <title>The Scriptorium Tapestry Room</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Fantasy Typography -->
@@ -336,12 +336,13 @@
     </style>
 </head>
 <body>
+
     <div id="map"></div>
 
     <!-- HUD Header -->
     <div class="tapestry-hud-header">
-        <h1>A Tapestry in Lord Snurre's</h1>
-        <p>The Second Breaking of the Dwarves</p>
+        <h1>The Celestial Tapestry</h1>
+        <p>Monastery Study Chamber</p>
     </div>
 
     <!-- Dynamic Status Panel -->
@@ -363,6 +364,12 @@
         </button>
     </div>
 
+    <!-- Navigation Overlay -->
+    <div class="nav-hud">
+        <a href="index.html" class="nav-btn">
+            🏰 Exit to Map
+        </a>
+    </div>
 
     <!-- Unified Tapestry Action Modal -->
     <div id="study-modal" class="study-overlay">
@@ -425,7 +432,7 @@
         };
 
         // Load Tapestry Base Layer
-        const tapestryImageUrl = 'The Second Breaking.webp';
+        const tapestryImageUrl = 'tapestry.jpg';
         L.imageOverlay(tapestryImageUrl, bounds).addTo(map);
         map.fitBounds(bounds);
 
@@ -534,24 +541,21 @@
 
         const fallbackHotspots = [
             {
-                id: "the_whisper",
-                name: "The Whisper",
+                id: "wyrm_crown",
+                name: "The Sundered Wyrm & Giant King",
                 shape: "ellipse",
-                center: [800, 575],
-                radiusY: 25,
-                radiusX: 75,
-                dc: 18,
+                center: [725, 575],
+                radiusY: 75,
+                radiusX: 175,
+                dc: 15,
                 success_lore: "<strong>Full Success:</strong> You decipher the faded gold stitching around the giant king's crown: <em>'When the sky-repaired Orrery completes three alignments, the dragon's tomb beneath the vault will crack open.'</em> You have unlocked the coordinate clue: <strong>[342, 1185]</strong> on the primary library ruins map.",
                 partial_lore: "<strong>Partial Success:</strong> You decipher the general inscription on the crown: it speaks of an alignment of the Celestial Orrery and a hidden tomb beneath the vault, but the exact coordinate numbers are frayed and obscured.",
                 failure_text: "<strong>Failure:</strong> The silver threads are extremely dense and tangled. The alignment coordinates slip from your mind before you can transcribe them correctly."
             },
             {
-                id: "the_cinder_clan",
-                name: "The Cinder Clan",
-                shape: "ellipse",
-                center: [400, 575],
-                radiusY: 100,
-                radiusX: 50,
+                id: "celestial_scroll",
+                name: "The Cosmic Constellation Stitches",
+                coords: [[300, 1100], [450, 1350]],
                 dc: 18,
                 success_lore: "<strong>Full Success:</strong> By tracing the indigo fibers representing the northern starmap, you reveal a celestial riddle: <em>'He who enters the Calefactory under deepfrost must speak the name of the Second Titan Matriarch.'</em> The passphrase to bypass the library gate trap is <strong>'Karontor-Soth'</strong>.",
                 partial_lore: "<strong>Partial Success:</strong> You trace the constellation path and learn that a passphrase is needed to enter the Calefactory gate safely, but you can only make out the prefix <strong>'Karontor-...'</strong> before the pattern becomes unreadable.",
@@ -1009,41 +1013,6 @@
             triggerInterruption(activeHotspot);
         };
 
-        // ===================================================================
-        // 7. COORDINATE FINDER HUD & CONSOLE LOGGER
-        // ===================================================================
-        const coordControl = L.control({ position: 'bottomleft' });
-        coordControl.onAdd = function() {
-            const div = L.DomUtil.create('div', 'coord-hud');
-            div.style.background = 'rgba(24, 27, 32, 0.9)';
-            div.style.color = '#f6c177';
-            div.style.padding = '6px 12px';
-            div.style.borderRadius = '6px';
-            div.style.border = '1px solid #3b4252';
-            div.style.fontFamily = 'monospace';
-            div.style.fontSize = '0.85rem';
-            div.style.boxShadow = '0 4px 10px rgba(0,0,0,0.5)';
-            div.style.pointerEvents = 'none';
-            div.innerHTML = 'Coords: ';
-            return div;
-        };
-        coordControl.addTo(map);
-
-        // Update HUD on mouse move
-        map.on('mousemove', function(e) {
-            const y = Math.round(e.latlng.lat);
-            const x = Math.round(e.latlng.lng);
-            const el = document.querySelector('.coord-hud');
-            if (el) el.innerHTML = `Coords: [${y}, ${x}]`;
-        });
-        
-        // Log exact clicked coordinates to Console (F12)
-        map.on('click', function(e) {
-            const y = Math.round(e.latlng.lat);
-            const x = Math.round(e.latlng.lng);
-            console.log(`📍 Clicked Coords -> [${y}, ${x}]`);
-        });
-        
         // Initialize Page Data Loading
         loadTapestryData();
     </script>
