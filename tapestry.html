@@ -1009,6 +1009,41 @@
             triggerInterruption(activeHotspot);
         };
 
+        // ===================================================================
+        // 7. COORDINATE FINDER HUD & CONSOLE LOGGER
+        // ===================================================================
+        const coordControl = L.control({ position: 'bottomleft' });
+        coordControl.onAdd = function() {
+            const div = L.DomUtil.create('div', 'coord-hud');
+            div.style.background = 'rgba(24, 27, 32, 0.9)';
+            div.style.color = '#f6c177';
+            div.style.padding = '6px 12px';
+            div.style.borderRadius = '6px';
+            div.style.border = '1px solid #3b4252';
+            div.style.fontFamily = 'monospace';
+            div.style.fontSize = '0.85rem';
+            div.style.boxShadow = '0 4px 10px rgba(0,0,0,0.5)';
+            div.style.pointerEvents = 'none';
+            div.innerHTML = 'Coords: ';
+            return div;
+        };
+        coordControl.addTo(map);
+
+        // Update HUD on mouse move
+        map.on('mousemove', function(e) {
+            const y = Math.round(e.latlng.lat);
+            const x = Math.round(e.latlng.lng);
+            const el = document.querySelector('.coord-hud');
+            if (el) el.innerHTML = `Coords: [${y}, ${x}]`;
+        });
+        
+        // Log exact clicked coordinates to Console (F12)
+        map.on('click', function(e) {
+            const y = Math.round(e.latlng.lat);
+            const x = Math.round(e.latlng.lng);
+            console.log(`📍 Clicked Coords -> [${y}, ${x}]`);
+        });
+        
         // Initialize Page Data Loading
         loadTapestryData();
     </script>
