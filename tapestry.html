@@ -59,8 +59,6 @@
             margin-top: 3px;
         }
 
-        
-
         /* Dynamic Status HUD */
         .status-hud {
             position: fixed;
@@ -319,7 +317,6 @@
                 min-width: 160px;
                 padding: 8px 12px;
             }
-            
         }
     </style>
 </head>
@@ -379,7 +376,7 @@
         </div>
     </div>
 
-    <!-- Leaflet JS (required by the map/script logic below; was missing) -->
+    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
@@ -488,6 +485,7 @@
                 radiusY: 25,
                 radiusX: 75,
                 dc: 18,
+                skill: "Deception or Insight Check",
                 success_lore: "Woven in the tapestry are runes in giant: <em>'You will be the biggest of your brethren and rule over them all.'</em>",
                 partial_lore: "You think one of the ancient dwarven clans made a deal with the fire giants. ",
                 failure_text: "The ancient lord of the Fire Giants finds dwarves incredibly attractive."
@@ -500,6 +498,7 @@
                 radiusY: 25,
                 radiusX: 75,
                 dc: 18,
+                skill: "Constitution or Athletics Check",
                 success_lore: "Studying the tapestry, you realize these dwarves may be ancient Duergar; before they descended to the Underdark.",
                 partial_lore: "You notice the size of this dwarf relative to the others may not be an accident.",
                 failure_text: "This represents the first of the dwarven clans to be subjugated."
@@ -1029,6 +1028,11 @@
             }
         }
 
+        function getHotspotSkillName(node) {
+            const rawSkill = node.skill || node.skill_check || node.check || node.skillCheck || 'History Check';
+            return rawSkill.toLowerCase().includes('check') ? rawSkill : `${rawSkill} Check`;
+        }
+
         function revealStudyCheckForm(node) {
             state.activeHotspot = node;
             state.activeEncounter = null;
@@ -1048,11 +1052,12 @@
             ui.tag.innerText = 'Lore Node';
             ui.tag.className = 'study-tag tag-lore';
 
+            const skillText = getHotspotSkillName(node);
+
             ui.body.innerHTML = `
                 <p style="margin-bottom: 8px;">You analyze the intricate threadwork to decipher the hidden script. Enter your skill modifier and roll a d20 to test your understanding against the Complexity DC.</p>
                 <div class="check-box" style="margin-bottom: 0;">
-                    <strong>Hotspot Complexity: Target DC ${node.dc}</strong>
-                    <p style="font-size: 0.78rem; color: #9ccfd8;">(Roll ≥ DC: Full Success | Roll ≥ DC-${CONFIG.game.partialSuccessMargin}: Partial Success | Roll &lt; DC-${CONFIG.game.partialSuccessMargin}: Failure)</p>
+                    <strong>Tapestry Analysis: ${skillText}</strong>
                 </div>
             `;
 
@@ -1270,3 +1275,4 @@
     </script>
 </body>
 </html>
+Gemini Notebook can be inaccurate; please double check its responses.
