@@ -478,15 +478,15 @@
 
         const fallbackHotspots = [
             {
-                id: "firelord_promise",
+                id: "firelord_promis",
                 name: "A Fire Lord's Promise",
                 shape: "ellipse",
                 center: [660, 550],
-                radiusY: 20,
-                radiusX: 40,
+                radiusY: 25,
+                radiusX: 75,
                 dc: 18,
-                skill: "Deception or Insight Check",
-                success_lore: "Woven in the tapestry are runes in giant: <em>' You will be the largest of your brethren and rule over them all.'</em>",
+                skill: "History Check",
+                success_lore: "Woven in the tapestry are runes in giant: <em>'You will be the biggest of your brethren and rule over them all.'</em>",
                 partial_lore: "You think one of the ancient dwarven clans made a deal with the fire giants. ",
                 failure_text: "The ancient lord of the Fire Giants finds dwarves incredibly attractive."
             },
@@ -494,54 +494,15 @@
                 id: "big_problem",
                 name: "The Big Problem",
                 shape: "ellipse",
-                center: [615, 911],
-                radiusY: 30,
-                radiusX: 30,
+                center: [660, 550],
+                radiusY: 25,
+                radiusX: 75,
                 dc: 18,
-                skill: "Constitution or Athletics Check",
+                skill: "Arcana Check",
                 success_lore: "Studying the tapestry, you realize these dwarves may be ancient Duergar; before they descended to the Underdark.",
-                partial_lore: "You notice the size of this dwarf relative to the others may not be simple artistic license.",
+                partial_lore: "You notice the size of this dwarf relative to the others may not be an accident.",
                 failure_text: "This represents the first of the dwarven clans to be subjugated."
-            },
-            {
-                id: "town_aflame",
-                name: "The Second Breaking",
-                shape: "ellipse",
-                center: [690, 224],
-                radiusY: 45,
-                radiusX: 45,
-                dc: 18,
-                skill: "History or Survival Check",
-                success_lore: "The ancient dwarven clans, ever resourceful, dragged themselves back to greatness after the Great Betrayal, only to be cast down again.",
-                partial_lore: "An ancient dwarven city in flames.",
-                failure_text: "Angry at their betrayal, the dwarves burned and sacked cities across the world; classic little man syndrome."
-            },
-            {
-                id: "fall_of_stone",
-                name: "Forgotten Clans",
-                shape: "ellipse",
-                center: [314, 416],
-                radiusY: 45,
-                radiusX: 45,
-                dc: 18,
-                skill: "Strength or Religion",
-                success_lore: "Their robes, the color of lapis lazuli, mark this as the Stone Clan, the second to fall during the great breaking. They often used their crafts and magic towards healing.",
-                partial_lore: "The Stone Clan was said to wear robes of the deepest blue and healed the sick and injured. Their kind hearts led them to disaster in the early days of the Fall.",
-                failure_text: "The royal blue of these robes mark them as the Sky Clan, the last to fall and the last to be broken."
-            },
-            {
-                id: "fall_of_forge",
-                name: "Forgotten Clans",
-                shape: "ellipse",
-                center: [372, 822],
-                radiusY: 45,
-                radiusX: 45,
-                dc: 18,
-                skill: "Deception or Stealth",
-                success_lore: "Robes as red as flame itself! This must be none other than the Forge Clan, whose fires were quenched before all others. Proud warriors, they rushed to battle, but fell to deception.",
-                partial_lore: "This must be the Fire Clan, brave warriors that fell before most of their other brethren.",
-                failure_text: "The Cinder clan, with robes like flame, were consumed by their ambition and struck a deal with fire giants; a shadow of their old selves in exchange for an unlocked gate."
-            },
+            }
         ];
 
         const fallbackEncounters = [
@@ -1122,28 +1083,20 @@
                 </p>
             `;
 
+            let loreText = '';
             if (savedResult === 'full' && node.success_lore) {
-                bodyHtml += `
-                    <div class="boon-box" style="border-left-color: #31b565; background: rgba(49, 181, 101, 0.08); margin-top: 10px; margin-bottom: 0;">
-                        <strong style="color: #31b565;">Archived Full Success Lore</strong>
-                        <p style="margin-top: 6px; font-size: 0.88rem; line-height: 1.45;">${node.success_lore}</p>
-                    </div>
-                `;
+                loreText = node.success_lore;
             } else if (savedResult === 'partial' && node.partial_lore) {
-                bodyHtml += `
-                    <div class="partial-box" style="border-left-color: #9ccfd8; background: rgba(156, 207, 216, 0.08); margin-top: 10px; margin-bottom: 0;">
-                        <strong style="color: #9ccfd8;">Archived Partial Success Lore</strong>
-                        <p style="margin-top: 6px; font-size: 0.88rem; line-height: 1.45;">${node.partial_lore}</p>
-                    </div>
-                `;
+                loreText = node.partial_lore;
             } else {
-                bodyHtml += `
-                    <div class="bane-box" style="border-left-color: #eb6f92; background: rgba(235, 111, 146, 0.08); margin-top: 10px; margin-bottom: 0;">
-                        <strong style="color: #eb6f92;">Archived Failure Outcome</strong>
-                        <p style="margin-top: 6px; font-size: 0.88rem; line-height: 1.45;">${node.failure_text || 'You failed to decipher this part of the tapestry.'}</p>
-                    </div>
-                `;
+                loreText = node.failure_text || 'You failed to decipher this part of the tapestry.';
             }
+
+            bodyHtml += `
+                <div style="margin-top: 10px; margin-bottom: 0; padding: 12px 16px; background: rgba(24, 27, 32, 0.7); border: 1px solid #3b4252; border-radius: 6px;">
+                    <p style="font-size: 0.88rem; line-height: 1.45; color: #e0def4;">${loreText}</p>
+                </div>
+            `;
 
             ui.body.innerHTML = bodyHtml;
             ui.form.style.display = 'none';
@@ -1159,9 +1112,8 @@
             ui.tag.innerText = 'Deciphered';
             ui.tag.className = 'study-tag tag-lore';
             ui.body.innerHTML = `
-                <div class="boon-box" style="border-left-color: #31b565; background: rgba(49, 181, 101, 0.08); margin-bottom: 12px;">
-                    <strong style="color: #31b565;">Archived Success Lore</strong>
-                    <p style="margin-top: 6px; font-size: 0.9rem; line-height: 1.45;">${node.success_lore}</p>
+                <div style="margin-bottom: 12px; padding: 12px 16px; background: rgba(24, 27, 32, 0.7); border: 1px solid #3b4252; border-radius: 6px;">
+                    <p style="font-size: 0.9rem; line-height: 1.45; color: #e0def4;">${node.success_lore}</p>
                 </div>
                 <p style="font-size: 0.78rem; color: #9ccfd8; text-align: center;">You have already deciphered this segment. You can close this window or re-test the study check below.</p>
             `;
@@ -1199,7 +1151,13 @@
             console.warn('Unknown modal mode:', state.modalMode);
         }
 
-        function formatRollSummary(d20, userMod, storedMod, storedVal, label) {
+        function getRollTier(val) {
+        if (val < 10) return 'Low';
+        if (val <= 16) return 'Medium';
+        return 'High';
+    }
+
+    function formatRollSummary(d20, userMod, storedMod, storedVal, label) {
             const userSign = userMod >= 0 ? '+' : '';
             const storedPart = storedVal !== 0 && storedMod
                 ? ` (${storedVal > 0 ? '+' : ''}${storedVal} ${storedMod.label})`
@@ -1251,41 +1209,35 @@
 
             const targetDC = state.activeHotspot.dc;
             const result = resolveStudyResult(finalTotal, targetDC);
-            const resultColor = result === 'full' ? '#31b565' : result === 'partial' ? '#9ccfd8' : '#eb6f92';
+
+            const d20Tier = getRollTier(d20);
+            const totalTier = getRollTier(finalTotal);
 
             let resultHtml = `<h3 style="font-family: 'Cinzel', serif; color: #f6c177; margin-bottom: 8px;">Deciphering: ${state.activeHotspot.name}</h3>`;
             resultHtml += `
                 <div style="margin-bottom: 12px; padding: 12px; background: #2a2e37; border-radius: 6px; text-align: center; border: 1px solid #3b4252;">
-                    <span style="font-size: 0.85rem; color: #9ccfd8;">${formatRollSummary(d20, userMod, storedMod, storedVal, 'Skill Mod')}</span><br>
-                    Decipher Result: <span style="font-size: 1.35rem; font-weight: bold; color: ${resultColor}">${finalTotal}</span> vs <span style="color: #f6c177;">DC ${targetDC}</span>
+                    <span style="font-size: 0.85rem; color: #9ccfd8;">${formatRollSummary(d20Tier, userMod, storedMod, storedVal, 'Skill Mod')}</span><br>
+                    Decipher Result: <span style="font-size: 1.25rem; font-weight: bold; color: #f6c177;">${totalTier}</span>
                 </div>
             `;
 
+            let loreText = '';
             if (result === 'full') {
                 markHotspotStudied(state.activeHotspot.id, 'full');
-                resultHtml += `
-                    <div class="boon-box">
-                        <strong style="color: #31b565;">Full Success! (Complete Lore Unlocked)</strong>
-                        <p style="margin-top: 6px; font-size: 0.9rem; line-height: 1.45;">${state.activeHotspot.success_lore || 'Complete lore unlocked.'}</p>
-                    </div>
-                `;
+                loreText = state.activeHotspot.success_lore || 'Complete lore unlocked.';
             } else if (result === 'partial') {
                 markHotspotStudied(state.activeHotspot.id, 'partial');
-                resultHtml += `
-                    <div class="partial-box">
-                        <strong style="color: #9ccfd8;">Partial Success (Partial Insight Unlocked)</strong>
-                        <p style="margin-top: 6px; font-size: 0.9rem; line-height: 1.45;">${state.activeHotspot.partial_lore || 'You gain partial insight.'}</p>
-                    </div>
-                `;
+                loreText = state.activeHotspot.partial_lore || 'You gain partial insight.';
             } else {
                 markHotspotStudied(state.activeHotspot.id, 'failure');
-                resultHtml += `
-                    <div class="bane-box">
-                        <strong style="color: #eb6f92;">Failure</strong>
-                        <p style="margin-top: 6px;">${state.activeHotspot.failure_text || 'You fail to decipher this section.'}</p>
-                    </div>
-                `;
+                loreText = state.activeHotspot.failure_text || 'You fail to decipher this section.';
             }
+
+            resultHtml += `
+                <div style="margin-bottom: 12px; padding: 12px 16px; background: rgba(24, 27, 32, 0.7); border: 1px solid #3b4252; border-radius: 6px;">
+                    <p style="font-size: 0.9rem; line-height: 1.5; color: #e0def4;">${loreText}</p>
+                </div>
+            `;
 
             setActiveModifier(null);
             ui.body.innerHTML = resultHtml;
@@ -1314,4 +1266,3 @@
     </script>
 </body>
 </html>
-Gemini Notebook can be inaccurate; please double check its responses.
