@@ -478,7 +478,7 @@
 
         const fallbackHotspots = [
             {
-                id: "firelord_promis",
+                id: "firelord_promise",
                 name: "A Fire Lord's Promise",
                 shape: "ellipse",
                 center: [660, 550],
@@ -486,7 +486,7 @@
                 radiusX: 40,
                 dc: 18,
                 skill: "Deception or Insight Check",
-                success_lore: "Woven in the tapestry are runes in giant: <em>'You will be the largest of your brethren and rule over them all.'</em>",
+                success_lore: "Woven in the tapestry are runes in giant: <em>' You will be the largest of your brethren and rule over them all.'</em>",
                 partial_lore: "You think one of the ancient dwarven clans made a deal with the fire giants. ",
                 failure_text: "The ancient lord of the Fire Giants finds dwarves incredibly attractive."
             },
@@ -502,7 +502,46 @@
                 success_lore: "Studying the tapestry, you realize these dwarves may be ancient Duergar; before they descended to the Underdark.",
                 partial_lore: "You notice the size of this dwarf relative to the others may not be simple artistic license.",
                 failure_text: "This represents the first of the dwarven clans to be subjugated."
-            }
+            },
+            {
+                id: "town_aflame",
+                name: "The Second Breaking",
+                shape: "ellipse",
+                center: [690, 224],
+                radiusY: 45,
+                radiusX: 45,
+                dc: 18,
+                skill: "History or Survival Check",
+                success_lore: "The ancient dwarven clans, ever resourceful, dragged themselves back to greatness after the Great Betrayal, only to be cast down again.",
+                partial_lore: "An ancient dwarven city in flames.",
+                failure_text: "Angry at their betrayal, the dwarves burned and sacked cities across the world; classic little man syndrome."
+            },
+            {
+                id: "fall_of_stone",
+                name: "Forgotten Clans",
+                shape: "ellipse",
+                center: [314, 416],
+                radiusY: 45,
+                radiusX: 45,
+                dc: 18,
+                skill: "Strength or Religion",
+                success_lore: "Their robes, the color of lapis lazuli, mark this as the Stone Clan, the second to fall during the great breaking. They often used their crafts and magic towards healing.",
+                partial_lore: "The Stone Clan was said to wear robes of the deepest blue and healed the sick and injured. Their kind hearts led them to disaster in the early days of the Fall.",
+                failure_text: "The royal blue of these robes mark them as the Sky Clan, the last to fall and the last to be broken."
+            },
+            {
+                id: "fall_of_forge",
+                name: "Forgotten Clans",
+                shape: "ellipse",
+                center: [372, 822],
+                radiusY: 45,
+                radiusX: 45,
+                dc: 18,
+                skill: "Deception or Stealth",
+                success_lore: "Robes as red as flame itself! This must be none other than the Forge Clan, whose fires were quenched before all others. Proud warriors, they rushed to battle, but fell to deception.",
+                partial_lore: "This must be the Fire Clan, brave warriors that fell before most of their other brethren.",
+                failure_text: "The Cinder clan, with robes like flame, were consumed by their ambition and struck a deal with fire giants; a shadow of their old selves in exchange for an unlocked gate."
+            },
         ];
 
         const fallbackEncounters = [
