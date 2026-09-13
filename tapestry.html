@@ -365,7 +365,24 @@
         </div>
         
         <!-- Input section for total modifiers (Shared for both Interruption & Study) -->
-        <div id="study-form-containe    <script>
+        <div id="study-form-container" class="study-form">
+            <span id="form-prompt-label" class="form-label">Enter your Skill Modifier:</span>
+            <div class="form-input-row">
+                <input type="number" id="roll-input" class="study-input" value="0">
+                <span id="modifier-info" class="roll-modifier-info">No active stored modifiers.</span>
+            </div>
+        </div>
+
+        <div class="study-actions">
+            <button id="study-dismiss-btn" class="study-btn btn-dismiss" onclick="dismissStudyModal()">Close</button>
+            <button id="study-roll-btn" class="study-btn btn-action">🎲 Roll d20</button>
+        </div>
+    </div>
+
+    <!-- Leaflet JS (required by the map/script logic below; was missing) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
         // ===================================================================
         // 1. REPOSITORY & CONFIGURATION
         // ===================================================================
@@ -1249,30 +1266,6 @@
         // ===================================================================
         // 13. INITIALIZATION
         // ===================================================================
-        loadTapestryData();
-    </script>.style.fontFamily = 'monospace';
-            div.style.fontSize = '0.85rem';
-            div.style.boxShadow = '0 4px 10px rgba(0,0,0,0.5)';
-            div.style.pointerEvents = 'none';
-            div.innerHTML = 'Coords: [0, 0]';
-            return div;
-        };
-        coordControl.addTo(map);
-
-        map.on('mousemove', function(e) {
-            const y = Math.round(e.latlng.lat);
-            const x = Math.round(e.latlng.lng);
-            const el = document.querySelector('.coord-hud');
-            if (el) el.innerHTML = `Coords: [${y}, ${x}]`;
-        });
-
-        map.on('click', function(e) {
-            const y = Math.round(e.latlng.lat);
-            const x = Math.round(e.latlng.lng);
-            console.log(`📍 Clicked Coords -> [${y}, ${x}]`);
-        });
-
-        // Initialize Page Data Loading
         loadTapestryData();
     </script>
 </body>
