@@ -276,6 +276,30 @@
 
         .check-box p, .boon-box p, .partial-box p, .bane-box p { font-size: 0.85rem; color: #e2e8f0; margin-top: 4px; line-height: 1.4; }
 
+        /* In-page notification */
+        .tapestry-notification {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            z-index: 2500;
+            transform: translateX(-50%) translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+            background: rgba(24, 27, 32, 0.96);
+            color: #e2e8f0;
+            border: 1px solid #f6c177;
+            border-radius: 6px;
+            padding: 9px 14px;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.65);
+            font-size: 0.78rem;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .tapestry-notification.active {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
         /* Mobile specific style overrides */
         @media (max-width: 768px) {
             .tapestry-hud-header {
@@ -328,7 +352,7 @@
         </button>
     </div>
 
-
+    <div id="tapestry-notification" class="tapestry-notification" role="status" aria-live="polite"></div>
 
     <!-- Unified Tapestry Action Modal -->
     <div id="study-modal" class="study-overlay">
@@ -341,172 +365,99 @@
         </div>
         
         <!-- Input section for total modifiers (Shared for both Interruption & Study) -->
-        <div id="study-form-container" class="study-form" style="display: none;">
-            <div class="form-label" id="form-prompt-label">Enter your tabletop Skill Modifier:</div>
-            <div class="form-input-row">
-                <input type="number" id="roll-input" class="study-input" value="0" placeholder="0">
-                <div class="roll-modifier-info" id="modifier-info">
-                    No active stored modifiers.
-                </div>
-            </div>
-        </div>
-
-        <div class="study-actions">
-            <button id="study-dismiss-btn" class="study-btn btn-dismiss" onclick="dismissStudyModal()">Close</button>
-            <button id="study-roll-btn" class="study-btn btn-action" onclick="executeRollAction()">🎲 Roll d20</button>
-        </div>
-    </div>
-
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
+        <div id="study-form-containe    <script>
         // ===================================================================
-        // 1. REPO & FILE CONFIGURATION (Simple Pixel CRS)
+        // 1. REPOSITORY & CONFIGURATION
         // ===================================================================
-        const imgWidth = 2000;
-        const imgHeight = 1000; // Aspect ratio of our Tapestry image
-        const bounds = [[0, 0], [imgHeight, imgWidth]];
+        const CONFIG = {
+            image: {
+                width: 2000,
+                height: 1000,
+                source: 'The Second Breaking.webp',
+                fallbackSources: ['tapestry.jpg', 'tapestry.png'],
+                boundsPadding: 250
+            },
+            map: {
+                minZoom: -1,
+                maxZoom: 2,
+                zoomSnap: 0.25,
+                maxBoundsViscosity: 0.8
+            },
+            storageKeys: {
+                modifierResetDate: 'tapestry_modifier_reset_date',
+                activeModifier: 'tapestry_active_modifier',
+                studiedHotspots: 'tapestry_studied_hotspots'
+            },
+            game: {
+                interruptionDC: 13,
+                partialSuccessMargin: 4
+            },
+            ui: {
+                notificationDurationMs: 2400
+            }
+        };
 
-        const boundsPadding = 250; 
+        const bounds = [[0, 0], [CONFIG.image.height, CONFIG.image.width]];
         const paddedBounds = [
-            [-boundsPadding, -boundsPadding],
-            [imgHeight + boundsPadding, imgWidth + boundsPadding]
+            [-CONFIG.image.boundsPadding, -CONFIG.image.boundsPadding],
+            [
+                CONFIG.image.height + CONFIG.image.boundsPadding,
+                CONFIG.image.width + CONFIG.image.boundsPadding
+            ]
         ];
 
         const map = L.map('map', {
             crs: L.CRS.Simple,
-            minZoom: -1,
-            maxZoom: 2,
-            zoomSnap: 0.25,
+            minZoom: CONFIG.map.minZoom,
+            maxZoom: CONFIG.map.maxZoom,
+            zoomSnap: CONFIG.map.zoomSnap,
             maxBounds: paddedBounds,
-            maxBoundsViscosity: 0.8
+            maxBoundsViscosity: CONFIG.map.maxBoundsViscosity
         });
 
-        // Config options for our popups
-        const dynamicPopupOptions = {
-            maxWidth: 550,
-            minWidth: 320,
-            maxHeight: 380,
-            autoPanPadding: [40, 80]
+        // ===================================================================
+        // 2. DOM REFERENCES & APPLICATION STATE
+        // ===================================================================
+        const ui = {
+            modal: document.getElementById('study-modal'),
+            title: document.getElementById('study-title'),
+            tag: document.getElementById('study-tag'),
+            body: document.getElementById('study-body'),
+            formPrompt: document.getElementById('form-prompt-label'),
+            rollInput: document.getElementById('roll-input'),
+            modifierInfo: document.getElementById('modifier-info'),
+            form: document.getElementById('study-form-container'),
+            rollBtn: document.getElementById('study-roll-btn'),
+            dismissBtn: document.getElementById('study-dismiss-btn'),
+            studiedCount: document.getElementById('hud-studied-count'),
+            activeBoon: document.getElementById('hud-active-boon'),
+            activeBane: document.getElementById('hud-active-bane'),
+            notification: document.getElementById('tapestry-notification')
         };
 
-        // Load Tapestry Base Layer (Defaults to tapestry.webp with automatic fallback)
-        const tapestryImageUrl = 'The Second Breaking.webp';
-        const tapestryOverlay = L.imageOverlay(tapestryImageUrl, bounds).addTo(map);
-        map.fitBounds(bounds);
+        const state = {
+            hotspots: [],
+            encounters: [],
+            activeHotspot: null,
+            activeEncounter: null,
+            modalMode: null,
+            modalStage: null,
+            revealedTouchHotspotId: null,
+            hotspotOverlays: [],
+            notificationTimer: null
+        };
 
-        // Automatic image fallback error handler
-        tapestryOverlay.on('error', function() {
-            const currentSrc = this.getElement() ? this.getElement().src : '';
-            console.warn("⚠️ Tapestry image failed to load from:", currentSrc);
-            if (currentSrc.endsWith('.webp')) {
-                console.log("🔄 Attempting fallback to tapestry.jpg...");
-                this.setUrl('tapestry.jpg');
-            } else if (currentSrc.endsWith('.jpg') || currentSrc.endsWith('.jpeg')) {
-                console.log("🔄 Attempting fallback to tapestry.png...");
-                this.setUrl('tapestry.png');
-            }
-        });
-
-        // ===================================================================
-        // 2. STATE MANAGEMENT & STORAGE (Strict Client-Side Privacy)
-        // ===================================================================
-        const CAP_DATE_KEY = 'tapestry_last_reset_date';
-        const ACTIVE_MODIFIER_KEY = 'tapestry_active_modifier';
-        const STUDIED_LIST_KEY = 'tapestry_studied_hotspots';
-
-        function checkDailyReset() {
-            const d = new Date();
-            const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-            const lastReset = localStorage.getItem(CAP_DATE_KEY);
-
-            if (lastReset !== todayStr) {
-                localStorage.removeItem(ACTIVE_MODIFIER_KEY);
-                localStorage.setItem(CAP_DATE_KEY, todayStr);
-                updateStatusHUD();
-            }
-        }
-
-        function getActiveModifier() {
-            const stored = localStorage.getItem(ACTIVE_MODIFIER_KEY);
-            return stored ? JSON.parse(stored) : null;
-        }
-
-        function setActiveModifier(mod) {
-            if (mod === null) {
-                localStorage.removeItem(ACTIVE_MODIFIER_KEY);
-            } else {
-                localStorage.setItem(ACTIVE_MODIFIER_KEY, JSON.stringify(mod));
-            }
-            updateStatusHUD();
-        }
-
-        function getStudiedHotspots() {
-            const stored = localStorage.getItem(STUDIED_LIST_KEY);
-            if (!stored) return {};
-            try {
-                const parsed = JSON.parse(stored);
-                if (Array.isArray(parsed)) {
-                    const map = {};
-                    parsed.forEach(id => { map[id] = 'full'; });
-                    return map;
-                }
-                return parsed;
-            } catch(e) {
-                return {};
-            }
-        }
-
-        function resetTapestryProgress() {
-            if (confirm("Reset all studied hotspots and active modifiers for the Tapestry?")) {
-                localStorage.removeItem(STUDIED_LIST_KEY);
-                localStorage.removeItem(ACTIVE_MODIFIER_KEY);
-                updateStatusHUD();
-                alert("Tapestry progress has been reset!");
-            }
-        }
-
-        function markHotspotStudied(id, resultType) {
-            const current = getStudiedHotspots();
-            current[id] = resultType; // 'full', 'partial', or 'failure'
-            localStorage.setItem(STUDIED_LIST_KEY, JSON.stringify(current));
-            updateStatusHUD();
-        }
-
-        function updateStatusHUD() {
-            const studiedMap = getStudiedHotspots();
-            const studiedCount = Object.keys(studiedMap).length;
-            const studiedCountEl = document.getElementById('hud-studied-count');
-            if (studiedCountEl) {
-                studiedCountEl.innerText = `${studiedCount}/${hotspotsData.length}`;
-            }
-
-            const activeMod = getActiveModifier();
-            const boonEl = document.getElementById('hud-active-boon');
-            const baneEl = document.getElementById('hud-active-bane');
-
-            if (activeMod) {
-                if (activeMod.val > 0) {
-                    boonEl.innerText = `${activeMod.label} (+${activeMod.val})`;
-                    boonEl.className = "status-val status-active-boon";
-                    baneEl.innerText = "None";
-                    baneEl.className = "status-val";
-                } else if (activeMod.val < 0) {
-                    baneEl.innerText = `${activeMod.label} (${activeMod.val})`;
-                    baneEl.className = "status-val status-active-bane";
-                    boonEl.innerText = "None";
-                    boonEl.className = "status-val";
-                }
-            } else {
-                boonEl.innerText = "None";
-                boonEl.className = "status-val";
-                baneEl.innerText = "None";
-                baneEl.className = "status-val";
-            }
-        }
+        const DEFAULT_HOTSPOT_STYLE = {
+            color: '#c4a7e7',
+            weight: 1.5,
+            fillColor: 'transparent',
+            fillOpacity: 0.0,
+            opacity: 0.15,
+            className: 'tapestry-hotspot-rect'
+        };
 
         // ===================================================================
-        // 3. DYNAMIC DATABASE FETCHING
+        // 3. DATA DEFINITIONS & VALIDATION
         // ===================================================================
         let hotspotsData = [];
         let encountersData = [];
@@ -575,6 +526,235 @@
             }
         ];
 
+        function isValidModifier(value) {
+            return Boolean(value) &&
+                Number.isFinite(value.val) &&
+                typeof value.label === 'string';
+        }
+
+        function isValidHotspot(node) {
+            return Boolean(node) &&
+                typeof node.id === 'string' && node.id.trim().length > 0 &&
+                typeof node.name === 'string' && node.name.trim().length > 0 &&
+                Number.isFinite(node.dc) &&
+                (Array.isArray(node.coords) ||
+                 (Array.isArray(node.center) && node.center.length === 2 &&
+                  Number.isFinite(node.radiusY) && Number.isFinite(node.radiusX)));
+        }
+
+        function isValidEncounter(encounter) {
+            return Boolean(encounter) &&
+                typeof encounter.title === 'string' &&
+                typeof encounter.type === 'string' &&
+                Number.isFinite(encounter.dc) &&
+                typeof encounter.text === 'string' &&
+                isValidModifier(encounter.boon) &&
+                isValidModifier(encounter.bane);
+        }
+
+        function validateHotspots(data) {
+            return Array.isArray(data) && data.length > 0 && data.every(isValidHotspot);
+        }
+
+        function validateEncounters(data) {
+            return Array.isArray(data) && data.length > 0 && data.every(isValidEncounter);
+        }
+
+        // ===================================================================
+        // 4. LOCAL STORAGE & PERSISTENT STATE
+        // ===================================================================
+        function todayKey() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function checkDailyReset() {
+            const todayStr = todayKey();
+            const lastReset = localStorage.getItem(CONFIG.storageKeys.modifierResetDate);
+
+            if (lastReset !== todayStr) {
+                localStorage.removeItem(CONFIG.storageKeys.activeModifier);
+                localStorage.setItem(CONFIG.storageKeys.modifierResetDate, todayStr);
+            }
+
+            updateStatusHUD();
+        }
+
+        function getActiveModifier() {
+            const stored = localStorage.getItem(CONFIG.storageKeys.activeModifier);
+            if (!stored) return null;
+
+            try {
+                const parsed = JSON.parse(stored);
+                if (!isValidModifier(parsed)) {
+                    console.warn('Invalid stored modifier. Clearing it.');
+                    localStorage.removeItem(CONFIG.storageKeys.activeModifier);
+                    return null;
+                }
+                return parsed;
+            } catch (err) {
+                console.warn('Corrupt stored modifier. Clearing it.', err);
+                localStorage.removeItem(CONFIG.storageKeys.activeModifier);
+                return null;
+            }
+        }
+
+        function setActiveModifier(mod) {
+            if (mod === null || mod === undefined) {
+                localStorage.removeItem(CONFIG.storageKeys.activeModifier);
+            } else if (isValidModifier(mod)) {
+                localStorage.setItem(CONFIG.storageKeys.activeModifier, JSON.stringify(mod));
+            } else {
+                console.warn('Refusing to store invalid modifier:', mod);
+                localStorage.removeItem(CONFIG.storageKeys.activeModifier);
+            }
+            updateStatusHUD();
+        }
+
+        function getStudiedHotspots() {
+            const stored = localStorage.getItem(CONFIG.storageKeys.studiedHotspots);
+            if (!stored) return {};
+
+            try {
+                const parsed = JSON.parse(stored);
+
+                if (Array.isArray(parsed)) {
+                    const migrated = {};
+                    parsed.forEach(id => {
+                        if (typeof id === 'string') migrated[id] = 'full';
+                    });
+                    return migrated;
+                }
+
+                if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+                    throw new Error('Unexpected studied-hotspot data type');
+                }
+
+                const cleaned = {};
+                Object.entries(parsed).forEach(([id, result]) => {
+                    if (typeof id === 'string' && ['full', 'partial', 'failure'].includes(result)) {
+                        cleaned[id] = result;
+                    }
+                });
+                return cleaned;
+            } catch (err) {
+                console.warn('Corrupt studied hotspot data. Clearing it.', err);
+                localStorage.removeItem(CONFIG.storageKeys.studiedHotspots);
+                return {};
+            }
+        }
+
+        function markHotspotStudied(id, resultType) {
+            const validResults = ['full', 'partial', 'failure'];
+            if (!id || !validResults.includes(resultType)) {
+                console.warn('Invalid hotspot result:', id, resultType);
+                return;
+            }
+
+            const current = getStudiedHotspots();
+            current[id] = resultType;
+            localStorage.setItem(CONFIG.storageKeys.studiedHotspots, JSON.stringify(current));
+            updateStatusHUD();
+        }
+
+        function resetTapestryProgress() {
+            if (!confirm('Reset all studied hotspots and active modifiers for the Tapestry?')) return;
+
+            localStorage.removeItem(CONFIG.storageKeys.studiedHotspots);
+            localStorage.removeItem(CONFIG.storageKeys.activeModifier);
+            updateStatusHUD();
+            showNotification('Tapestry progress has been reset.');
+        }
+
+        // ===================================================================
+        // 5. UI HELPERS
+        // ===================================================================
+        function showNotification(message) {
+            if (!ui.notification) return;
+
+            if (state.notificationTimer) {
+                clearTimeout(state.notificationTimer);
+                state.notificationTimer = null;
+            }
+
+            ui.notification.textContent = message;
+            ui.notification.classList.add('active');
+
+            state.notificationTimer = setTimeout(() => {
+                ui.notification.classList.remove('active');
+                state.notificationTimer = null;
+            }, CONFIG.ui.notificationDurationMs);
+        }
+
+        function setModalVisible(visible) {
+            if (!ui.modal) return;
+            ui.modal.classList.toggle('active', visible);
+        }
+
+        function setRollButton(handler, text, visible = true) {
+            ui.rollBtn.style.display = visible ? 'inline-block' : 'none';
+            ui.rollBtn.innerText = text;
+            ui.rollBtn.onclick = handler;
+        }
+
+        function setDismissButton(text = 'Close', visible = true) {
+            ui.dismissBtn.style.display = visible ? 'inline-block' : 'none';
+            ui.dismissBtn.innerText = text;
+        }
+
+        function showModifierInfo() {
+            const modifier = getActiveModifier();
+            if (modifier) {
+                const sign = modifier.val > 0 ? '+' : '';
+                const className = modifier.val > 0 ? 'status-active-boon' : 'status-active-bane';
+                ui.modifierInfo.innerHTML = `Stored Modifier: <strong class="${className}">${modifier.label} (${sign}${modifier.val})</strong>`;
+            } else {
+                ui.modifierInfo.textContent = 'No active stored modifiers.';
+            }
+        }
+
+        function updateStatusHUD() {
+            const studiedMap = getStudiedHotspots();
+            const studiedCount = Object.keys(studiedMap).length;
+
+            if (ui.studiedCount) {
+                ui.studiedCount.innerText = `${studiedCount}/${state.hotspots.length}`;
+            }
+
+            const activeMod = getActiveModifier();
+            if (!activeMod) {
+                ui.activeBoon.innerText = 'None';
+                ui.activeBoon.className = 'status-val';
+                ui.activeBane.innerText = 'None';
+                ui.activeBane.className = 'status-val';
+                return;
+            }
+
+            if (activeMod.val > 0) {
+                ui.activeBoon.innerText = `${activeMod.label} (+${activeMod.val})`;
+                ui.activeBoon.className = 'status-val status-active-boon';
+                ui.activeBane.innerText = 'None';
+                ui.activeBane.className = 'status-val';
+            } else if (activeMod.val < 0) {
+                ui.activeBane.innerText = `${activeMod.label} (${activeMod.val})`;
+                ui.activeBane.className = 'status-val status-active-bane';
+                ui.activeBoon.innerText = 'None';
+                ui.activeBoon.className = 'status-val';
+            } else {
+                ui.activeBoon.innerText = 'None';
+                ui.activeBoon.className = 'status-val';
+                ui.activeBane.innerText = 'None';
+                ui.activeBane.className = 'status-val';
+            }
+        }
+
+        function dismissStudyModal() {
+            setModalVisible(false);
+        }
+
+        // ===================================================================
+        // 6. DATA LOADING
+        // ===================================================================
         async function loadTapestryData() {
             try {
                 const [hotspotsRes, encountersRes] = await Promise.all([
@@ -582,17 +762,41 @@
                     fetch('data/tapestry_encounters.json')
                 ]);
 
-                if (hotspotsRes.ok) hotspotsData = await hotspotsRes.json();
-                else hotspotsData = fallbackHotspots;
+                let loadedHotspots = null;
+                let loadedEncounters = null;
 
-                if (encountersRes.ok) encountersData = await encountersRes.json();
-                else encountersData = fallbackEncounters;
+                if (hotspotsRes.ok) {
+                    try {
+                        loadedHotspots = await hotspotsRes.json();
+                    } catch (err) {
+                        console.warn('Hotspot JSON could not be parsed. Using fallback data.', err);
+                    }
+                } else {
+                    console.warn(`Hotspot data request failed with HTTP ${hotspotsRes.status}.`);
+                }
 
-                console.log("✅ Tapestry campaign files loaded successfully!");
+                if (encountersRes.ok) {
+                    try {
+                        loadedEncounters = await encountersRes.json();
+                    } catch (err) {
+                        console.warn('Encounter JSON could not be parsed. Using fallback data.', err);
+                    }
+                } else {
+                    console.warn(`Encounter data request failed with HTTP ${encountersRes.status}.`);
+                }
+
+                state.hotspots = validateHotspots(loadedHotspots) ? loadedHotspots : fallbackHotspots;
+                state.encounters = validateEncounters(loadedEncounters) ? loadedEncounters : fallbackEncounters;
+
+                if (state.hotspots === fallbackHotspots || state.encounters === fallbackEncounters) {
+                    console.warn('One or more external datasets were invalid; fallback campaign data is in use.');
+                } else {
+                    console.log('✅ Tapestry campaign files loaded successfully.');
+                }
             } catch (err) {
-                console.warn("⚠️ Using fallback tapestry datasets (running on local filesystem without webserver).", err);
-                hotspotsData = fallbackHotspots;
-                encountersData = fallbackEncounters;
+                console.warn('Using fallback tapestry datasets. External data could not be loaded.', err);
+                state.hotspots = fallbackHotspots;
+                state.encounters = fallbackEncounters;
             } finally {
                 checkDailyReset();
                 initTapestryOverlays();
@@ -600,13 +804,61 @@
         }
 
         // ===================================================================
-        // 4. MAP INTERACTION & OUTLINE HOVERS
+        // 7. MAP & IMAGE SETUP
         // ===================================================================
-        let activeHotspot = null;
-        let activeEncounter = null;
-        let currentModalMode = null; // 'interruption' or 'study'
-        let revealedTouchHotspotId = null;
+        let currentImageIndex = 0;
+        const imageSources = [CONFIG.image.source, ...CONFIG.image.fallbackSources];
+        const tapestryOverlay = L.imageOverlay(imageSources[currentImageIndex], bounds).addTo(map);
+        map.fitBounds(bounds);
 
+        tapestryOverlay.on('error', function() {
+            const failedSource = imageSources[currentImageIndex];
+            console.warn('⚠️ Tapestry image failed to load:', failedSource);
+
+            currentImageIndex += 1;
+            if (currentImageIndex < imageSources.length) {
+                console.log('🔄 Attempting fallback:', imageSources[currentImageIndex]);
+                this.setUrl(imageSources[currentImageIndex]);
+            } else {
+                console.error('❌ Unable to load any configured tapestry image.');
+                showNotification('Tapestry image could not be loaded.');
+            }
+        });
+
+        const coordControl = L.control({ position: 'bottomleft' });
+        coordControl.onAdd = function() {
+            const div = L.DomUtil.create('div', 'coord-hud');
+            div.style.background = 'rgba(24, 27, 32, 0.9)';
+            div.style.color = '#f6c177';
+            div.style.padding = '6px 12px';
+            div.style.borderRadius = '6px';
+            div.style.border = '1px solid #3b4252';
+            div.style.fontFamily = 'monospace';
+            div.style.fontSize = '0.85rem';
+            div.style.boxShadow = '0 4px 10px rgba(0,0,0,0.5)';
+            div.style.pointerEvents = 'none';
+            div.innerHTML = 'Coords: [0, 0]';
+            return div;
+        };
+        coordControl.addTo(map);
+
+        const coordHudEl = document.querySelector('.coord-hud');
+
+        map.on('mousemove', function(e) {
+            const y = Math.round(e.latlng.lat);
+            const x = Math.round(e.latlng.lng);
+            if (coordHudEl) coordHudEl.textContent = `Coords: [${y}, ${x}]`;
+        });
+
+        map.on('click', function(e) {
+            const y = Math.round(e.latlng.lat);
+            const x = Math.round(e.latlng.lng);
+            console.log(`📍 Clicked Coords -> [${y}, ${x}]`);
+        });
+
+        // ===================================================================
+        // 8. MAP HOTSPOTS
+        // ===================================================================
         function generateEllipseCoords(centerY, centerX, radiusY, radiusX, points = 32) {
             const coords = [];
             for (let i = 0; i < points; i++) {
@@ -618,389 +870,387 @@
             return coords;
         }
 
-        function initTapestryOverlays() {
-            hotspotsData.forEach(node => {
-                let outline;
-                const styleOpts = {
-                    color: '#c4a7e7',
-                    weight: 1.5,
-                    fillColor: 'transparent',
-                    fillOpacity: 0.0,
-                    opacity: 0.15,
-                    className: 'tapestry-hotspot-rect'
-                };
+        function createHotspotOverlay(node) {
+            let outline;
+            const styleOpts = { ...DEFAULT_HOTSPOT_STYLE };
 
-                if (node.shape === 'ellipse' || (node.center && node.radiusY && node.radiusX)) {
-                    const ellipsePoints = generateEllipseCoords(node.center[0], node.center[1], node.radiusY, node.radiusX);
-                    outline = L.polygon(ellipsePoints, styleOpts).addTo(map);
-                } else if (node.shape === 'polygon' || (Array.isArray(node.coords) && node.coords.length > 2)) {
-                    outline = L.polygon(node.coords, styleOpts).addTo(map);
-                } else {
-                    outline = L.rectangle(node.coords, styleOpts).addTo(map);
-                }
+            if (node.shape === 'ellipse' || (node.center && node.radiusY && node.radiusX)) {
+                const ellipsePoints = generateEllipseCoords(
+                    node.center[0],
+                    node.center[1],
+                    node.radiusY,
+                    node.radiusX
+                );
+                outline = L.polygon(ellipsePoints, styleOpts).addTo(map);
+            } else if (node.shape === 'polygon' || (Array.isArray(node.coords) && node.coords.length > 2)) {
+                outline = L.polygon(node.coords, styleOpts).addTo(map);
+            } else if (Array.isArray(node.coords)) {
+                outline = L.rectangle(node.coords, styleOpts).addTo(map);
+            } else {
+                console.warn('Skipping malformed hotspot geometry:', node);
+                return;
+            }
 
-                outline.on('mouseover', function() {
-                    this.setStyle({ opacity: 0.65, color: '#f6c177', weight: 2 });
-                });
+            state.hotspotOverlays.push(outline);
 
-                outline.on('mouseout', function() {
-                    this.setStyle({ opacity: 0.15, color: '#c4a7e7', weight: 1.5 });
-                });
-
-                outline.on('click', function(e) {
-                    L.DomEvent.stopPropagation(e);
-                    
-                    const isTouch = L.Browser.touch;
-                    if (isTouch && revealedTouchHotspotId !== node.id) {
-                        map.eachLayer(layer => {
-                            if ((layer instanceof L.Rectangle || layer instanceof L.Polygon) && layer !== outline) {
-                                layer.setStyle({ opacity: 0.15, color: '#c4a7e7', weight: 1.5 });
-                            }
-                        });
-                        outline.setStyle({ opacity: 0.65, color: '#f6c177', weight: 2 });
-                        revealedTouchHotspotId = node.id;
-                        return;
-                    }
-
-                    revealedTouchHotspotId = null;
-                    outline.setStyle({ opacity: 0.15, color: '#c4a7e7', weight: 1.5 });
-
-                    map.fitBounds(outline.getBounds(), { animate: true, duration: 0.4 });
-
-                    activeHotspot = node;
-                    startStudyAttempt(node);
-                });
+            outline.on('mouseover', function() {
+                this.setStyle({ opacity: 0.65, color: '#f6c177', weight: 2 });
             });
 
+            outline.on('mouseout', function() {
+                this.setStyle(DEFAULT_HOTSPOT_STYLE);
+            });
+
+            outline.on('click', function(e) {
+                L.DomEvent.stopPropagation(e);
+
+                const isTouch = L.Browser.touch;
+                if (isTouch && state.revealedTouchHotspotId !== node.id) {
+                    state.hotspotOverlays.forEach(layer => {
+                        if (layer !== outline) layer.setStyle(DEFAULT_HOTSPOT_STYLE);
+                    });
+                    outline.setStyle({ opacity: 0.65, color: '#f6c177', weight: 2 });
+                    state.revealedTouchHotspotId = node.id;
+                    return;
+                }
+
+                state.revealedTouchHotspotId = null;
+                outline.setStyle(DEFAULT_HOTSPOT_STYLE);
+                map.fitBounds(outline.getBounds(), { animate: true, duration: 0.4 });
+                startStudyAttempt(node);
+            });
+        }
+
+        function initTapestryOverlays() {
+            if (state.hotspotOverlays.length > 0) return;
+
+            state.hotspots.forEach(createHotspotOverlay);
             updateStatusHUD();
         }
 
         // ===================================================================
-        // 5. UNIFIED ACTION LOOP (INTERRUPTIONS & STUDY)
+        // 9. GAME LOGIC HELPERS
         // ===================================================================
+        function rollD20() {
+            return Math.floor(Math.random() * 20) + 1;
+        }
+
+        function readUserModifier() {
+            const inputVal = Number.parseInt(ui.rollInput.value, 10);
+            return Number.isFinite(inputVal) ? inputVal : 0;
+        }
+
+        function calculateTotal(d20, userMod, storedVal) {
+            return d20 + userMod + storedVal;
+        }
+
+        function resolveStudyResult(total, dc) {
+            if (total >= dc) return 'full';
+            if (total >= dc - CONFIG.game.partialSuccessMargin) return 'partial';
+            return 'failure';
+        }
+
+        function resolveInterruption(total, dc) {
+            return total >= dc;
+        }
+
         function startStudyAttempt(node) {
-            activeHotspot = node;
+            state.activeHotspot = node;
+            state.activeEncounter = null;
+            state.modalMode = null;
+            state.modalStage = null;
 
-            // TRIGGER RANDOM INTERRUPTION ROLL (DC 13, ~40% chance of hazard)
-            const d20 = Math.floor(Math.random() * 20) + 1;
-            console.log(`🎲 Interruption Check on ${node.name}: Rolled ${d20} vs DC 13`);
+            const d20 = rollD20();
+            console.log(`🎲 Interruption Check on ${node.name}: Rolled ${d20} vs DC ${CONFIG.game.interruptionDC}`);
 
-            if (d20 >= 13) {
-                triggerInterruption(node);
+            if (d20 >= CONFIG.game.interruptionDC) {
+                triggerInterruption(node, d20);
             } else {
                 revealStudyCheckForm(node);
             }
         }
 
-        // --- INTERRUPTIONS (2-State Pass/Fail) ---
-        function triggerInterruption(node) {
-            activeEncounter = encountersData[Math.floor(Math.random() * encountersData.length)];
-            currentModalMode = 'interruption';
-            
-            const modal = document.getElementById('study-modal');
-            const titleEl = document.getElementById('study-title');
-            const tagEl = document.getElementById('study-tag');
-            const bodyEl = document.getElementById('study-body');
-            const formPromptLabel = document.getElementById('form-prompt-label');
-            const rollBtn = document.getElementById('study-roll-btn');
-            const dismissBtn = document.getElementById('study-dismiss-btn');
-            const formContainer = document.getElementById('study-form-container');
-            const modInfoEl = document.getElementById('modifier-info');
+        // ===================================================================
+        // 10. MODAL FLOWS
+        // ===================================================================
+        function triggerInterruption(node, preRolledD20 = null) {
+            if (!state.encounters.length) {
+                console.error('No interruption encounters are available.');
+                revealStudyCheckForm(node);
+                return;
+            }
 
-            modal.className = "study-overlay active encounter-" + activeEncounter.type;
-            titleEl.innerText = `⚠️ Interruption: ${activeEncounter.title}`;
-            tagEl.innerText = activeEncounter.tag;
-            tagEl.className = `study-tag tag-${activeEncounter.type}`;
+            state.activeHotspot = node;
+            state.activeEncounter = state.encounters[Math.floor(Math.random() * state.encounters.length)];
+            state.modalMode = 'interruption';
+            state.modalStage = 'resolution';
 
-            bodyEl.innerHTML = `
-                <p style="margin-bottom: 12px; color: #e0def4; line-height: 1.5;">${activeEncounter.text}</p>
+            ui.modal.className = `study-overlay active encounter-${state.activeEncounter.type}`;
+            ui.title.innerText = `⚠️ Interruption: ${state.activeEncounter.title}`;
+            ui.tag.innerText = state.activeEncounter.tag || 'Encounter';
+            ui.tag.className = `study-tag tag-${state.activeEncounter.type}`;
+
+            ui.body.innerHTML = `
+                <p style="margin-bottom: 12px; color: #e0def4; line-height: 1.5;">${state.activeEncounter.text}</p>
                 <div class="check-box">
-                    <strong>Hazard Resolution Check: Target DC ${activeEncounter.dc || 14}</strong>
+                    <strong>Hazard Resolution Check: Target DC ${state.activeEncounter.dc}</strong>
                     <p>Enter your tabletop ability modifier, then click <strong>Roll d20</strong> to resolve this threat!</p>
                 </div>
             `;
 
-            formPromptLabel.innerText = "Enter your Ability / Save Modifier:";
-            document.getElementById('roll-input').value = "0";
+            ui.formPrompt.innerText = 'Enter your Ability / Save Modifier:';
+            ui.rollInput.value = '0';
+            showModifierInfo();
 
-            const modifier = getActiveModifier();
-            if (modifier) {
-                const sign = modifier.val > 0 ? '+' : '';
-                modInfoEl.innerHTML = `Stored Modifier: <strong class="${modifier.val > 0 ? 'status-active-boon' : 'status-active-bane'}">${modifier.label} (${sign}${modifier.val})</strong>`;
-            } else {
-                modInfoEl.innerHTML = "No active stored modifiers.";
+            ui.form.style.display = 'block';
+            setRollButton(executeRollAction, '🎲 Roll d20');
+            setDismissButton('Cancel');
+            setModalVisible(true);
+
+            if (preRolledD20 !== null) {
+                console.debug(`Interruption trigger supplied pre-roll ${preRolledD20}; user resolution roll remains separate.`);
             }
-
-            formContainer.style.display = "block";
-            rollBtn.style.display = "inline-block";
-            rollBtn.innerText = "🎲 Roll d20";
-            rollBtn.onclick = function() { executeRollAction(); };
-            dismissBtn.style.display = "inline-block";
-            dismissBtn.innerText = "Cancel";
         }
 
-        // --- STUDY CHECK FORM (3-State: Success / Partial / Fail) ---
         function revealStudyCheckForm(node) {
-            currentModalMode = 'study';
-            activeHotspot = node;
-
-            const modal = document.getElementById('study-modal');
-            const titleEl = document.getElementById('study-title');
-            const tagEl = document.getElementById('study-tag');
-            const bodyEl = document.getElementById('study-body');
-            const formPromptLabel = document.getElementById('form-prompt-label');
-            const rollBtn = document.getElementById('study-roll-btn');
-            const dismissBtn = document.getElementById('study-dismiss-btn');
-            const formContainer = document.getElementById('study-form-container');
-            const modInfoEl = document.getElementById('modifier-info');
+            state.activeHotspot = node;
+            state.activeEncounter = null;
+            state.modalMode = 'study';
+            state.modalStage = 'resolution';
 
             const studiedMap = getStudiedHotspots();
-            if (studiedMap[node.id]) {
-                const savedResult = studiedMap[node.id]; // 'full', 'partial', or 'failure'
+            const savedResult = studiedMap[node.id];
 
-                modal.className = "study-overlay active";
-                titleEl.innerText = `🔒 ${node.name}`;
-                tagEl.innerText = "Locked";
-                tagEl.className = "study-tag tag-hazard";
-
-                let bodyHtml = `
-                    <p style="margin-bottom: 12px; color: #f6c177; font-style: italic; line-height: 1.5; font-size: 0.95rem; border-bottom: 1px solid #2e3440; padding-bottom: 10px;">
-                        "You don't think you can tease any more knowledge from this part of the tapestry..."
-                    </p>
-                `;
-
-                if (savedResult === 'full' && node.success_lore) {
-                    bodyHtml += `
-                        <div class="boon-box" style="border-left-color: #31b565; background: rgba(49, 181, 101, 0.08); margin-top: 10px; margin-bottom: 0;">
-                            <strong style="color: #31b565;">Archived Full Success Lore</strong>
-                            <p style="margin-top: 6px; font-size: 0.88rem; line-height: 1.45;">${node.success_lore}</p>
-                        </div>
-                    `;
-                } else if (savedResult === 'partial' && node.partial_lore) {
-                    bodyHtml += `
-                        <div class="partial-box" style="border-left-color: #9ccfd8; background: rgba(156, 207, 216, 0.08); margin-top: 10px; margin-bottom: 0;">
-                            <strong style="color: #9ccfd8;">Archived Partial Success Lore</strong>
-                            <p style="margin-top: 6px; font-size: 0.88rem; line-height: 1.45;">${node.partial_lore}</p>
-                        </div>
-                    `;
-                } else {
-                    bodyHtml += `
-                        <div class="bane-box" style="border-left-color: #eb6f92; background: rgba(235, 111, 146, 0.08); margin-top: 10px; margin-bottom: 0;">
-                            <strong style="color: #eb6f92;">Archived Failure Outcome</strong>
-                            <p style="margin-top: 6px; font-size: 0.88rem; line-height: 1.45;">${node.failure_text || "You failed to decipher this part of the tapestry."}</p>
-                        </div>
-                    `;
-                }
-
-                bodyEl.innerHTML = bodyHtml;
-                formContainer.style.display = "none";
-                rollBtn.style.display = "none";
-                dismissBtn.style.display = "inline-block";
-                dismissBtn.innerText = "Close Window";
+            if (savedResult) {
+                showLockedStudyResult(node, savedResult);
                 return;
             }
 
-            modal.className = "study-overlay active";
-            titleEl.innerText = `🔍 Studying: ${node.name}`;
-            tagEl.innerText = "Lore Node";
-            tagEl.className = "study-tag tag-lore";
+            ui.modal.className = 'study-overlay active';
+            ui.title.innerText = `🔍 Studying: ${node.name}`;
+            ui.tag.innerText = 'Lore Node';
+            ui.tag.className = 'study-tag tag-lore';
 
-            bodyEl.innerHTML = `
+            ui.body.innerHTML = `
                 <p style="margin-bottom: 8px;">You analyze the intricate threadwork to decipher the hidden script. Enter your skill modifier and roll a d20 to test your understanding against the Complexity DC.</p>
                 <div class="check-box" style="margin-bottom: 0;">
                     <strong>Hotspot Complexity: Target DC ${node.dc}</strong>
-                    <p style="font-size: 0.78rem; color: #9ccfd8;">(Roll ≥ DC: Full Success | Roll ≥ DC-4: Partial Success | Roll < DC-4: Failure)</p>
+                    <p style="font-size: 0.78rem; color: #9ccfd8;">(Roll ≥ DC: Full Success | Roll ≥ DC-${CONFIG.game.partialSuccessMargin}: Partial Success | Roll &lt; DC-${CONFIG.game.partialSuccessMargin}: Failure)</p>
                 </div>
             `;
 
-            formPromptLabel.innerText = "Enter your Skill Modifier (e.g. History / Arcana):";
-            document.getElementById('roll-input').value = "0";
+            ui.formPrompt.innerText = 'Enter your Skill Modifier (e.g. History / Arcana):';
+            ui.rollInput.value = '0';
+            showModifierInfo();
 
-            const modifier = getActiveModifier();
-            if (modifier) {
-                const sign = modifier.val > 0 ? '+' : '';
-                modInfoEl.innerHTML = `Stored Modifier: <strong class="${modifier.val > 0 ? 'status-active-boon' : 'status-active-bane'}">${modifier.label} (${sign}${modifier.val})</strong>`;
+            ui.form.style.display = 'block';
+            setRollButton(executeRollAction, '🎲 Roll d20');
+            setDismissButton('Cancel Study');
+            setModalVisible(true);
+        }
+
+        function showLockedStudyResult(node, savedResult) {
+            ui.modal.className = 'study-overlay active';
+            ui.title.innerText = `🔒 ${node.name}`;
+            ui.tag.innerText = 'Locked';
+            ui.tag.className = 'study-tag tag-hazard';
+
+            let bodyHtml = `
+                <p style="margin-bottom: 12px; color: #f6c177; font-style: italic; line-height: 1.5; font-size: 0.95rem; border-bottom: 1px solid #2e3440; padding-bottom: 10px;">
+                    "You don't think you can tease any more knowledge from this part of the tapestry..."
+                </p>
+            `;
+
+            if (savedResult === 'full' && node.success_lore) {
+                bodyHtml += `
+                    <div class="boon-box" style="border-left-color: #31b565; background: rgba(49, 181, 101, 0.08); margin-top: 10px; margin-bottom: 0;">
+                        <strong style="color: #31b565;">Archived Full Success Lore</strong>
+                        <p style="margin-top: 6px; font-size: 0.88rem; line-height: 1.45;">${node.success_lore}</p>
+                    </div>
+                `;
+            } else if (savedResult === 'partial' && node.partial_lore) {
+                bodyHtml += `
+                    <div class="partial-box" style="border-left-color: #9ccfd8; background: rgba(156, 207, 216, 0.08); margin-top: 10px; margin-bottom: 0;">
+                        <strong style="color: #9ccfd8;">Archived Partial Success Lore</strong>
+                        <p style="margin-top: 6px; font-size: 0.88rem; line-height: 1.45;">${node.partial_lore}</p>
+                    </div>
+                `;
             } else {
-                modInfoEl.innerHTML = "No active stored modifiers.";
-            }
-
-            formContainer.style.display = "block";
-            rollBtn.style.display = "inline-block";
-            rollBtn.innerText = "🎲 Roll d20";
-            rollBtn.onclick = function() { executeRollAction(); };
-            dismissBtn.style.display = "inline-block";
-            dismissBtn.innerText = "Cancel Study";
-        }
-
-        // --- UNIFIED ROLL EXECUTION (HANDLES BOTH MODES) ---
-        function executeRollAction() {
-            const inputVal = parseInt(document.getElementById('roll-input').value);
-            const userMod = isNaN(inputVal) ? 0 : inputVal;
-
-            const storedMod = getActiveModifier();
-            const storedVal = storedMod ? storedMod.val : 0;
-
-            const d20 = Math.floor(Math.random() * 20) + 1;
-            const finalTotal = d20 + userMod + storedVal;
-
-            const bodyEl = document.getElementById('study-body');
-            const formContainer = document.getElementById('study-form-container');
-            const rollBtn = document.getElementById('study-roll-btn');
-            const dismissBtn = document.getElementById('study-dismiss-btn');
-
-            if (currentModalMode === 'interruption') {
-                // 2-STATE PASS/FAIL RESOLUTION FOR HAZARDS
-                const hazardDC = activeEncounter.dc || 14;
-                const pass = finalTotal >= hazardDC;
-
-                let resultHtml = `<p style="margin-bottom: 12px; color: #e0def4;">${activeEncounter.text}</p>`;
-                resultHtml += `
-                    <div style="margin-bottom: 12px; padding: 12px; background: #2a2e37; border-radius: 6px; text-align: center; border: 1px solid #3b4252;">
-                        <span style="font-size: 0.85rem; color: #9ccfd8;">d20 Roll (${d20}) ${userMod >= 0 ? '+' : ''}${userMod} Mod ${storedVal !== 0 ? `(${storedVal > 0 ? '+' : ''}${storedVal} ${storedMod.label})` : ''}</span><br>
-                        Total Result: <span style="font-size: 1.35rem; font-weight: bold; color: ${pass ? '#31b565' : '#eb6f92'}">${finalTotal}</span> vs <span style="color: #f6c177;">DC ${hazardDC}</span>
+                bodyHtml += `
+                    <div class="bane-box" style="border-left-color: #eb6f92; background: rgba(235, 111, 146, 0.08); margin-top: 10px; margin-bottom: 0;">
+                        <strong style="color: #eb6f92;">Archived Failure Outcome</strong>
+                        <p style="margin-top: 6px; font-size: 0.88rem; line-height: 1.45;">${node.failure_text || 'You failed to decipher this part of the tapestry.'}</p>
                     </div>
                 `;
-
-                if (pass) {
-                    setActiveModifier(activeEncounter.boon);
-                    resultHtml += `
-                        <div class="boon-box">
-                            <strong>Success! Boon Earned: ${activeEncounter.boon.label}</strong>
-                            <p>${activeEncounter.boon.text || activeEncounter.boon.description || 'You gain a helpful modifier.'}</p>
-                        </div>
-                    `;
-                } else {
-                    setActiveModifier(activeEncounter.bane);
-                    resultHtml += `
-                        <div class="bane-box">
-                            <strong>Failure! Bane Suffered: ${activeEncounter.bane.label}</strong>
-                            <p>${activeEncounter.bane.text || activeEncounter.bane.description || 'You suffer a lingering penalty.'}</p>
-                        </div>
-                    `;
-                }
-
-                bodyEl.innerHTML = resultHtml;
-                formContainer.style.display = "none";
-                rollBtn.style.display = "inline-block";
-                rollBtn.innerText = "🔍 Proceed to Study Check";
-                rollBtn.onclick = function() {
-                    revealStudyCheckForm(activeHotspot);
-                };
-                dismissBtn.style.display = "inline-block";
-                dismissBtn.innerText = "Close";
-
-            } else if (currentModalMode === 'study') {
-                // 3-STATE RESOLUTION FOR STUDY (SUCCEED / PARTIAL / FAIL)
-                const targetDC = activeHotspot.dc;
-                const isFullSuccess = finalTotal >= targetDC;
-                const isPartialSuccess = !isFullSuccess && finalTotal >= (targetDC - 4);
-
-                let resultHtml = `<h3 style="font-family: 'Cinzel', serif; color: #f6c177; margin-bottom: 8px;">Deciphering: ${activeHotspot.name}</h3>`;
-                resultHtml += `
-                    <div style="margin-bottom: 12px; padding: 12px; background: #2a2e37; border-radius: 6px; text-align: center; border: 1px solid #3b4252;">
-                        <span style="font-size: 0.85rem; color: #9ccfd8;">d20 Roll (${d20}) ${userMod >= 0 ? '+' : ''}${userMod} Skill Mod ${storedVal !== 0 ? `(${storedVal > 0 ? '+' : ''}${storedVal} ${storedMod.label})` : ''}</span><br>
-                        Decipher Result: <span style="font-size: 1.35rem; font-weight: bold; color: ${isFullSuccess ? '#31b565' : (isPartialSuccess ? '#9ccfd8' : '#eb6f92')}">${finalTotal}</span> vs <span style="color: #f6c177;">DC ${targetDC}</span>
-                    </div>
-                `;
-
-                if (isFullSuccess) {
-                    markHotspotStudied(activeHotspot.id, 'full');
-                    resultHtml += `
-                        <div class="boon-box">
-                            <strong style="color: #31b565;">Full Success! (Complete Lore Unlocked)</strong>
-                            <p style="margin-top: 6px; font-size: 0.9rem; line-height: 1.45;">${activeHotspot.success_lore}</p>
-                        </div>
-                    `;
-                } else if (isPartialSuccess) {
-                    markHotspotStudied(activeHotspot.id, 'partial');
-                    resultHtml += `
-                        <div class="partial-box">
-                            <strong style="color: #9ccfd8;">Partial Success (Partial Insight Unlocked)</strong>
-                            <p style="margin-top: 6px; font-size: 0.9rem; line-height: 1.45;">${activeHotspot.partial_lore}</p>
-                        </div>
-                    `;
-                } else {
-                    markHotspotStudied(activeHotspot.id, 'failure');
-                    resultHtml += `
-                        <div class="bane-box">
-                            <strong style="color: #eb6f92;">Failure</strong>
-                            <p style="margin-top: 6px;">${activeHotspot.failure_text}</p>
-                        </div>
-                    `;
-                }
-
-                // Clear stored modifier after a study roll
-                setActiveModifier(null);
-
-                bodyEl.innerHTML = resultHtml;
-                formContainer.style.display = "none";
-                rollBtn.style.display = "none";
-                dismissBtn.innerText = "Close Window";
             }
+
+            ui.body.innerHTML = bodyHtml;
+            ui.form.style.display = 'none';
+            setRollButton(() => revealStudyCheckForm(node), '🔍 Re-test Study Check');
+            setDismissButton('Close Window');
+            setModalVisible(true);
         }
 
-        // --- PREVIOUSLY DECIPHERED DISPLAY ---
         function showSuccessArchive(node) {
-            activeHotspot = node;
-            const modal = document.getElementById('study-modal');
-            const titleEl = document.getElementById('study-title');
-            const tagEl = document.getElementById('study-tag');
-            const bodyEl = document.getElementById('study-body');
-            const rollBtn = document.getElementById('study-roll-btn');
-            const dismissBtn = document.getElementById('study-dismiss-btn');
-            const formContainer = document.getElementById('study-form-container');
-
-            modal.className = "study-overlay active";
-            titleEl.innerText = node.name;
-            tagEl.innerText = "Deciphered";
-            tagEl.className = "study-tag tag-lore";
-
-            bodyEl.innerHTML = `
+            state.activeHotspot = node;
+            ui.modal.className = 'study-overlay active';
+            ui.title.innerText = node.name;
+            ui.tag.innerText = 'Deciphered';
+            ui.tag.className = 'study-tag tag-lore';
+            ui.body.innerHTML = `
                 <div class="boon-box" style="border-left-color: #31b565; background: rgba(49, 181, 101, 0.08); margin-bottom: 12px;">
                     <strong style="color: #31b565;">Archived Success Lore</strong>
                     <p style="margin-top: 6px; font-size: 0.9rem; line-height: 1.45;">${node.success_lore}</p>
                 </div>
                 <p style="font-size: 0.78rem; color: #9ccfd8; text-align: center;">You have already deciphered this segment. You can close this window or re-test the study check below.</p>
             `;
-
-            formContainer.style.display = "none";
-            rollBtn.style.display = "inline-block";
-            rollBtn.innerText = "🎲 Re-test Study Check";
-            rollBtn.onclick = function() {
-                revealStudyCheckForm(node);
-            };
-            dismissBtn.style.display = "inline-block";
-            dismissBtn.innerText = "Close Archive";
+            ui.form.style.display = 'none';
+            setRollButton(() => revealStudyCheckForm(node), '🎲 Re-test Study Check');
+            setDismissButton('Close Archive');
+            setModalVisible(true);
         }
+
         // ===================================================================
-        // 6. GLOBAL WINDOW & CLOSE HANDLERS
+        // 11. ROLL EXECUTION & RESULT RENDERING
         // ===================================================================
-        function dismissStudyModal() {
-            const modal = document.getElementById('study-modal');
-            if (modal) {
-                modal.classList.remove('active');
+        function executeRollAction() {
+            if (!state.modalMode) {
+                console.warn('Roll requested without an active modal mode.');
+                return;
             }
+
+            const d20 = rollD20();
+            const userMod = readUserModifier();
+            const storedMod = getActiveModifier();
+            const storedVal = storedMod ? storedMod.val : 0;
+            const finalTotal = calculateTotal(d20, userMod, storedVal);
+
+            if (state.modalMode === 'interruption') {
+                resolveInterruptionRoll(d20, userMod, storedMod, storedVal, finalTotal);
+                return;
+            }
+
+            if (state.modalMode === 'study') {
+                resolveStudyRoll(d20, userMod, storedMod, storedVal, finalTotal);
+                return;
+            }
+
+            console.warn('Unknown modal mode:', state.modalMode);
         }
 
-        // Global debug hook: Type forceTapestryEncounter() in browser console to trigger instantly
+        function formatRollSummary(d20, userMod, storedMod, storedVal, label) {
+            const userSign = userMod >= 0 ? '+' : '';
+            const storedPart = storedVal !== 0 && storedMod
+                ? ` (${storedVal > 0 ? '+' : ''}${storedVal} ${storedMod.label})`
+                : '';
+            return `d20 Roll (${d20}) ${userSign}${userMod} ${label}${storedPart}`;
+        }
+
+        function resolveInterruptionRoll(d20, userMod, storedMod, storedVal, finalTotal) {
+            if (!state.activeEncounter) return;
+
+            const hazardDC = state.activeEncounter.dc;
+            const pass = resolveInterruption(finalTotal, hazardDC);
+
+            let resultHtml = `<p style="margin-bottom: 12px; color: #e0def4;">${state.activeEncounter.text}</p>`;
+            resultHtml += `
+                <div style="margin-bottom: 12px; padding: 12px; background: #2a2e37; border-radius: 6px; text-align: center; border: 1px solid #3b4252;">
+                    <span style="font-size: 0.85rem; color: #9ccfd8;">${formatRollSummary(d20, userMod, storedMod, storedVal, 'Mod')}</span><br>
+                    Total Result: <span style="font-size: 1.35rem; font-weight: bold; color: ${pass ? '#31b565' : '#eb6f92'}">${finalTotal}</span> vs <span style="color: #f6c177;">DC ${hazardDC}</span>
+                </div>
+            `;
+
+            if (pass) {
+                setActiveModifier(state.activeEncounter.boon);
+                resultHtml += `
+                    <div class="boon-box">
+                        <strong>Success! Boon Earned: ${state.activeEncounter.boon.label}</strong>
+                        <p>${state.activeEncounter.boon.text || state.activeEncounter.boon.description || 'You gain a helpful modifier.'}</p>
+                    </div>
+                `;
+            } else {
+                setActiveModifier(state.activeEncounter.bane);
+                resultHtml += `
+                    <div class="bane-box">
+                        <strong>Failure! Bane Suffered: ${state.activeEncounter.bane.label}</strong>
+                        <p>${state.activeEncounter.bane.text || state.activeEncounter.bane.description || 'You suffer a lingering penalty.'}</p>
+                    </div>
+                `;
+            }
+
+            ui.body.innerHTML = resultHtml;
+            ui.form.style.display = 'none';
+            state.modalStage = 'interruption-result';
+            setRollButton(() => revealStudyCheckForm(state.activeHotspot), '🔍 Proceed to Study Check');
+            setDismissButton('Close');
+        }
+
+        function resolveStudyRoll(d20, userMod, storedMod, storedVal, finalTotal) {
+            if (!state.activeHotspot) return;
+
+            const targetDC = state.activeHotspot.dc;
+            const result = resolveStudyResult(finalTotal, targetDC);
+            const resultColor = result === 'full' ? '#31b565' : result === 'partial' ? '#9ccfd8' : '#eb6f92';
+
+            let resultHtml = `<h3 style="font-family: 'Cinzel', serif; color: #f6c177; margin-bottom: 8px;">Deciphering: ${state.activeHotspot.name}</h3>`;
+            resultHtml += `
+                <div style="margin-bottom: 12px; padding: 12px; background: #2a2e37; border-radius: 6px; text-align: center; border: 1px solid #3b4252;">
+                    <span style="font-size: 0.85rem; color: #9ccfd8;">${formatRollSummary(d20, userMod, storedMod, storedVal, 'Skill Mod')}</span><br>
+                    Decipher Result: <span style="font-size: 1.35rem; font-weight: bold; color: ${resultColor}">${finalTotal}</span> vs <span style="color: #f6c177;">DC ${targetDC}</span>
+                </div>
+            `;
+
+            if (result === 'full') {
+                markHotspotStudied(state.activeHotspot.id, 'full');
+                resultHtml += `
+                    <div class="boon-box">
+                        <strong style="color: #31b565;">Full Success! (Complete Lore Unlocked)</strong>
+                        <p style="margin-top: 6px; font-size: 0.9rem; line-height: 1.45;">${state.activeHotspot.success_lore || 'Complete lore unlocked.'}</p>
+                    </div>
+                `;
+            } else if (result === 'partial') {
+                markHotspotStudied(state.activeHotspot.id, 'partial');
+                resultHtml += `
+                    <div class="partial-box">
+                        <strong style="color: #9ccfd8;">Partial Success (Partial Insight Unlocked)</strong>
+                        <p style="margin-top: 6px; font-size: 0.9rem; line-height: 1.45;">${state.activeHotspot.partial_lore || 'You gain partial insight.'}</p>
+                    </div>
+                `;
+            } else {
+                markHotspotStudied(state.activeHotspot.id, 'failure');
+                resultHtml += `
+                    <div class="bane-box">
+                        <strong style="color: #eb6f92;">Failure</strong>
+                        <p style="margin-top: 6px;">${state.activeHotspot.failure_text || 'You fail to decipher this section.'}</p>
+                    </div>
+                `;
+            }
+
+            setActiveModifier(null);
+            ui.body.innerHTML = resultHtml;
+            ui.form.style.display = 'none';
+            state.modalStage = 'study-result';
+            setRollButton(null, '', false);
+            setDismissButton('Close Window');
+        }
+
+        // ===================================================================
+        // 12. GLOBAL DEBUG HOOK
+        // ===================================================================
         window.forceTapestryEncounter = function() {
-            activeHotspot = hotspotsData[0];
-            triggerInterruption(activeHotspot);
+            if (!state.hotspots.length) {
+                console.warn('Tapestry hotspots are not loaded yet.');
+                return;
+            }
+            state.activeHotspot = state.hotspots[0];
+            triggerInterruption(state.activeHotspot);
         };
 
-        
         // ===================================================================
-        // COORDINATE FINDER HUD & CONSOLE LOGGER
+        // 13. INITIALIZATION
         // ===================================================================
-        const coordControl = L.control({ position: 'bottomleft' });
-        coordControl.onAdd = function() {
-            const div = L.DomUtil.create('div', 'coord-hud');
-            div.style.background = 'rgba(24, 27, 32, 0.9)';
-            div.style.color = '#f6c177';
-            div.style.padding = '6px 12px';
-            div.style.borderRadius = '6px';
-            div.style.border = '1px solid #3b4252';
-            div.style.fontFamily = 'monospace';
+        loadTapestryData();
+    </script>.style.fontFamily = 'monospace';
             div.style.fontSize = '0.85rem';
             div.style.boxShadow = '0 4px 10px rgba(0,0,0,0.5)';
             div.style.pointerEvents = 'none';
