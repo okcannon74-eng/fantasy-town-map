@@ -337,12 +337,11 @@
             <span class="status-val" id="hud-studied-count">0/0</span>
         </div>
         <div class="status-item">
-            <span class="status-label">Active Boon:</span>
-            <span class="status-val" id="hud-active-boon">None</span>
+            <span class="status-label">Cumulative Mod:</span>
+            <span class="status-val" id="hud-cumulative-mod">+0</span>
         </div>
-        <div class="status-item">
-            <span class="status-label">Active Bane:</span>
-            <span class="status-val" id="hud-active-bane">None</span>
+        <div id="hud-active-modifiers-list" style="display: flex; flex-direction: column; gap: 3px; margin-top: 4px; border-top: 1px solid #3b4252; padding-top: 4px; max-height: 100px; overflow-y: auto;">
+            <span style="font-size: 0.72rem; color: #9ccfd8;">No Active Modifiers</span>
         </div>
         <button onclick="resetTapestryProgress()" style="margin-top: 6px; padding: 4px 8px; background: #2a2e37; border: 1px solid #3b4252; color: #f6c177; border-radius: 4px; font-size: 0.72rem; cursor: pointer; text-transform: uppercase; font-weight: 600;">
             🔄 Reset Progress
@@ -444,8 +443,8 @@
             rollBtn: document.getElementById('study-roll-btn'),
             dismissBtn: document.getElementById('study-dismiss-btn'),
             studiedCount: document.getElementById('hud-studied-count'),
-            activeBoon: document.getElementById('hud-active-boon'),
-            activeBane: document.getElementById('hud-active-bane'),
+            cumulativeMod: document.getElementById('hud-cumulative-mod'),
+            activeModifiersList: document.getElementById('hud-active-modifiers-list'),
             notification: document.getElementById('tapestry-notification')
         };
 
@@ -902,34 +901,48 @@
             updateStatusHUD();
         }
 
-        function getActiveModifier() {
+        function getActiveModifiers() {
             const stored = localStorage.getItem(CONFIG.storageKeys.activeModifier);
-            if (!stored) return null;
+            if (!stored) return [];
 
             try {
                 const parsed = JSON.parse(stored);
-                if (!isValidModifier(parsed)) {
-                    console.warn('Invalid stored modifier. Clearing it.');
-                    localStorage.removeItem(CONFIG.storageKeys.activeModifier);
-                    return null;
+                if (Array.isArray(parsed)) {
+                    return parsed.filter(isValidModifier).slice(-3);
                 }
-                return parsed;
-            } catch (err) {
-                console.warn('Corrupt stored modifier. Clearing it.', err);
+                if (isValidModifier(parsed)) {
+                    return [parsed];
+                }
                 localStorage.removeItem(CONFIG.storageKeys.activeModifier);
-                return null;
+                return [];
+            } catch (err) {
+                console.warn('Corrupt stored modifier. Clearing.', err);
+                localStorage.removeItem(CONFIG.storageKeys.activeModifier);
+                return [];
             }
         }
 
-        function setActiveModifier(mod) {
-            if (mod === null || mod === undefined) {
-                localStorage.removeItem(CONFIG.storageKeys.activeModifier);
-            } else if (isValidModifier(mod)) {
-                localStorage.setItem(CONFIG.storageKeys.activeModifier, JSON.stringify(mod));
-            } else {
+        function getNetModifierValue() {
+            const mods = getActiveModifiers();
+            return mods.reduce((sum, m) => sum + (m.val || 0), 0);
+        }
+
+        function addActiveModifier(mod) {
+            if (!isValidModifier(mod)) {
                 console.warn('Refusing to store invalid modifier:', mod);
-                localStorage.removeItem(CONFIG.storageKeys.activeModifier);
+                return;
             }
+            const list = getActiveModifiers();
+            list.push(mod);
+            while (list.length > 3) {
+                list.shift(); // Retire oldest after 3
+            }
+            localStorage.setItem(CONFIG.storageKeys.activeModifier, JSON.stringify(list));
+            updateStatusHUD();
+        }
+
+        function clearActiveModifiers() {
+            localStorage.removeItem(CONFIG.storageKeys.activeModifier);
             updateStatusHUD();
         }
 
@@ -1025,11 +1038,18 @@
         }
 
         function showModifierInfo() {
-            const modifier = getActiveModifier();
-            if (modifier) {
-                const sign = modifier.val > 0 ? '+' : '';
-                const className = modifier.val > 0 ? 'status-active-boon' : 'status-active-bane';
-                ui.modifierInfo.innerHTML = `Stored Modifier: <strong class="${className}">${modifier.label} (${sign}${modifier.val})</strong>`;
+            const activeMods = getActiveModifiers();
+            const netVal = getNetModifierValue();
+
+            if (activeMods.length > 0) {
+                const netSign = netVal > 0 ? '+' : '';
+                const netClass = netVal > 0 ? 'status-active-boon' : netVal < 0 ? 'status-active-bane' : '';
+                const breakdown = activeMods.map(m => {
+                    const sign = m.val > 0 ? '+' : '';
+                    return `${m.label} (${sign}${m.val})`;
+                }).join(', ');
+
+                ui.modifierInfo.innerHTML = `Stored Mods (<strong class="${netClass}">${netSign}${netVal} Net</strong>): <span style="color: #e0def4; font-size: 0.75rem;">${breakdown}</span>`;
             } else {
                 ui.modifierInfo.textContent = 'No active stored modifiers.';
             }
@@ -1043,30 +1063,28 @@
                 ui.studiedCount.innerText = `${studiedCount}/${state.hotspots.length}`;
             }
 
-            const activeMod = getActiveModifier();
-            if (!activeMod) {
-                ui.activeBoon.innerText = 'None';
-                ui.activeBoon.className = 'status-val';
-                ui.activeBane.innerText = 'None';
-                ui.activeBane.className = 'status-val';
-                return;
+            const activeMods = getActiveModifiers();
+            const netVal = getNetModifierValue();
+
+            if (ui.cumulativeMod) {
+                const sign = netVal > 0 ? '+' : '';
+                ui.cumulativeMod.innerText = `${sign}${netVal}`;
+                ui.cumulativeMod.className = `status-val ${netVal > 0 ? 'status-active-boon' : netVal < 0 ? 'status-active-bane' : ''}`;
             }
 
-            if (activeMod.val > 0) {
-                ui.activeBoon.innerText = `${activeMod.label} (+${activeMod.val})`;
-                ui.activeBoon.className = 'status-val status-active-boon';
-                ui.activeBane.innerText = 'None';
-                ui.activeBane.className = 'status-val';
-            } else if (activeMod.val < 0) {
-                ui.activeBane.innerText = `${activeMod.label} (${activeMod.val})`;
-                ui.activeBane.className = 'status-val status-active-bane';
-                ui.activeBoon.innerText = 'None';
-                ui.activeBoon.className = 'status-val';
-            } else {
-                ui.activeBoon.innerText = 'None';
-                ui.activeBoon.className = 'status-val';
-                ui.activeBane.innerText = 'None';
-                ui.activeBane.className = 'status-val';
+            if (ui.activeModifiersList) {
+                if (activeMods.length === 0) {
+                    ui.activeModifiersList.innerHTML = '<span style="font-size: 0.72rem; color: #9ccfd8;">No Active Modifiers</span>';
+                } else {
+                    ui.activeModifiersList.innerHTML = activeMods.map((m, idx) => {
+                        const sign = m.val > 0 ? '+' : '';
+                        const colorClass = m.val > 0 ? 'status-active-boon' : 'status-active-bane';
+                        return `<div style="font-size: 0.72rem; display: flex; justify-content: space-between; gap: 6px;">
+                            <span style="color: #e0def4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;" title="${m.label}">${idx + 1}. ${m.label}</span>
+                            <span class="status-val ${colorClass}">${sign}${m.val}</span>
+                        </div>`;
+                    }).join('');
+                }
             }
         }
 
@@ -1440,17 +1458,16 @@
 
             const d20 = rollD20();
             const userMod = readUserModifier();
-            const storedMod = getActiveModifier();
-            const storedVal = storedMod ? storedMod.val : 0;
+            const storedVal = getNetModifierValue();
             const finalTotal = calculateTotal(d20, userMod, storedVal);
 
             if (state.modalMode === 'interruption') {
-                resolveInterruptionRoll(d20, userMod, storedMod, storedVal, finalTotal);
+                resolveInterruptionRoll(d20, userMod, storedVal, finalTotal);
                 return;
             }
 
             if (state.modalMode === 'study') {
-                resolveStudyRoll(d20, userMod, storedMod, storedVal, finalTotal);
+                resolveStudyRoll(d20, userMod, storedVal, finalTotal);
                 return;
             }
 
@@ -1463,15 +1480,15 @@
         return 'High';
     }
 
-    function formatRollSummary(d20, userMod, storedMod, storedVal, label) {
+    function formatRollSummary(d20Text, userMod, storedVal, label) {
             const userSign = userMod >= 0 ? '+' : '';
-            const storedPart = storedVal !== 0 && storedMod
-                ? ` (${storedVal > 0 ? '+' : ''}${storedVal} ${storedMod.label})`
+            const storedPart = storedVal !== 0
+                ? ` (${storedVal > 0 ? '+' : ''}${storedVal} Stored Mod)`
                 : '';
-            return `d20 Roll (${d20}) ${userSign}${userMod} ${label}${storedPart}`;
+            return `d20 Roll (${d20Text}) ${userSign}${userMod} ${label}${storedPart}`;
         }
 
-        function resolveInterruptionRoll(d20, userMod, storedMod, storedVal, finalTotal) {
+        function resolveInterruptionRoll(d20, userMod, storedVal, finalTotal) {
             if (!state.activeEncounter) return;
 
             const hazardDC = state.activeEncounter.dc;
@@ -1480,13 +1497,13 @@
             let resultHtml = `<p style="margin-bottom: 12px; color: #e0def4;">${state.activeEncounter.text}</p>`;
             resultHtml += `
                 <div style="margin-bottom: 12px; padding: 12px; background: #2a2e37; border-radius: 6px; text-align: center; border: 1px solid #3b4252;">
-                    <span style="font-size: 0.85rem; color: #9ccfd8;">${formatRollSummary(d20, userMod, storedMod, storedVal, 'Mod')}</span><br>
+                    <span style="font-size: 0.85rem; color: #9ccfd8;">${formatRollSummary(d20, userMod, storedVal, 'Mod')}</span><br>
                     Total Result: <span style="font-size: 1.35rem; font-weight: bold; color: ${pass ? '#31b565' : '#eb6f92'}">${finalTotal}</span> vs <span style="color: #f6c177;">DC ${hazardDC}</span>
                 </div>
             `;
 
             if (pass) {
-                setActiveModifier(state.activeEncounter.boon);
+                addActiveModifier(state.activeEncounter.boon);
                 resultHtml += `
                     <div class="boon-box">
                         <strong>Success! Boon Earned: ${state.activeEncounter.boon.label}</strong>
@@ -1494,7 +1511,7 @@
                     </div>
                 `;
             } else {
-                setActiveModifier(state.activeEncounter.bane);
+                addActiveModifier(state.activeEncounter.bane);
                 resultHtml += `
                     <div class="bane-box">
                         <strong>Failure! Bane Suffered: ${state.activeEncounter.bane.label}</strong>
@@ -1510,7 +1527,7 @@
             setDismissButton('Close');
         }
 
-        function resolveStudyRoll(d20, userMod, storedMod, storedVal, finalTotal) {
+        function resolveStudyRoll(d20, userMod, storedVal, finalTotal) {
             if (!state.activeHotspot) return;
 
             const targetDC = state.activeHotspot.dc;
@@ -1522,7 +1539,7 @@
             let resultHtml = `<h3 style="font-family: 'Cinzel', serif; color: #f6c177; margin-bottom: 8px;">Deciphering: ${state.activeHotspot.name}</h3>`;
             resultHtml += `
                 <div style="margin-bottom: 12px; padding: 12px; background: #2a2e37; border-radius: 6px; text-align: center; border: 1px solid #3b4252;">
-                    <span style="font-size: 0.85rem; color: #9ccfd8;">${formatRollSummary(d20Tier, userMod, storedMod, storedVal, 'Skill Mod')}</span><br>
+                    <span style="font-size: 0.85rem; color: #9ccfd8;">${formatRollSummary(d20Tier, userMod, storedVal, 'Skill Mod')}</span><br>
                     Decipher Result: <span style="font-size: 1.25rem; font-weight: bold; color: #f6c177;">${totalTier}</span>
                 </div>
             `;
@@ -1545,7 +1562,6 @@
                 </div>
             `;
 
-            setActiveModifier(null);
             ui.body.innerHTML = resultHtml;
             ui.form.style.display = 'none';
             state.modalStage = 'study-result';
