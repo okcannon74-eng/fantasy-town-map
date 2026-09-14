@@ -476,6 +476,7 @@
         let encountersData = [];
 
         const fallbackHotspots = [
+
             {
                 id: "firelord_promis",
                 name: "A Fire Lord's Promise",
@@ -846,7 +847,6 @@
     }
   }
         ];
-
         function isValidModifier(value) {
             return Boolean(value) &&
                 Number.isFinite(value.val) &&
@@ -1481,11 +1481,15 @@
     }
 
     function formatRollSummary(d20Text, userMod, storedVal, label) {
-            const userSign = userMod >= 0 ? '+' : '';
-            const storedPart = storedVal !== 0
-                ? ` (${storedVal > 0 ? '+' : ''}${storedVal} Stored Mod)`
-                : '';
-            return `d20 Roll (${d20Text}) ${userSign}${userMod} ${label}${storedPart}`;
+            const userSign = userMod >= 0 ? '+ ' : '- ';
+            const absUserMod = Math.abs(userMod);
+            let summary = `d20 Roll (${d20Text}) ${userSign}${absUserMod} ${label}`;
+            if (storedVal !== 0) {
+                const storedSign = storedVal > 0 ? '+ ' : '- ';
+                const absStoredVal = Math.abs(storedVal);
+                summary += ` ${storedSign}${absStoredVal} Net Mod`;
+            }
+            return summary;
         }
 
         function resolveInterruptionRoll(d20, userMod, storedVal, finalTotal) {
@@ -1588,3 +1592,4 @@
     </script>
 </body>
 </html>
+
