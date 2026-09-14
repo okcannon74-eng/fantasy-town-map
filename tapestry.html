@@ -506,40 +506,346 @@
         ];
 
         const fallbackEncounters = [
-            {
-                title: "Spores of the Calefactory",
-                type: "hazard",
-                tag: "Spores",
-                dc: 14,
-                text: "As you lean close to study the ancient thread, your breath disturbs a pocket of centuries-old mold settled in the wool fibers. A cloud of black dust vents into the air! You must make a <strong>DC 14 Constitution Saving Throw</strong>.",
-                bane: {
-                    val: -2,
-                    label: "Choking Spores",
-                    text: "<strong>Failure (Bane):</strong> Soot and dust choke your lungs. You take 1d6 poison damage, and suffer a <strong>-2 penalty</strong> on all Tapestry study rolls today due to blinding, watery eyes."
-                },
-                boon: {
-                    val: 1,
-                    label: "Resilient Breath",
-                    text: "<strong>Success (Boon):</strong> You steel your throat and quickly blow the dust away. The stray magic in the dust sharpens your senses, granting you a <strong>+1 bonus</strong> to your next Tapestry check."
-                }
-            },
-            {
-                title: "Planar Static Spark",
-                type: "danger",
-                tag: "Wild Magic",
-                dc: 15,
-                text: "Your fingertips touch a silver thread connected to the Celestial Orrery overlay. Instantly, a current of static wild magic surges from the canvas! Make a <strong>DC 15 Dexterity or Arcana Save</strong> to absorb or dodge the feedback.",
-                bane: {
-                    val: -3,
-                    label: "Planar Static Shocks",
-                    text: "<strong>Failure (Bane):</strong> The lightning current leaves your fingers scorched and tingling. You take 2d4 lightning damage and suffer a severe <strong>-3 penalty</strong> on all Tapestry checks today."
-                },
-                boon: {
-                    val: 2,
-                    label: "Static Charge",
-                    text: "<strong>Success (Boon):</strong> You gracefully ground the magical static charge, channeling its energy into your mind. You gain a <strong>+2 bonus</strong> to your next Tapestry check."
-                }
-            }
+{
+    "title": "The Balcony Target Practice",
+    "type": "danger",
+    "tag": "Target Practice",
+    "dc": 18,
+    "text": "A boredom-stricken Fire Giant on an upper ledge or passing archway spots the party lingering by the wall and decides to throw a heavy granite boulder for fun. Make a <strong>DC 18 Strength (Athletics) or Dexterity (Acrobatics) saving throw</strong>.",
+    "boon": {
+      "val": 2,
+      "label": "Overlooked Detail",
+      "text": "<strong>Success (Boon):</strong> A dodged stone strikes the tapestry behind you, drawing attention to a detail you have overlooked before. You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Shattered Rock Dust",
+      "text": "<strong>Failure (Bane):</strong> A rock shatters next to your head. Bits of dust get in your eye, imposing a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "Gas Jet Pressure Flare",
+    "type": "danger",
+    "tag": "Volcanic Fire",
+    "dc": 18,
+    "text": "The natural gas piping behind the stone wall experiences a sudden volcanic pressure spike, causing the iron gas jet right next to the tapestry to flare violently into a 15-foot cone of white-hot fire. Make a <strong>DC 18 Dexterity saving throw</strong>.",
+    "boon": {
+      "val": 2,
+      "label": "Soot Cleared",
+      "text": "<strong>Success (Boon):</strong> You dodge the gout of flame and it strikes the tapestry instead, cleaning a thin layer of soot from the fine threads. You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Singed Hair",
+      "text": "<strong>Failure (Bane):</strong> The smell of your singed hair distracts you from your chore and you keep one eye out for a repeat occurrence. You suffer a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "The Janitor Sludge",
+    "type": "hazard",
+    "tag": "Maintenance Slime",
+    "dc": 16,
+    "text": "A semi-mindless Obsidian Slime (a maintenance ooze trained to eat grease and meat scraps) slowly oozes out from beneath the tapestry baseboard to clean the soot off the floor. Make a <strong>DC 16 Dexterity (Acrobatics) check</strong> if stepped on.",
+    "boon": {
+      "val": 2,
+      "label": "Enlightening Angle",
+      "text": "<strong>Success (Boon):</strong> You succeed in gently landing on your back. The new perspective is enlightening! You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Broken Concentration",
+      "text": "<strong>Failure (Bane):</strong> You fall flat on your face, breaking your concentration. You suffer a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "Ettin Bickering",
+    "type": "hazard",
+    "tag": "Guards Distraction",
+    "dc": 18,
+    "text": "The two Ettin guards patrolling the Grand Hall stop nearby and get into a loud, self-contradicting argument. One head insists it smelled small-folk near the tapestries, while the other head insists it\u2019s just roasting cave-ox from the kitchens. Make a <strong>DC 18 Dexterity (Stealth) check</strong>.",
+    "boon": {
+      "val": 2,
+      "label": "Overheard Insight",
+      "text": "<strong>Success (Boon):</strong> You stay quietly hidden and something one of the heads says sparks an insight! You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Protracted Cowering",
+      "text": "<strong>Failure (Bane):</strong> Failing to stay completely quiet causes the Ettin to investigate. You crouch in the corner for so long, you've quite forgotten where you were in your studies. You suffer a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "The Shimmering Footsteps",
+    "type": "danger",
+    "tag": "Phantom Dagger",
+    "dc": 18,
+    "text": "You feel a faint shift in the wind. You turn just in time to see a glowing dagger fly from the darkness! Make a <strong>DC 18 Perception check</strong>.",
+    "boon": {
+      "val": 2,
+      "label": "Guided Strike",
+      "text": "<strong>Success (Boon):</strong> You easily step out of the way of the dagger. It strikes the tapestry behind you, pointing to a key portion before disappearing into thin air. You turn to see who threw it, but there is no one there. You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Shrill Screaming Mind",
+      "text": "<strong>Failure (Bane):</strong> The glowing dagger strikes you square between the eyes. Your mind is filled with a scream so shrill, it takes you a few minutes to regain your wits. You suffer a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "Echoing Kennel Howls",
+    "type": "hazard",
+    "tag": "Atmosphere",
+    "dc": 16,
+    "text": "A bloodcurdling, synchronized howl of canines echoes from distant kennel pens down the hall, vibrating through the stone floor and rattling the heavy tapestry rings. Make a <strong>DC 16 Nature check</strong>.",
+    "boon": {
+      "val": 2,
+      "label": "Assured Focus",
+      "text": "<strong>Success (Boon):</strong> This is clearly the sound of a pack of canines getting ready to be fed. You go back to your studies, assured they are no threat. You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Sense of Foreboding",
+      "text": "<strong>Failure (Bane):</strong> You are filled with such a sense of foreboding, you can't fully concentrate on your task. You suffer a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "The Spit-Master's Procession",
+    "type": "hazard",
+    "tag": "Fire Giant Servant",
+    "dc": 16,
+    "text": "A towering Fire Giant Servant passes down the hall carrying a massive iron spit laden with a sizzling, grease-dripping cave-ox heading toward the dining hall. Make a <strong>DC 16 Constitution check</strong> to keep your stomach from rumbling <em>(at disadvantage for statuesque elves)</em>.",
+    "boon": {
+      "val": 2,
+      "label": "Feast Anticipation",
+      "text": "<strong>Success (Boon):</strong> The thought that such a fine feast awaits somewhere in this castle causes you to redouble your efforts. You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Steaming Fat Splash",
+      "text": "<strong>Failure (Bane):</strong> The sound of your gastrointestinal distress startles the fire giant, causing her to bobble her burden. A giant gobbet of steaming hot fat falls on you! You are distracted by hungry looks from Skunch, suffering a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "Volcanic Ash Collapse",
+    "type": "hazard",
+    "tag": "Volcanic Ash",
+    "dc": 16,
+    "text": "Lifting or pulling back the heavy, soot-caked tapestry to inspect the wall behind it dislodges decades of accumulated volcanic ash and dry bone-dust trapped behind the fabric. Make a <strong>DC 16 Constitution saving throw</strong>.",
+    "boon": {
+      "val": 2,
+      "label": "Tearful Discovery",
+      "text": "<strong>Success (Boon):</strong> You are racked by a fit of sneezing that leaves you bent over, eyes watering. Through a shimmer of tears, you spot something subtle! You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Confusing Encounter",
+      "text": "<strong>Failure (Bane):</strong> Sir Gallowsgrin appears from nowhere, strikes you forcefully on the forehead, shouts 'Purple' directly in your face, and disappears. While you no longer need to sneeze, you are thoroughly confused, suffering a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "Young Giant Practice Throws",
+    "type": "danger",
+    "tag": "Giant Toy",
+    "dc": 17,
+    "text": "A juvenile Fire Giant practicing with a wooden club hurls a heavy iron practice toy down the Grand Hall corridor, where it skitters and bounces loudly off the obsidian floor right toward your feet. Make a <strong>DC 17 Intelligence check</strong> to catch or deflect the toy silently.",
+    "boon": {
+      "val": 2,
+      "label": "Ge-Ohm-Uh-Tree Art",
+      "text": "<strong>Success (Boon):</strong> You use the mystical art of ge-ohm-uh-tree to force the toy to thump into the tapestry noiselessly. Emboldened by your own intellect, you study the tapestry from a new angle, gaining a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Deafening Clatter",
+      "text": "<strong>Failure (Bane):</strong> Book learning is for losers! You somehow cause the toy to pick up speed right before it strikes the metal door, causing a deafening ringing throughout the hall. You pray no one heard that while suffering a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "Resonance of the Iron Gong",
+    "type": "hazard",
+    "tag": "Iron Gong",
+    "dc": 18,
+    "text": "A distant, heavy iron gong reverberates through the stronghold walls. The tapestries vibrate against the stone. Make a <strong>DC 18 History or Arcana check</strong>.",
+    "boon": {
+      "val": 2,
+      "label": "Shift Change Knowledge",
+      "text": "<strong>Success (Boon):</strong> You recognize the sound as a standard changing of the guards. They will all be in the guardroom chatting up the next shift, giving you uninterrupted focus! You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Alarm Panic",
+      "text": "<strong>Failure (Bane):</strong> You spend valuable time cowering behind the tapestry, concerned an alarm has been raised. You suffer a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "The Fraying Thread",
+    "type": "hazard",
+    "tag": "Threadwork",
+    "dc": 17,
+    "text": "Inspecting the edge of a tapestry depicting dwarven smiths, you notice a thick, silver-threaded seam that appears to have been added long after the original weave was completed. Make a <strong>DC 17 Dexterity (Sleight of Hand) check</strong>.",
+    "boon": {
+      "val": 2,
+      "label": "Unspooled Glyph",
+      "text": "<strong>Success (Boon):</strong> You deftly pull the loose thread, unspooling a line of blackened soot to reveal a hidden dwarven clan glyph woven directly into the backing fabric. You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Unraveled Seam",
+      "text": "<strong>Failure (Bane):</strong> You pull the wrong thread and a three-foot section of historical embroidery unravels into a useless pile of lint! Panic ensues as you try to stuff it back in, imposing a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "The Gargoyle\u2019s Sightline",
+    "type": "hazard",
+    "tag": "Basalt Gargoyle",
+    "dc": 18,
+    "text": "High above the tapestry, a carved basalt gargoyle protrudes from the masonry, its gaping maw pointed downward at an unusual angle toward the hall. Make a <strong>DC 18 Wisdom (Perception) or Intelligence (Investigation) check</strong>.",
+    "boon": {
+      "val": 2,
+      "label": "Gemstone Alignment",
+      "text": "<strong>Success (Boon):</strong> You realize the gargoyle\u2019s gemstone eyes align perfectly with three specific focal points on the tapestry, acting as a visual guide to the sequence of defeat. You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Paranoid Staredown",
+      "text": "<strong>Failure (Bane):</strong> You spend several paranoid minutes staring down a completely inanimate, soot-covered piece of masonry, convinced it\u2019s an optical spy-hole for an assassin. You suffer a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "The Spilled Ale Stream",
+    "type": "hazard",
+    "tag": "Dwarven Ale",
+    "dc": 16,
+    "text": "A careless giant servant on his way back from the kitchen spills a heavy wooden bucket of sour dwarven ale, causing a pungent trickle to run down the stone wall directly behind the tapestry. Make a <strong>DC 16 Dexterity saving throw</strong>.",
+    "boon": {
+      "val": 2,
+      "label": "Cleaned Timeline",
+      "text": "<strong>Success (Boon):</strong> You dodge the smelly stream just in time. The acidic ale washes away decades of caked-on grease along the bottom hem, exposing a buried timeline. You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Stale Ale Gag",
+      "text": "<strong>Failure (Bane):</strong> The foul, sticky ale splashes all over your boots and cloak. The stench of stale yeast fills your nostrils, making you gag and breaking your train of thought. You suffer a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "The Stumbling Guard",
+    "type": "danger",
+    "tag": "Intoxicated Guard",
+    "dc": 18,
+    "text": "An off-duty, intoxicated Fire Giant guard staggers down the corridor, leaning her full weight against the heavy tapestry right where you are standing. Make a <strong>DC 18 Strength (Athletics) check</strong> to brace the heavy fabric.",
+    "boon": {
+      "val": 2,
+      "label": "Taut Gold Embroidery",
+      "text": "<strong>Success (Boon):</strong> You absorb the impact silently from behind the heavy weave. As the giant pushes off, the strain on the cloth pulls it taut, making hidden gold-leaf embroidery pop into crisp relief. You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Lumpy Tapestry",
+      "text": "<strong>Failure (Bane):</strong> The giant's weight presses you flat against the damp basalt wall with a loud 'oof!'. The giant mutters about 'lumpy tapestries' before stumbling off, leaving you bruised and dazed with a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "The Volcanic Draft",
+    "type": "hazard",
+    "tag": "Thermal Updraft",
+    "dc": 16,
+    "text": "A sudden thermal updraft billows out from a narrow fissure behind the stone wall, causing the massive tapestry to rise and fall like a heavy curtain. Make a <strong>DC 16 Wisdom (Survival) or Dexterity check</strong>.",
+    "boon": {
+      "val": 2,
+      "label": "Air Current Ride",
+      "text": "<strong>Success (Boon):</strong> You ride the air currents, catching the fabric at the peak of the draft to glimpse an upper portion of the tapestry in close detail. You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Sulfuric Blast",
+      "text": "<strong>Failure (Bane):</strong> A blast of hot, sulfuric air blows straight into your face, drying out your eyes and causing them to sting and water uncontrollably. You suffer a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "Thermal Runic Resonance",
+    "type": "hazard",
+    "tag": "Thermal Runes",
+    "dc": 17,
+    "text": "As a nearby gas jet flares, the metallic gold and silver threads woven into the dwarven crowns begin to absorb the ambient heat, pulsing with a faint glow. Make a <strong>DC 17 Intelligence (Arcana) check</strong>.",
+    "boon": {
+      "val": 2,
+      "label": "Thermal Sequence",
+      "text": "<strong>Success (Boon):</strong> You trace the thermal signature, noticing that the crowns glow in a specific diminishing intensity that reveals the chronological order of the fallen clans. You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Scorched Fingertips",
+      "text": "<strong>Failure (Bane):</strong> The sudden thermal feedback scorches your fingertips right through your gloves, leaving a throbbing sting that makes taking notes agonizing. You suffer a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "Manticore Flea Infestation",
+    "type": "hazard",
+    "tag": "Ember Fleas",
+    "dc": 16,
+    "text": "The tapestry, woven partially from coarse manticore pelts, harbors a nest of aggressive, giant subterranean ember-fleas. Make a <strong>DC 16 Constitution saving throw</strong> <em>(bearded characters at disadvantage, hairless at advantage)</em>.",
+    "boon": {
+      "val": 2,
+      "label": "Warded Nesting",
+      "text": "<strong>Success (Boon):</strong> You swat the biting pests away before they land, noticing that their nesting pattern strangely avoids specific silver-threaded warding sigils on the fabric. You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Burning Collar Itch",
+      "text": "<strong>Failure (Bane):</strong> A biting ember-flea gets down your collar, causing an unbearable, burning itch that forces you to squirm and scratch uncontrollably instead of studying. You suffer a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "Shifting Chandelier Shadows",
+    "type": "hazard",
+    "tag": "Brazier Shadows",
+    "dc": 17,
+    "text": "The flickering orange light from a massive iron brazier casts dancing, grotesque shadows across the embroidered faces of the dwarven kings. Make a <strong>DC 17 Intelligence (History) or Wisdom (Insight) check</strong>.",
+    "boon": {
+      "val": 2,
+      "label": "Betrayal Silhouette",
+      "text": "<strong>Success (Boon):</strong> You catch the exact moment the shadow aligns with the embroidery, revealing a hidden silhouette that depicts the Cinder Clan's secret betrayal. You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Sneering Shadows",
+      "text": "<strong>Failure (Bane):</strong> The dancing, eerie shadows play tricks on your mind, making the giant faces seem to move and sneer directly at you, severely rattling your focus. You suffer a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "Falling Torch Cinders",
+    "type": "danger",
+    "tag": "White-Hot Sparks",
+    "dc": 18,
+    "text": "An iron wall brazier overhead pops loudly, sending a shower of glowing, white-hot sparks cascading down the front of the tapestry. Make a <strong>DC 18 Dexterity (Sleight of Hand) check</strong>.",
+    "boon": {
+      "val": 2,
+      "label": "Fortuitous Scorch",
+      "text": "<strong>Success (Boon):</strong> You snuff out the embers in mid-air with your gloved fingers. The tiny scorch mark left behind fortuitously burns away a patch of black mold covering a key image! You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Fringe Flame",
+      "text": "<strong>Failure (Bane):</strong> A spark catches on the dry fringe, forcing you to frantically smother a growing flame with your bare hands before it burns the tapestry\u2014and your fingers. You suffer a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  },
+  {
+    "title": "Psionic Static Echo",
+    "type": "danger",
+    "tag": "Duergar Psionics",
+    "dc": 18,
+    "text": "Residual psionic energy siphoned from the Duergar extraction cells on Level 2 hums through the ancient metallic dyes used in the weave. Make a <strong>DC 18 Wisdom (Insight) check</strong>.",
+    "boon": {
+      "val": 2,
+      "label": "Weaver's Psychic Echo",
+      "text": "<strong>Success (Boon):</strong> You attune to the faint psionic vibration, catching a psychic echo of the ancient dwarven weaver's thoughts as they recorded the downfall of the Shield Clan. You gain a <strong>+2 bonus</strong> to your Tapestry checks."
+    },
+    "bane": {
+      "val": -3,
+      "label": "Static Spike Migraine",
+      "text": "<strong>Failure (Bane):</strong> The psionic feedback triggers a sudden, blinding spike of static inside your skull, causing a throbbing migraine behind your eyes. You suffer a <strong>-3 penalty</strong> to your Tapestry checks."
+    }
+  }
         ];
 
         function isValidModifier(value) {
