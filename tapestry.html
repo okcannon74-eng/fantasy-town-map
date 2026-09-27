@@ -1151,7 +1151,9 @@
 
             ui.formPrompt.innerText = 'Enter your Ability / Save Modifier:';
             ui.rollInput.value = '0';
-            showModifierInfo();
+            if (ui.modifierInfo) {
+                ui.modifierInfo.innerHTML = '<span style="color: #9ccfd8; font-size: 0.78rem; font-style: italic;">(Stored Boons/Banes apply only to Tapestry Study checks)</span>';
+            }
 
             ui.form.style.display = 'block';
             setRollButton(executeRollAction, '🎲 Roll d20');
