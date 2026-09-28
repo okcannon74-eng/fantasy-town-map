@@ -1417,16 +1417,18 @@
             state.modalMode = null;
             state.modalStage = null;
 
-            const d20 = rollD20();
-            console.log(`🎲 Interruption Check on ${node.name}: Rolled ${d20} vs DC ${CONFIG.game.interruptionDC}`);
+            const studiedMap = getStudiedHotspots();
+            const savedResult = studiedMap[node.id];
 
-            if (d20 >= CONFIG.game.interruptionDC) {
-                triggerInterruption(node, d20);
-            } else {
-                revealStudyCheckForm(node);
+            if (savedResult) {
+                showLockedStudyResult(node, savedResult);
+                return;
             }
-        }
 
+            // Guaranteed interruption on first attempt for unstudied hotspots
+            console.log(`🎲 First attempt on "${node.name}": Triggering guaranteed interruption encounter.`);
+            triggerInterruption(node);
+        }
         // ===================================================================
         // 10. MODAL FLOWS
         // ===================================================================
@@ -1672,8 +1674,8 @@
         ui.body.innerHTML = resultHtml;
         ui.form.style.display = 'none';
         state.modalStage = 'interruption-result';
-        setRollButton(() => revealStudyCheckForm(state.activeHotspot), '🔍 Proceed to Study Check');
-        setDismissButton('Close');
+        setRollButton(null, '', false);
+        setDismissButton('Close', true);
     }
 
     function resolveStudyRoll(d20, userMod, storedVal, finalTotal) {
