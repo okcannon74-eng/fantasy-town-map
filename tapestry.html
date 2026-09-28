@@ -1157,7 +1157,7 @@
 
             ui.form.style.display = 'block';
             setRollButton(executeRollAction, '🎲 Roll d20');
-            setDismissButton('Cancel');
+            setDismissButton('Cancel', false);
             setModalVisible(true);
 
             if (preRolledD20 !== null) {
@@ -1204,7 +1204,7 @@
 
             ui.form.style.display = 'block';
             setRollButton(executeRollAction, '🎲 Roll d20');
-            setDismissButton('Cancel Study');
+            setDismissButton('Cancel Study', false);
             setModalVisible(true);
         }
 
