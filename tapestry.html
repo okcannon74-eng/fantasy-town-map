@@ -326,7 +326,7 @@
 
     <!-- HUD Header -->
     <div class="tapestry-hud-header">
-        <h1>A Tapestry in Lord Snurre's</h1>
+        <h1>A Tapestry in Lord Snurre's Hall</h1>
         <p>The Second Breaking of the Dwarves</p>
     </div>
 
@@ -1443,10 +1443,19 @@
             }
 
             const clearedMap = getClearedInterruptions();
-            if (clearedMap[node.id]) {
-                revealStudyCheckForm(node);
-            } else {
+            if (!clearedMap[node.id]) {
+                // First click on unstudied hotspot: Guaranteed Interruption
+                console.log(`🎲 First attempt on "${node.name}": Triggering guaranteed initial interruption.`);
                 triggerInterruption(node);
+            } else {
+                // Subsequent clicks: Random chance (d20 vs interruptionDC) for another interruption vs study check
+                const d20 = rollD20();
+                console.log(`🎲 Subsequent attempt on "${node.name}": Rolled d20 (${d20}) vs Interruption DC (${CONFIG.game.interruptionDC})`);
+                if (d20 >= CONFIG.game.interruptionDC) {
+                    triggerInterruption(node, d20);
+                } else {
+                    revealStudyCheckForm(node);
+                }
             }
         }
 
@@ -1566,7 +1575,6 @@
 
             ui.body.innerHTML = bodyHtml;
             ui.form.style.display = 'none';
-            setRollButton(() => revealStudyCheckForm(node), '🔍 Re-test Study Check');
             setDismissButton('Close Window');
             setModalVisible(true);
         }
@@ -1581,7 +1589,7 @@
                 <div style="margin-bottom: 12px; padding: 12px 16px; background: rgba(24, 27, 32, 0.7); border: 1px solid #3b4252; border-radius: 6px;">
                     <p style="font-size: 0.9rem; line-height: 1.45; color: #e0def4;">${node.success_lore}</p>
                 </div>
-                <p style="font-size: 0.78rem; color: #9ccfd8; text-align: center;">You have already deciphered this segment. You can close this window or re-test the study check below.</p>
+                <p style="font-size: 0.78rem; color: #9ccfd8; text-align: center;">You have already deciphered this segment.</p>
             `;
             ui.form.style.display = 'none';
             setRollButton(() => revealStudyCheckForm(node), '🎲 Re-test Study Check');
