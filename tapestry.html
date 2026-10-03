@@ -399,7 +399,8 @@
             storageKeys: {
                 modifierResetDate: 'tapestry_modifier_reset_date',
                 activeModifier: 'tapestry_active_modifier',
-                studiedHotspots: 'tapestry_studied_hotspots'
+                studiedHotspots: 'tapestry_studied_hotspots',
+                clearedInterruptions: 'tapestry\_cleared\_interruptions'
             },
             game: {
                 interruptionDC: 13,
@@ -1108,12 +1109,28 @@
             localStorage.setItem(CONFIG.storageKeys.studiedHotspots, JSON.stringify(current));
             updateStatusHUD();
         }
+        function getClearedInterruptions() {
+            const stored = localStorage.getItem(CONFIG.storageKeys.clearedInterruptions);
+            if (!stored) return {};
+            try {
+                return JSON.parse(stored) || {};
+            } catch (e) {
+                return {};
+            }
+        }
 
+        function markInterruptionCleared(id) {
+            if (!id) return;
+            const cleared = getClearedInterruptions();
+            cleared[id] = true;
+            localStorage.setItem(CONFIG.storageKeys.clearedInterruptions, JSON.stringify(cleared));
+        }
         function resetTapestryProgress() {
             if (!confirm('Reset all studied hotspots and active modifiers for the Tapestry?')) return;
 
             localStorage.removeItem(CONFIG.storageKeys.studiedHotspots);
             localStorage.removeItem(CONFIG.storageKeys.activeModifier);
+            localStorage.removeItem(CONFIG.storageKeys.clearedInterruptions);
             updateStatusHUD();
             showNotification('Tapestry progress has been reset.');
         }
@@ -1425,10 +1442,14 @@
                 return;
             }
 
-            // Guaranteed interruption on first attempt for unstudied hotspots
-            console.log(`🎲 First attempt on "${node.name}": Triggering guaranteed interruption encounter.`);
-            triggerInterruption(node);
+            const clearedMap = getClearedInterruptions();
+            if (clearedMap[node.id]) {
+                revealStudyCheckForm(node);
+            } else {
+                triggerInterruption(node);
+            }
         }
+
         // ===================================================================
         // 10. MODAL FLOWS
         // ===================================================================
@@ -1618,7 +1639,9 @@
         }
 
         function resolveInterruptionRoll(d20, userMod, finalTotal) {
-        if (!state.activeEncounter) return;
+        if (!state.activeEncounter || !state.activeHotspot) return;
+
+        markInterruptionCleared(state.activeHotspot.id);
 
         const hazardDC = state.activeEncounter.dc;
         const pass = resolveInterruption(finalTotal, hazardDC);
